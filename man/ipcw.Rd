@@ -25,6 +25,7 @@ ipcw(
   firth = FALSE,
   flic = FALSE,
   ns_df = 3,
+  relative_time = TRUE,
   stabilized_weights = TRUE,
   trunc = 0,
   trunc_upper_only = TRUE,
@@ -55,10 +56,10 @@ counting-process data with time-dependent covariates.
 \item \code{swtrt_time_upper}: The upper bound of treatment switching time.
 \item \code{base_cov}: The baseline covariates (excluding treat) used in
 the outcome model.
-\item \code{numerator}: The baseline covariates used in the switching
-model for the numerator for stabilized weights.
+\item \code{numerator}: The baseline covariates (excluding treat) used in
+the switching model for the numerator for stabilized weights.
 \item \code{denominator}: The baseline and time-dependent covariates
-used in the switching model for the denominator.
+(excluding treat) used in the switching model for the denominator.
 }}
 
 \item{id}{The name of the id variable in the input data.}
@@ -83,14 +84,16 @@ the input data.}
 \item{swtrt_time_upper}{The name of the swtrt_time_upper variable in
 the input data.}
 
-\item{base_cov}{The vector of names of base_cov variables (excluding
+\item{base_cov}{The names of baseline covariates (excluding
 treat) in the input data for the Cox model.}
 
-\item{numerator}{The vector of names of variables in the input data
-for the numerator switching model for stabilized weights.}
+\item{numerator}{The names of baseline covariates
+(excluding treat) in the input data for the numerator switching
+model for stabilized weights.}
 
-\item{denominator}{The vector of names of variables in the input data
-for the denominator switching model.}
+\item{denominator}{The names of baseline and time-dependent
+covariates (excluding treat) in the input data for the denominator
+switching model.}
 
 \item{logistic_switching_model}{Whether a pooled logistic regression
 switching model is used.}
@@ -100,23 +103,28 @@ effects in the logistic regression switching model. Defaults to
 \code{TRUE}, otherwise all possible strata combinations will be
 considered in the switching model.}
 
-\item{firth}{Whether the firth's bias reducing penalized likelihood
+\item{firth}{Whether the Firth's bias reducing penalized likelihood
 should be used. The default is \code{FALSE}.}
 
 \item{flic}{Whether to apply intercept correction to obtain more
 accurate predicted probabilities. The default is \code{FALSE}.}
 
-\item{ns_df}{Degrees of freedom for the natural cubic spline.
-Defaults to 3 for two inner knots at the 33 and 67 percentiles
+\item{ns_df}{Degrees of freedom for the natural cubic spline for
+visit-specific intercepts of the pooled logistic regression model.
+Defaults to 3 for two internal knots at the 33 and 67 percentiles
 of the artificial censoring times due to treatment switching.}
+
+\item{relative_time}{Whether to use the time relative to
+\code{swtrt_time_lower} as the intercepts for the pooled logistic
+regression model.}
 
 \item{stabilized_weights}{Whether to use the stabilized weights.}
 
-\item{trunc}{The pre-specified fraction of the weights. Defaults to 0
-for no truncation in weights.}
+\item{trunc}{The truncation fraction of the weight distribution.
+Defaults to 0 for no truncation in weights.}
 
 \item{trunc_upper_only}{Whether to truncate the weights from the upper
-end of the distribution only. Defaults to \code{TRUE}, otherwise
+end of the weight distribution only. Defaults to \code{TRUE}, otherwise
 the weights will be truncated from both the lower and upper ends of
 the distribution.}
 
@@ -139,29 +147,34 @@ The seed from the environment will be used if left unspecified.}
 \value{
 A list with the following components:
 \itemize{
-\item \code{logrank_pvalue}: The two-sided p-value of the log-rank test
-based on the treatment policy strategy.
+\item \code{logrank_pvalue}:  The two-sided p-value of the log-rank test
+for an intention-to-treat (ITT) analysis.
 \item \code{cox_pvalue}: The two-sided p-value for treatment effect based on
 the Cox model.
 \item \code{hr}: The estimated hazard ratio from the Cox model.
 \item \code{hr_CI}: The confidence interval for hazard ratio.
 \item \code{hr_CI_type}: The type of confidence interval for hazard ratio,
 either "Cox model" or "bootstrap".
-\item \code{fit_switch}: A list of the fitted switching models for the
+\item \code{data_switch}: A list of input data for the switching models by
+treatment group.
+\item \code{fit_switch}: A list of fitted switching models for the
 denominator and numerator by treatment group.
-\item \code{df_outcome}: The input data frame for the outcome Cox model
+\item \code{data_outcome}: The input data for the outcome Cox model
 including the inverse probability of censoring weights.
-\item \code{fit_outcome}: The fitted outcome model.
+\item \code{fit_outcome}: The fitted outcome Cox model.
 \item \code{settings}: A list with the following components:
 \itemize{
 \item \code{logistic_switching_model}: Whether a pooled logistic
 regression switching model is used.
 \item \code{strata_main_effect_only}: Whether to only include the
 strata main effects in the logistic regression switching model.
-\item \code{firth}: Whether the firth's bias reducing penalized likelihood
+\item \code{firth}: Whether the Firth's bias reducing penalized likelihood
 should be used.
 \item \code{flic}: Whether to apply intercept correction to obtain more
 accurate predicted probabilities.
+\item \code{ns_df}: Degrees of freedom for the natural cubic spline.
+\item \code{relative_time}: Whether to use the relative time as the
+intercepts.
 \item \code{stabilized_weights}: Whether to use the stabilized weights.
 \item \code{trunc}: The truncation fraction of the weight distribution.
 \item \code{trunc_upper_only}: Whether to truncate the weights from the
@@ -174,39 +187,46 @@ intervals.
 \item \code{boot}: Whether to use bootstrap to obtain the confidence
 interval for hazard ratio.
 \item \code{n_boot}: The number of bootstrap samples.
-\item \code{seed}: The seed to reproduce the simulation results.
+\item \code{seed}: The seed to reproduce the bootstrap results.
 }
 \item \code{hr_boots}: The bootstrap hazard ratio estimates if \code{boot} is
 \code{TRUE}.
 }
 }
 \description{
-Uses the IPCW method to obtain the hazard ratio estimate
-of the Cox model to account for treatment switching.
+Uses the inverse probability of censoring weights (IPCW)
+method to obtain the hazard ratio estimate of the Cox model to
+adjust for treatment switching.
 }
 \details{
 We use the following steps to obtain the hazard ratio estimate
 and confidence interval had there been no treatment switching:
 \itemize{
-\item Exclude observations after treatment switch and set up the crossover
-and event indicators for the last time interval for each subject.
+\item Exclude observations after treatment switch.
+\item Set up the crossover and event indicators for the last time interval
+for each subject.
 \item For time-dependent covariates Cox switching models, replicate unique
 event times across treatment arms within each subject.
 \item Fit the denominator switching model (and the numerator switching model
 for stabilized weights) to obtain the inverse probability
 of censoring weights. This can be a Cox model with time-dependent
-covariates or a pooled logistic regression model.
+covariates or a pooled logistic regression model. For pooled logistic
+regression switching model, the probability of remaining uncensored
+(i.e., not switching) will be calculated by subtracting the
+predicted probability of switching from 1 and then multiplied over
+time up to the current time point.
 \item Fit the weighted Cox model to the censored outcome survival times
 to obtain the hazard ratio estimate.
-\item Use bootstrap to construct the p-value and confidence interval for
-hazard ratio.
+\item Use either robust sandwich variance or bootstrapping to construct the
+p-value and confidence interval for the hazard ratio.
+If bootstrapping is used, the confidence interval
+and corresponding p-value are calculated based on a t-distribution with
+\code{n_boot - 1} degrees of freedom.
 }
 }
 \examples{
 
 # Example 1: pooled logistic regression switching model
-
-library(dplyr)
 
 sim1 <- tsegestsim(
   n = 500, allocation1 = 2, allocation2 = 1, pbprog = 0.5, 
@@ -227,7 +247,8 @@ fit1 <- ipcw(
   swtrt_time_upper = "xotime_upper", base_cov = "bprog", 
   numerator = "bprog", denominator = "bprog*catlag", 
   logistic_switching_model = TRUE, ns_df = 3,
-  swtrt_control_only = TRUE, boot = FALSE)
+  relative_time = TRUE, swtrt_control_only = TRUE, 
+  boot = FALSE)
   
 c(fit1$hr, fit1$hr_CI) 
 

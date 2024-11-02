@@ -19,7 +19,7 @@ rpsftm(
   n_eval_z = 100,
   treat_modifier = 1,
   recensor = TRUE,
-  admin_recensor_only = FALSE,
+  admin_recensor_only = TRUE,
   autoswitch = TRUE,
   gridsearch = FALSE,
   alpha = 0.05,
@@ -56,25 +56,26 @@ be provided for all subjects including those who had events.
 
 \item{censor_time}{The name of the censor_time variable in the input data.}
 
-\item{base_cov}{The vector of names of baseline covariates (excluding
-treat) in the input data.}
+\item{base_cov}{The names of baseline covariates (excluding
+treat) in the input data for the outcome Cox model.}
 
 \item{low_psi}{The lower limit of the causal parameter.}
 
 \item{hi_psi}{The upper limit of the causal parameter.}
 
-\item{n_eval_z}{The number of points between low_psi and hi_psi
-(inclusive) at which to evaluate the log-rank Z-statistics.}
+\item{n_eval_z}{The number of points between \code{low_psi} and
+\code{hi_psi} (inclusive) at which to evaluate the log-rank
+Z-statistics.}
 
 \item{treat_modifier}{The optional sensitivity parameter for the
 constant treatment effect assumption.}
 
-\item{recensor}{Whether to apply recensoring to counter-factual
+\item{recensor}{Whether to apply recensoring to counterfactual
 survival times. Defaults to \code{TRUE}.}
 
 \item{admin_recensor_only}{Whether to apply recensoring to administrative
-censoring time only. Defaults to \code{FALSE}, in which case,
-recensoring will be applied to the actual censoring time for dropouts.}
+censoring times only. Defaults to \code{TRUE}. If \code{FALSE},
+recensoring will be applied to the actual censoring times for dropouts.}
 
 \item{autoswitch}{Whether to exclude recensoring for treatment arms
 with no switching. Defaults to \code{TRUE}.}
@@ -107,34 +108,37 @@ A list with the following components:
 \item \code{psi_CI}: The confidence interval for \code{psi}.
 \item \code{psi_CI_type}: The type of confidence interval for \code{psi},
 i.e., "grid search", "root finding", or "bootstrap".
-\item \code{Sstar}: A data frame containing the counter-factual untreated
-survival times and the event indicators.
-\item \code{kmstar}: A data frame containing the Kaplan-Meier estimates
-based on the counter-factual untreated survival times by treatment arm.
-\item \code{eval_z}: A data frame containing the log-rank test Z-statistics
-evaluated at a sequence of \code{psi} values. Used to plot and check
-if the range of \code{psi} values to search for the solution and
-limits of confidence interval of \code{psi} need be modified.
 \item \code{logrank_pvalue}: The two-sided p-value of the log-rank test
-based on the treatment policy strategy.
+for the ITT analysis.
 \item \code{cox_pvalue}: The two-sided p-value for treatment effect based on
 the Cox model.
 \item \code{hr}: The estimated hazard ratio from the Cox model.
 \item \code{hr_CI}: The confidence interval for hazard ratio.
 \item \code{hr_CI_type}: The type of confidence interval for hazard ratio,
 either "log-rank p-value" or "bootstrap".
+\item \code{eval_z}: A data frame containing the log-rank test Z-statistics
+evaluated at a sequence of \code{psi} values. Used to plot and check
+if the range of \code{psi} values to search for the solution and
+limits of confidence interval of \code{psi} need be modified.
+\item \code{Sstar}: A data frame containing the counterfactual untreated
+survival times and event indicators for each treatment group.
+\item \code{kmstar}: A data frame containing the Kaplan-Meier estimates
+based on the counterfactual untreated survival times by treatment arm.
+\item \code{data_outcome}: The input data for the outcome Cox model.
+\item \code{fit_outcome}: The fitted outcome Cox model.
 \item \code{settings}: A list with the following components:
 \itemize{
 \item \code{low_psi}: The lower limit of the causal parameter.
 \item \code{hi_psi}: The upper limit of the causal parameter.
 \item \code{n_eval_z}: The number of points between \code{low_psi} and
-\code{hi_psi} at which to evaluate the log-rank Z-statistics.
+\code{hi_psi} (inclusive) at which to evaluate the log-rank
+Z-statistics.
 \item \code{treat_modifier}: The sensitivity parameter for the
 constant treatment effect assumption.
-\item \code{recensor}: Whether to apply recensoring to counter-factual
+\item \code{recensor}: Whether to apply recensoring to counterfactual
 survival times.
 \item \code{admin_recensor_only}: Whether to apply recensoring to
-administrative censoring time only.
+administrative censoring times only.
 \item \code{autoswitch}: Whether to exclude recensoring for treatment
 arms with no switching.
 \item \code{gridsearch}: Whether to use grid search to estimate the
@@ -142,11 +146,12 @@ causal parameter \code{psi}.
 \item \code{alpha}: The significance level to calculate confidence
 intervals.
 \item \code{ties}: The method for handling ties in the Cox model.
-\item \code{tol}: The desired accuracy (convergence tolerance).
+\item \code{tol}: The desired accuracy (convergence tolerance)
+for \code{psi}.
 \item \code{boot}: Whether to use bootstrap to obtain the confidence
 interval for hazard ratio.
 \item \code{n_boot}: The number of bootstrap samples.
-\item \code{seed}: The seed to reproduce the simulation results.
+\item \code{seed}: The seed to reproduce the bootstrap results.
 }
 \item \code{hr_boots}: The bootstrap hazard ratio estimates if \code{boot} is
 \code{TRUE}.
@@ -157,20 +162,23 @@ interval for hazard ratio.
 \description{
 Obtains the causal parameter estimate from the
 log-rank test and the hazard ratio estimate from the Cox model
-to account for treatment switching.
+to adjust for treatment switching.
 }
 \details{
 We use the following steps to obtain the hazard ratio estimate
 and confidence interval had there been no treatment switching:
 \itemize{
 \item Use RPSFTM to estimate the causal parameter \eqn{\psi} based on the
-log-rank test for counter-factual untreated survival times for
-both arms: \eqn{U_{i,\psi} = T_{C_i} +  e^{\psi}T_{E_i}}.
+log-rank test for counterfactual untreated survival times for
+both arms: \deqn{U_{i,\psi} = T_{C_i} +  e^{\psi}T_{E_i}}
 \item Fit the Cox proportional hazards model to the observed survival times
-on the treatment arm and the counter-factual untreated survival times
-on the control arm to obtain the hazard ratio estimate.
-\item Use either the log-rank test p-value for the treatment policy strategy
-or bootstrap to construct the confidence interval for hazard ratio.
+for the experimental group and the counterfactual survival times
+for the control group to obtain the hazard ratio estimate.
+\item Use either the log-rank test p-value for the intention-to-treat (ITT)
+analysis or bootstrap to construct the confidence interval for
+hazard ratio. If bootstrapping is used, the confidence interval
+and corresponding p-value are calculated based on a t-distribution with
+\code{n_boot - 1} degrees of freedom.
 }
 }
 \examples{
@@ -193,7 +201,7 @@ c(fit1$hr, fit1$hr_CI)
 shilong1 <- shilong \%>\%
   arrange(bras.f, id, tstop) \%>\%
   group_by(bras.f, id) \%>\%
-  filter(row_number() == n()) \%>\%
+  slice(n()) \%>\%
   select(-c("ps", "ttc", "tran"))
 
 shilong2 <- shilong1 \%>\%

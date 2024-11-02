@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Iterative Parameter Estimation</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Iterative Parameter Estimation</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(trtswitch)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(dplyr, <span class="at">warn.conflicts =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code></pre></div>
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>The iterative parameter estimation (IPE) method is an alternative to
+the rank preserving structural failure time model (RPSDTM) method to
+adjust for treatment switching within a counterfactual framework. Both
+methods assume a common treatment effect. However, instead of using
+g-estimation to find the optimal value of <span class="math inline">\(\psi\)</span>, the IPE method iteratively fits a
+parametric survival model.</p>
+</div>
+<div id="estimation-of-psi" class="section level1">
+<h1>Estimation of <span class="math inline">\(\psi\)</span></h1>
+<p>With an initial estimate of <span class="math inline">\(\psi\)</span>
+from the intention-to-treat (ITT) analysis using an accelerated failure
+time (AFT) model to compare the randomized treatment groups, the IPE
+method iterates between the following two steps until convergence:</p>
+<ol style="list-style-type: decimal">
+<li><p>Derive the counterfactual survival times and event indicators
+(possibly recensored) for patients in the control group, <span class="math display">\[
+  U_{i,\psi} = T_{C_i} + e^{\psi} T_{E_i},
+\]</span> <span class="math display">\[
+  D_{i,\psi}^* = \min(C_i, e^{\psi} C_i),
+\]</span> <span class="math display">\[
+  U_{i,\psi}^* = \min(U_{i,\psi}, D_{i,\psi}^*),
+\]</span> <span class="math display">\[
+  \Delta_{i,\psi}^* = \Delta_i I(U_{i,\psi} \leq D_{i,\psi}^*).
+\]</span></p></li>
+<li><p>Fit an AFT model to the adjusted data set consisting of</p>
+<ul>
+<li><p>The observed survival times of the experimental group: <span class="math inline">\(\{(T_i,\Delta_i,Z_i): A_i = 1\}\)</span></p></li>
+<li><p>The counterfactual survival times for the control group: <span class="math inline">\(\{(U_{i,\psi}^*, \Delta_{i,\psi}^*, Z_i): A_i =
+0\}\)</span> evaluated at <span class="math inline">\(\psi =
+\hat{\psi}\)</span>.</p></li>
+</ul></li>
+</ol>
+<p>The updated estimate of <span class="math inline">\(\psi\)</span> is
+equal to the negative of the regression coefficient for the treatment
+indicator in the AFT model.</p>
+</div>
+<div id="estimation-of-hazard-ratio" class="section level1">
+<h1>Estimation of Hazard Ratio</h1>
+<p>This step is the same as the RPSFTM method. Once <span class="math inline">\(\psi\)</span> has been estimated, we can fit a
+(potentially stratified) Cox proportional hazards model to the adjusted
+data set. This allows us to obtain an estimate of the hazard ratio. The
+confidence interval for the hazard ratio can be derived by either</p>
+<ol style="list-style-type: decimal">
+<li>Matching the p-value from the log-rank test for an ITT analysis,
+or</li>
+<li>Bootstrapping the entire adjustment and subsequent model-fitting
+process.</li>
+</ol>
+</div>
+<div id="concorde-trial-example" class="section level1">
+<h1>Concorde Trial Example</h1>
+<p>We will demonstrate the use of the <code>ipe</code> function with
+simulated data based on the randomized Concorde trial.</p>
+<p>We start by preparing the data and then apply the IPE method:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>data <span class="ot">&lt;-</span> immdef <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">rx =</span> <span class="dv">1</span><span class="sc">-</span>xoyrs<span class="sc">/</span>progyrs)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>fit1 <span class="ot">&lt;-</span> <span class="fu">ipe</span>(</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  data, <span class="at">time =</span> <span class="st">&quot;progyrs&quot;</span>, <span class="at">event =</span> <span class="st">&quot;prog&quot;</span>, <span class="at">treat =</span> <span class="st">&quot;imm&quot;</span>, </span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">rx =</span> <span class="st">&quot;rx&quot;</span>, <span class="at">censor_time =</span> <span class="st">&quot;censyrs&quot;</span>, <span class="at">aft_dist =</span> <span class="st">&quot;weibull&quot;</span>,</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">boot =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<p>The log-rank test for an ITT analysis, which ignores treatment
+changes, yields a borderline significant p-value of <span class="math inline">\(0.056\)</span>.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>fit1<span class="sc">$</span>logrank_pvalue</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co">#&gt; [1] 0.05563532</span></span></code></pre></div>
+<p>Using the IPE method with a Weibull AFT model, we estimate <span class="math inline">\(\hat{\psi} = -0.183\)</span>, which is similar to
+the estimate obtained from the RPSFTM analysis.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>fit1<span class="sc">$</span>psi</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt; [1] -0.182931</span></span></code></pre></div>
+<p>The Kaplan-Meier plot of counterfactual survival times supports the
+estimated <span class="math inline">\(\hat{\psi}\)</span>.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>```{r km}</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>ggplot(fit1$kmstar, aes(x=time, y=survival, group=treated,</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>                        linetype=as.factor(treated))) + </span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  geom_step() + </span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  scale_linetype_discrete(name = &quot;treated&quot;) + </span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  scale_y_continuous(limits = c(0,1))</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>```</span></code></pre></div>
+<p>The estimated hazard ratio from the Cox proportional hazards model is
+<span class="math inline">\(0.766\)</span>, with a 95% confidence
+interval of <span class="math inline">\((0.583, 1.006)\)</span>, closely
+aligning with the results from the RPSFTM analysis.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">c</span>(fit1<span class="sc">$</span>hr, fit1<span class="sc">$</span>hr_CI)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="co">#&gt; [1] 0.7657898 0.5826782 1.0064459</span></span></code></pre></div>
+</div>
+<div id="potential-convergence-issues" class="section level1">
+<h1>Potential Convergence Issues</h1>
+<p>There is no guarantee that the IPE method will produce an unique
+estimate of the causal parameter <span class="math inline">\(\psi\)</span>. To see this, consider the following
+SHIVA data for illustration purposes only.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>shilong1 <span class="ot">&lt;-</span> shilong <span class="sc">%&gt;%</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="fu">arrange</span>(bras.f, id, tstop) <span class="sc">%&gt;%</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="fu">group_by</span>(bras.f, id) <span class="sc">%&gt;%</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="fu">n</span>()) <span class="sc">%&gt;%</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(<span class="st">&quot;ps&quot;</span>, <span class="st">&quot;ttc&quot;</span>, <span class="st">&quot;tran&quot;</span>))</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>shilong2 <span class="ot">&lt;-</span> shilong1 <span class="sc">%&gt;%</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">rx =</span> <span class="fu">ifelse</span>(co, <span class="fu">ifelse</span>(bras.f <span class="sc">==</span> <span class="st">&quot;MTA&quot;</span>, dco<span class="sc">/</span>ady, </span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>                                <span class="dv">1</span> <span class="sc">-</span> dco<span class="sc">/</span>ady),</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>                     <span class="fu">ifelse</span>(bras.f <span class="sc">==</span> <span class="st">&quot;MTA&quot;</span>, <span class="dv">1</span>, <span class="dv">0</span>)),</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>         <span class="at">treated =</span> <span class="dv">1</span><span class="sc">*</span>(bras.f <span class="sc">==</span> <span class="st">&quot;MTA&quot;</span>))</span></code></pre></div>
+<p>Now let us apply the IPE method using the Brent’s method for root
+finding:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>fit2 <span class="ot">&lt;-</span> <span class="fu">ipe</span>(</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  shilong2, <span class="at">time =</span> <span class="st">&quot;tstop&quot;</span>, <span class="at">event =</span> <span class="st">&quot;event&quot;</span>,</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="at">treat =</span> <span class="st">&quot;bras.f&quot;</span>, <span class="at">rx =</span> <span class="st">&quot;rx&quot;</span>, <span class="at">censor_time =</span> <span class="st">&quot;dcut&quot;</span>,</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="at">base_cov =</span> <span class="fu">c</span>(<span class="st">&quot;agerand&quot;</span>, <span class="st">&quot;sex.f&quot;</span>, <span class="st">&quot;tt_Lnum&quot;</span>, <span class="st">&quot;rmh_alea.c&quot;</span>,</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>               <span class="st">&quot;pathway.f&quot;</span>),</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>  <span class="at">aft_dist =</span> <span class="st">&quot;weibull&quot;</span>, <span class="at">boot =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<p>The reported causal parameter estimate is <span class="math inline">\(\hat{\psi} = 0.953\)</span>, while the negative of
+the coefficient for the treatment variable in the updated AFT model fit
+equals <span class="math inline">\(0.950\)</span>:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>fit2<span class="sc">$</span>fit_aft<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co">#&gt;                    param         beta      sebeta          z</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt; 1            (Intercept)  6.934726162 0.495626815 13.9918301</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; 2                treated -0.949765754 0.150227469 -6.3221843</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt; 3                agerand -0.003290492 0.006498533 -0.5063439</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; 4            sex.fFemale  0.322266214 0.156016644  2.0655887</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt; 5                tt_Lnum -0.014139570 0.028712690 -0.4924502</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt; 6             rmh_alea.c -0.671748356 0.156970327 -4.2794608</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt; 7            pathway.fHR -0.174054293 0.239966698 -0.7253269</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="co">#&gt; 8 pathway.fPI3K.AKT.mTOR -0.149492620 0.241468216 -0.6190985</span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#&gt; 9             Log(scale) -0.209508060 0.076278866 -2.7466069</span></span></code></pre></div>
+<p>This suggests that the <span class="math inline">\(\psi\)</span>
+value has not converged. The following code demonstrates the oscillation
+of <span class="math inline">\(\psi\)</span> values between 0.955,
+0.951, and 0.960 after additional iterations.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>f <span class="ot">&lt;-</span> <span class="cf">function</span>(psi) {</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  data1 <span class="ot">&lt;-</span> shilong2 <span class="sc">%&gt;%</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>    <span class="fu">filter</span>(treated <span class="sc">==</span> <span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">u_star =</span> tstop<span class="sc">*</span>(<span class="dv">1</span> <span class="sc">-</span> rx <span class="sc">+</span> rx<span class="sc">*</span><span class="fu">exp</span>(psi)),</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>           <span class="at">c_star =</span> <span class="fu">pmin</span>(dcut, dcut<span class="sc">*</span><span class="fu">exp</span>(psi)),</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>           <span class="at">t_star =</span> <span class="fu">pmin</span>(u_star, c_star),</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>           <span class="at">d_star =</span> event<span class="sc">*</span>(u_star <span class="sc">&lt;=</span> c_star)) <span class="sc">%&gt;%</span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>    <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(<span class="st">&quot;u_star&quot;</span>, <span class="st">&quot;c_star&quot;</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>    <span class="fu">bind_rows</span>(shilong2 <span class="sc">%&gt;%</span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>                <span class="fu">filter</span>(treated <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>                <span class="fu">mutate</span>(<span class="at">u_star =</span> tstop<span class="sc">*</span>(rx <span class="sc">+</span> (<span class="dv">1</span><span class="sc">-</span>rx)<span class="sc">*</span><span class="fu">exp</span>(<span class="sc">-</span>psi)),</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>                       <span class="at">c_star =</span> <span class="fu">pmin</span>(dcut, dcut<span class="sc">*</span><span class="fu">exp</span>(<span class="sc">-</span>psi)),</span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>                       <span class="at">t_star =</span> <span class="fu">pmin</span>(u_star, c_star),</span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>                       <span class="at">d_star =</span> event<span class="sc">*</span>(u_star <span class="sc">&lt;=</span> c_star)))</span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>  </span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>  fit_aft <span class="ot">&lt;-</span> <span class="fu">liferegr</span>(data1, <span class="at">time =</span> <span class="st">&quot;t_star&quot;</span>, <span class="at">event =</span> <span class="st">&quot;d_star&quot;</span>, </span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a>                      <span class="at">covariates =</span> <span class="fu">c</span>(<span class="st">&quot;treated&quot;</span>, <span class="st">&quot;agerand&quot;</span>, <span class="st">&quot;sex.f&quot;</span>, </span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a>                                     <span class="st">&quot;tt_Lnum&quot;</span>, <span class="st">&quot;rmh_alea.c&quot;</span>, </span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a>                                     <span class="st">&quot;pathway.f&quot;</span>), </span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a>                      <span class="at">dist =</span> <span class="st">&quot;weibull&quot;</span>)</span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a>  </span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a>  <span class="sc">-</span>fit_aft<span class="sc">$</span>beta[<span class="dv">2</span>]</span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a>}</span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a></span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a>B <span class="ot">&lt;-</span> <span class="dv">30</span></span>
+<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a>psihats <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">0</span>, B)</span>
+<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a>psihats[<span class="dv">1</span>] <span class="ot">&lt;-</span> fit2<span class="sc">$</span>psi</span>
+<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>B) {</span>
+<span id="cb10-30"><a href="#cb10-30" tabindex="-1"></a>  psihats[i] <span class="ot">&lt;-</span> <span class="fu">f</span>(psihats[i<span class="dv">-1</span>])</span>
+<span id="cb10-31"><a href="#cb10-31" tabindex="-1"></a>}</span>
+<span id="cb10-32"><a href="#cb10-32" tabindex="-1"></a></span>
+<span id="cb10-33"><a href="#cb10-33" tabindex="-1"></a>data2 <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">index =</span> <span class="dv">1</span><span class="sc">:</span>B, <span class="at">psi =</span> psihats)</span>
+<span id="cb10-34"><a href="#cb10-34" tabindex="-1"></a><span class="fu">tail</span>(data2)</span>
+<span id="cb10-35"><a href="#cb10-35" tabindex="-1"></a><span class="co">#&gt;    index       psi</span></span>
+<span id="cb10-36"><a href="#cb10-36" tabindex="-1"></a><span class="co">#&gt; 25    25 0.9550293</span></span>
+<span id="cb10-37"><a href="#cb10-37" tabindex="-1"></a><span class="co">#&gt; 26    26 0.9511406</span></span>
+<span id="cb10-38"><a href="#cb10-38" tabindex="-1"></a><span class="co">#&gt; 27    27 0.9603835</span></span>
+<span id="cb10-39"><a href="#cb10-39" tabindex="-1"></a><span class="co">#&gt; 28    28 0.9550297</span></span>
+<span id="cb10-40"><a href="#cb10-40" tabindex="-1"></a><span class="co">#&gt; 29    29 0.9511409</span></span>
+<span id="cb10-41"><a href="#cb10-41" tabindex="-1"></a><span class="co">#&gt; 30    30 0.9603837</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>```{r psi plot}</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>ggplot(data2, aes(x = index, y = psi)) + </span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  geom_point() + </span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  geom_line()</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>```</span></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

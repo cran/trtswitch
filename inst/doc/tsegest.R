@@ -1,0 +1,52 @@
+## ----include = FALSE----------------------------------------------------------
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+
+## ----setup--------------------------------------------------------------------
+library(trtswitch)
+library(dplyr, warn.conflicts = FALSE)
+library(ggplot2)
+
+## ----data---------------------------------------------------------------------
+sim1 <- tsegestsim(
+  n = 500, allocation1 = 2, allocation2 = 1, pbprog = 0.5, 
+  trtlghr = -0.5, bprogsl = 0.3, shape1 = 1.8, 
+  scale1 = 0.000025, shape2 = 1.7, scale2 = 0.000015, 
+  pmix = 0.5, admin = 5000, pcatnotrtbprog = 0.5, 
+  pcattrtbprog = 0.25, pcatnotrt = 0.2, pcattrt = 0.1, 
+  catmult = 0.5, tdxo = 1, ppoor = 0.1, pgood = 0.04, 
+  ppoormet = 0.4, pgoodmet = 0.2, xomult = 1.4188308, 
+  milestone = 546, swtrt_control_only = TRUE,
+  outputRawDataset = 1, seed = 2000)
+
+## ----analysis-----------------------------------------------------------------
+fit1 <- tsegest(
+  data = sim1$paneldata, id = "id", 
+  tstart = "tstart", tstop = "tstop", event = "died", 
+  treat = "trtrand", censor_time = "censor_time", 
+  pd = "progressed", pd_time = "timePFSobs", swtrt = "xo", 
+  swtrt_time = "xotime", swtrt_time_upper = "xotime_upper",
+  base_cov = "bprog", conf_cov = "bprog*catlag", 
+  low_psi = -3, hi_psi = 3, strata_main_effect_only = TRUE,
+  recensor = TRUE, admin_recensor_only = TRUE, 
+  swtrt_control_only = TRUE, alpha = 0.05, ties = "efron", 
+  tol = 1.0e-6, boot = FALSE)
+
+## ----switch time points-------------------------------------------------------
+switched <- fit1$analysis_switch$data_switch[[1]]$data %>% 
+  filter(swtrt == 1)
+table(switched$swtrt_time)
+
+## ----logis--------------------------------------------------------------------
+parest <- fit1$analysis_switch$fit_logis[[1]]$fit$parest
+parest[, c("param", "beta", "sebeta", "z")]
+
+## ----psi estimates------------------------------------------------------------
+c(fit1$psi, fit1$psi_CI)
+
+## ----cox----------------------------------------------------------------------
+fit1$fit_outcome$parest[, c("param", "beta", "sebeta", "z")]
+c(fit1$hr, fit1$hr_CI)
+

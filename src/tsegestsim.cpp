@@ -19,13 +19,13 @@ using namespace Rcpp;
 //' @param trtlghr The treatment effect in terms of log hazard ratio.
 //' @param bprogsl The poor prognosis effect in terms of log hazard ratio.
 //' @param shape1 The shape parameter for the Weibull event distribution 
-//'   for the treatment group.
+//'   for the first component.
 //' @param scale1 The scale parameter for the Weibull event distribution 
-//'   for the treatment group.
+//'   for the first component.
 //' @param shape2 The shape parameter for the Weibull event distribution 
-//'   for the control group.
+//'   for the second component.
 //' @param scale2 The scale parameter for the Weibull event distribution 
-//'   for the control group.
+//'   for the second component.
 //' @param pmix The mixing probability of the first component Weibull 
 //'   distribution.
 //' @param admin The administrative censoring time.
@@ -39,8 +39,8 @@ using namespace Rcpp;
 //'   on active treatment with good baseline prognosis.
 //' @param catmult The impact of metastatic disease on shortening remaining 
 //'   survival time.
-//' @param tdxo whether treatment crossover occurs immediately after 
-//'   disease progression.
+//' @param tdxo Whether treatment crossover depends on time-dependent 
+//'   covariates between disease progression and treatment switching.
 //' @param ppoor The probability of switching for poor baseline prognosis
 //'   with no metastatic disease.
 //' @param pgood The probability of switching for good baseline prognosis
@@ -55,11 +55,11 @@ using namespace Rcpp;
 //'   time.
 //' @param swtrt_control_only Whether treatment switching occurred only in
 //'   the control group.
-//' @param outputRawDataset whether to output the raw data set
+//' @param outputRawDataset Whether to output the raw data set.
 //' @param seed The seed to reproduce the simulation results.
 //'   The seed from the environment will be used if left unspecified.
 //'
-//' @return A list with two data frames
+//' @return A list with two data frames.
 //' 
 //' * \code{sumdata}: A data frame with the following variables:
 //'
@@ -972,6 +972,8 @@ List tsegestsim(const int n = 500,
   for (i=0; i<n2; i++) {
     if (progressed2[i] == 1) {
       xotime_upper[i] = timePFSobs2[i] + 105;
+    } else {
+      xotime_upper[i] = 1e8;
     }
   }
   

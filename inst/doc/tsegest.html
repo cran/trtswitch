@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Two-Stage Estimation With g-estimation</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Two-Stage Estimation With g-estimation</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(trtswitch)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(dplyr, <span class="at">warn.conflicts =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code></pre></div>
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>TSEgest is an extension of the simple two-stage estimation (TSE)
+method by incorporating a structural nested model (SNM) and utilizing
+g-estimation. This allows a delay between disease progression (secondary
+baseline) and treatment switch, provided that time-dependent confounding
+variables that predict switching and survival are measured beyond the
+secondary baseline and included in the model for treatment switching.
+One key assumption for the TSEgest method is no unmeasured confounding,
+i.e., switching is independent of potential outcomes conditional on
+measured variables.</p>
+</div>
+<div id="estimation-of-psi" class="section level1">
+<h1>Estimation of <span class="math inline">\(\psi\)</span></h1>
+<p>To derive the g-estimate of <span class="math inline">\(\psi\)</span>, we utilize a logistic regression
+model for switching <span class="math display">\[
+  \textrm{logit}(p(E_{ik})) = \alpha U_{i,\psi} + \sum_{j} \beta_j
+x_{ijk}
+\]</span> alongside a structural model for counterfactual survival times
+<span class="math display">\[
+  U_{i,\psi} =  T_{C_i} + e^{\psi}T_{E_i}
+\]</span></p>
+<div id="key-components" class="section level2">
+<h2>Key Components</h2>
+<ul>
+<li><p><strong>Switch Indictor <span class="math inline">\(E_{ik}\)</span></strong>: This variable indicates
+whether subject <span class="math inline">\(i\)</span> switched
+treatment at observation <span class="math inline">\(k\)</span>,
+starting from the secondary baseline up to and including the time of
+treatment switching. The secondary baseline visit corresponds to the
+first observation <span class="math inline">\((k=1)\)</span> in the
+logistic regression model.</p>
+<ul>
+<li><p>If a patient switches treatment two visits after disease
+progression, they contribute three records to the switching model: <span class="math inline">\(E_{i1} = 0\)</span>, <span class="math inline">\(E_{i2} = 0\)</span>, and <span class="math inline">\(E_{i3} = 1\)</span>.</p></li>
+<li><p>If a patient does not switch treatment and either dies or is
+censored four visits after disease progression, they contribute five
+records, with <span class="math inline">\(E_{ik} = 0\)</span> for <span class="math inline">\(k=1,\ldots,5\)</span>.</p></li>
+</ul></li>
+<li><p><strong>Confounders <span class="math inline">\(x_{ijk}\)</span></strong>: These are the
+confounding variables measured for subject <span class="math inline">\(i\)</span> at observation <span class="math inline">\(k\)</span>.</p></li>
+<li><p><strong>Counteractual Survival Time <span class="math inline">\(U_{i,\psi}\)</span></strong>: This represents the
+counterfactual survival time for subject <span class="math inline">\(i\)</span> based on a specific value of <span class="math inline">\(\psi\)</span>. In case of censoring, we define
+<span class="math inline">\(D_{i,\psi}^* = \min(C_i,
+e^{\psi}C_i)\)</span>, where <span class="math inline">\(C_i\)</span> is
+the censoring time for the subject. Additionally, we denote <span class="math inline">\(\Delta_i\)</span> as the observed event
+indicators. We then define <span class="math inline">\(U_{i,\psi}^* =
+\min(U_{i,\psi}, D_{i,\psi}^*)\)</span> and <span class="math inline">\(\Delta_{i,\psi}^* = \Delta_i I(U_{i,\psi} \leq
+D_{i,\psi}^*)\)</span> to represent the recensored counterfactual
+survival times and event indicators, respectively. Next, we fit a null
+Cox model to the dataset <span class="math inline">\((U_{i,\psi}^*,
+\Delta_{i,\psi}^*)\)</span> to patients with disease progression. The
+martingale residuals from this model are then used to replace <span class="math inline">\(U_{i,\psi}\)</span> in the pooled logistic
+regression switching model.</p></li>
+</ul>
+</div>
+</div>
+<div id="estimation-of-hazard-ratio" class="section level1">
+<h1>Estimation of Hazard Ratio</h1>
+<p>Once <span class="math inline">\(\psi\)</span> has been estimated, we
+can derive an adjusted data set and fit a (potentially stratified) Cox
+proportional hazards model to the adjusted data set to obtain an
+estimate of the hazard ratio. The confidence interval for the hazard
+ratio can be derived by bootstrapping the entire adjustment and
+subsequent model-fitting process.</p>
+</div>
+<div id="example" class="section level1">
+<h1>Example</h1>
+<p>We start by preparing the data.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>sim1 <span class="ot">&lt;-</span> <span class="fu">tsegestsim</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="at">n =</span> <span class="dv">500</span>, <span class="at">allocation1 =</span> <span class="dv">2</span>, <span class="at">allocation2 =</span> <span class="dv">1</span>, <span class="at">pbprog =</span> <span class="fl">0.5</span>, </span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">trtlghr =</span> <span class="sc">-</span><span class="fl">0.5</span>, <span class="at">bprogsl =</span> <span class="fl">0.3</span>, <span class="at">shape1 =</span> <span class="fl">1.8</span>, </span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">scale1 =</span> <span class="fl">0.000025</span>, <span class="at">shape2 =</span> <span class="fl">1.7</span>, <span class="at">scale2 =</span> <span class="fl">0.000015</span>, </span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">pmix =</span> <span class="fl">0.5</span>, <span class="at">admin =</span> <span class="dv">5000</span>, <span class="at">pcatnotrtbprog =</span> <span class="fl">0.5</span>, </span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">pcattrtbprog =</span> <span class="fl">0.25</span>, <span class="at">pcatnotrt =</span> <span class="fl">0.2</span>, <span class="at">pcattrt =</span> <span class="fl">0.1</span>, </span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  <span class="at">catmult =</span> <span class="fl">0.5</span>, <span class="at">tdxo =</span> <span class="dv">1</span>, <span class="at">ppoor =</span> <span class="fl">0.1</span>, <span class="at">pgood =</span> <span class="fl">0.04</span>, </span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  <span class="at">ppoormet =</span> <span class="fl">0.4</span>, <span class="at">pgoodmet =</span> <span class="fl">0.2</span>, <span class="at">xomult =</span> <span class="fl">1.4188308</span>, </span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>  <span class="at">milestone =</span> <span class="dv">546</span>, <span class="at">swtrt_control_only =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  <span class="at">outputRawDataset =</span> <span class="dv">1</span>, <span class="at">seed =</span> <span class="dv">2000</span>)</span></code></pre></div>
+<p>Next we apply the TSE method with g-estimation.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>fit1 <span class="ot">&lt;-</span> <span class="fu">tsegest</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="at">data =</span> sim1<span class="sc">$</span>paneldata, <span class="at">id =</span> <span class="st">&quot;id&quot;</span>, </span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">tstart =</span> <span class="st">&quot;tstart&quot;</span>, <span class="at">tstop =</span> <span class="st">&quot;tstop&quot;</span>, <span class="at">event =</span> <span class="st">&quot;died&quot;</span>, </span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">treat =</span> <span class="st">&quot;trtrand&quot;</span>, <span class="at">censor_time =</span> <span class="st">&quot;censor_time&quot;</span>, </span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="at">pd =</span> <span class="st">&quot;progressed&quot;</span>, <span class="at">pd_time =</span> <span class="st">&quot;timePFSobs&quot;</span>, <span class="at">swtrt =</span> <span class="st">&quot;xo&quot;</span>, </span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  <span class="at">swtrt_time =</span> <span class="st">&quot;xotime&quot;</span>, <span class="at">swtrt_time_upper =</span> <span class="st">&quot;xotime_upper&quot;</span>,</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  <span class="at">base_cov =</span> <span class="st">&quot;bprog&quot;</span>, <span class="at">conf_cov =</span> <span class="st">&quot;bprog*catlag&quot;</span>, </span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>  <span class="at">low_psi =</span> <span class="sc">-</span><span class="dv">3</span>, <span class="at">hi_psi =</span> <span class="dv">3</span>, <span class="at">strata_main_effect_only =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>  <span class="at">recensor =</span> <span class="cn">TRUE</span>, <span class="at">admin_recensor_only =</span> <span class="cn">TRUE</span>, </span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>  <span class="at">swtrt_control_only =</span> <span class="cn">TRUE</span>, <span class="at">alpha =</span> <span class="fl">0.05</span>, <span class="at">ties =</span> <span class="st">&quot;efron&quot;</span>, </span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>  <span class="at">tol =</span> <span class="fl">1.0e-6</span>, <span class="at">boot =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<p>The Kaplan-Meier plot for the control arm demonstrates that treatment
+switching can occur at the secondary baseline and at each of the ensuing
+five scheduled visits, spaced 21 days apart.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>switched <span class="ot">&lt;-</span> fit1<span class="sc">$</span>analysis_switch<span class="sc">$</span>data_switch[[<span class="dv">1</span>]]<span class="sc">$</span>data <span class="sc">%&gt;%</span> </span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="fu">filter</span>(swtrt <span class="sc">==</span> <span class="dv">1</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="fu">table</span>(switched<span class="sc">$</span>swtrt_time)</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt;   0  21  42  63  84 105 </span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt;  16   8  15  14  11  15</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>```{r km}</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>ggplot(fit1$analysis_switch$km_switch[[1]]$data, </span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>       aes(x=time, y=survival)) + </span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  geom_step() + </span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  scale_y_continuous(limits = c(0,1)) + </span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  scale_x_continuous(breaks = seq(0,105,21)) + </span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  xlab(&quot;time from progression to switch&quot;) + </span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>  ggtitle(paste(&quot;trtrand: &quot;, </span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>                fit1$analysis_switch$km_switch[[1]]$trtrand)) + </span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>  theme(panel.grid.minor.x = element_blank())</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>```</span></code></pre></div>
+<p>We can examine the logistic regression switching model to confirm
+that the coefficient associated with the counterfactual survival time
+(the martingale residuals for the null Cox model) is effectively zero.
+To account for the potential correlation of multiple observations within
+a subject, a robust sandwich variance estimator is employed, clustering
+on the subject level for the logistic regression model.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>parest <span class="ot">&lt;-</span> fit1<span class="sc">$</span>analysis_switch<span class="sc">$</span>fit_logis[[<span class="dv">1</span>]]<span class="sc">$</span>fit<span class="sc">$</span>parest</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt;            param          beta    sebeta             z</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt; 1    (Intercept) -3.2107237230 0.2606354 -12.318832320</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt; 2 counterfactual  0.0003012517 0.1503624   0.002003504</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt; 3          bprog  1.6012096263 0.3166177   5.057233481</span></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt; 4         catlag  0.9283091909 0.5326442   1.742831583</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt; 5   bprog.catlag -0.0119634791 0.6394798  -0.018708141</span></span></code></pre></div>
+<p>The plot of <span class="math inline">\(Z(\psi)\)</span> versus <span class="math inline">\(\psi\)</span> shows that the estimation process
+worked well.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">c</span>(fit1<span class="sc">$</span>psi, fit1<span class="sc">$</span>psi_CI)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co">#&gt; [1] -0.5193008 -0.9105605 -0.2065572</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>```{r Z(psi)}</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>psi_CI_width &lt;- fit1$psi_CI[2] - fit1$psi_CI[1]</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>ggplot(fit1$analysis_switch$eval_z[[1]]$data %&gt;% </span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>         filter(psi &gt; fit1$psi_CI[1] - psi_CI_width*0.25 &amp; </span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>                  psi &lt; fit1$psi_CI[2] + psi_CI_width*0.25), </span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>       aes(x=psi, y=Z)) + </span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>  geom_line() + </span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>  geom_hline(yintercept = c(0, -1.96, 1.96), linetype = 2) + </span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>  scale_y_continuous(breaks = c(0, -1.96, 1.96)) + </span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>  geom_vline(xintercept = c(fit1$psi, fit1$psi_CI), linetype = 2) + </span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>  scale_x_continuous(breaks = round(c(fit1$psi, fit1$psi_CI), 3)) + </span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>  ylab(&quot;Wald Z for counterfactual&quot;) + </span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>  theme(panel.grid.minor = element_blank())</span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>```</span></code></pre></div>
+<p>Now we fit the outcome Cox model and compare the treatment hazard
+ratio estimate with the reported.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>fit1<span class="sc">$</span>fit_outcome<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co">#&gt;     param       beta     sebeta         z</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt; 1 treated -0.5345281 0.09762388 -5.475383</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; 2   bprog  0.3511980 0.09132221  3.845702</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="fu">c</span>(fit1<span class="sc">$</span>hr, fit1<span class="sc">$</span>hr_CI)</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; [1] 0.5859457 0.4839047 0.7095042</span></span></code></pre></div>
+<p>Finally, to ensure the uncertainty is accurately represented, the
+entire adjustment process and subsequent survival modeling can be
+bootstrapped.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>```{r boot}</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>fit2 &lt;- tsegest(</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  data = sim1$paneldata, id = &quot;id&quot;, </span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  tstart = &quot;tstart&quot;, tstop = &quot;tstop&quot;, event = &quot;died&quot;, </span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  treat = &quot;trtrand&quot;, censor_time = &quot;censor_time&quot;, </span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>  pd = &quot;progressed&quot;, pd_time = &quot;timePFSobs&quot;, swtrt = &quot;xo&quot;, </span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>  swtrt_time = &quot;xotime&quot;, swtrt_time_upper = &quot;xotime_upper&quot;,</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>  base_cov = &quot;bprog&quot;, conf_cov = &quot;bprog*catlag&quot;, </span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>  low_psi = -3, hi_psi = 3, strata_main_effect_only = TRUE,</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>  recensor = TRUE, admin_recensor_only = TRUE, </span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>  swtrt_control_only = TRUE, alpha = 0.05, ties = &quot;efron&quot;, </span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>  tol = 1.0e-6, boot = TRUE, n_boot = 1000, seed = 12345)</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>c(fit2$hr, fit2$hr_CI)</span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>```</span></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

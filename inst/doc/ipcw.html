@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Inverse Probability of Censoring Weights</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Inverse Probability of Censoring
+Weights</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(trtswitch)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(dplyr, <span class="at">warn.conflicts =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code></pre></div>
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>The inverse probability of censoring weights (IPCW) method is a
+powerful tool for adjusting survival analysis in the presence of
+treatment switching. In scenarios where patients switch treatments,
+survival data are artificially censored, leading to biased estimates if
+not properly addressed. This bias arises because the decision to switch
+treatments may depend on prognostic factors that also influence survival
+outcomes.</p>
+<p>To mitigate this bias, researchers gather data on prognostic
+covariates at baseline and at regular intervals until one of the
+following occurs: a treatment switch, death, drop-out, or the end of the
+follow-up period. A “switching model” is then developed to estimate
+weights for each patient at each time point. These weights represent the
+inverse probability of remaining unswitched over time. Each patient
+retains a weight greater than 1, which accounts for both their own data
+and that of switchers with similar prognostic profiles.</p>
+<p>Finally, an “outcome” model utilizing IPCW-weighted survival times is
+employed to estimate the treatment effect, adjusted for switching.</p>
+</div>
+<div id="estimation-of-weights" class="section level1">
+<h1>Estimation of weights</h1>
+<p>The switching model can be implemented using either pooled logistic
+regression or proportional hazards regression with time-dependent
+covariates.</p>
+<div id="pooled-logistic-regression-model" class="section level2">
+<h2>Pooled Logistic Regression Model</h2>
+<p>When using pooled logistic regression for the switching model, the
+following specifications can be made:</p>
+<ul>
+<li><p><strong>Visit-Specific Intercepts</strong>: These can be modeled
+using a natural cubic spline with specified degrees of freedom, denoted
+as <span class="math inline">\(\nu\)</span> (corresponding to the
+<code>ns_df</code> parameter of the <code>ipcw</code> function). The
+boundary and internal knots can be based on the range and percentiles of
+observed treatment switching times, respectively. Here, <span class="math inline">\(\nu\)</span> equals the number of internal knots
+plus one; a value of <span class="math inline">\(\nu=0\)</span>
+indicates a common intercept, while <span class="math inline">\(\nu=1\)</span> leads to a linear effect of visit.
+By default, <span class="math inline">\(\nu=3\)</span>, which implies
+two internal knots for the cubic spline. The parameter
+<code>relative_time</code> is set to <code>TRUE</code> by default, which
+indicates that visit time is relative to the secondary baseline defined
+by the <code>swtrt_time_lower</code> parameter. Setting
+<code>relative_time = FALSE</code> makes visit time relative to
+randomization.</p></li>
+<li><p><strong>Stratification Factors</strong>: If more more than one
+stratification factor exists, they can be included in the logistic model
+either as main effects only
+(<code>strata_main_effect_only = TRUE</code>) or as all possible
+combinations of the levels of the stratification factors
+(<code>strata_main_effect_only = FALSE</code>).</p></li>
+<li><p><strong>Handling Nonconvergence</strong>: If the pooled logistic
+regression model encounters issues such as complete or quasi-complete
+separation, Firth’s bias-reducing penalized likelihood method
+(<code>firth = TRUE</code>) can be applied alongside intercept
+correction (<code>flic = TRUE</code>) to yield more accurate predicted
+probabilities.</p></li>
+</ul>
+</div>
+<div id="proportional-hazards-model" class="section level2">
+<h2>Proportional Hazards Model</h2>
+<p>When using a Cox model with time-dependent covariates as the
+switching model, adjacent observations within a subject may be combined
+as long as the values of time-dependent covariates do not change over
+each combined interval. This approach saves data storage but
+observations across subjects will not be aligned at regular intervals.
+In this case, unique event times across treatment arms should be
+replicated within each subject, enabling the availability of weights at
+each event time.</p>
+</div>
+<div id="stabilized-weights" class="section level2">
+<h2>Stabilized Weights</h2>
+<p>To address the high variability in “unstabilized” weights,
+researchers often opt for “stabilized” weights. The switching model for
+stabilized weights involves a model for the numerator of the weight in
+addition to the model for the denominator. Typically, the numerator
+model mirrors the denominator model but includes only prognostic
+baseline variables. Any prognostic baseline variables included in the
+numerator must also be part of the weighted outcome model.</p>
+</div>
+<div id="truncation-of-weights" class="section level2">
+<h2>Truncation of Weights</h2>
+<p>You can specify weight truncation using the <code>trunc</code> and
+<code>trunc_upper_only</code> parameters of the <code>ipcw</code>
+function. The <code>trunc</code> parameter is a number between 0 and 0.5
+that represents the fraction of the weight distribution to truncate. The
+<code>trunc_upper_only</code> parameter is a flag that indicates whether
+to truncate weights only from the upper end of the weight
+distribution.</p>
+</div>
+</div>
+<div id="estimation-of-hazard-ratio" class="section level1">
+<h1>Estimation of Hazard Ratio</h1>
+<p>Once weights have been obtained for each event time in the data set,
+we fit a (potentially stratified) Cox proportional hazards model to this
+weighted data set to obtain an estimate of the hazard ratio. The
+confidence interval for the hazard ratio can be derived by bootstrapping
+the weight estimation and the subsequent model-fitting process.</p>
+<div id="example-for-pooled-logistic-regression-switching-model" class="section level2">
+<h2>Example for Pooled Logistic Regression Switching Model</h2>
+<p>First we prepare the data.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>sim1 <span class="ot">&lt;-</span> <span class="fu">tsegestsim</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="at">n =</span> <span class="dv">500</span>, <span class="at">allocation1 =</span> <span class="dv">2</span>, <span class="at">allocation2 =</span> <span class="dv">1</span>, <span class="at">pbprog =</span> <span class="fl">0.5</span>, </span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">trtlghr =</span> <span class="sc">-</span><span class="fl">0.5</span>, <span class="at">bprogsl =</span> <span class="fl">0.3</span>, <span class="at">shape1 =</span> <span class="fl">1.8</span>, </span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">scale1 =</span> <span class="fl">0.000025</span>, <span class="at">shape2 =</span> <span class="fl">1.7</span>, <span class="at">scale2 =</span> <span class="fl">0.000015</span>, </span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">pmix =</span> <span class="fl">0.5</span>, <span class="at">admin =</span> <span class="dv">5000</span>, <span class="at">pcatnotrtbprog =</span> <span class="fl">0.5</span>, </span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">pcattrtbprog =</span> <span class="fl">0.25</span>, <span class="at">pcatnotrt =</span> <span class="fl">0.2</span>, <span class="at">pcattrt =</span> <span class="fl">0.1</span>, </span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  <span class="at">catmult =</span> <span class="fl">0.5</span>, <span class="at">tdxo =</span> <span class="dv">1</span>, <span class="at">ppoor =</span> <span class="fl">0.1</span>, <span class="at">pgood =</span> <span class="fl">0.04</span>, </span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  <span class="at">ppoormet =</span> <span class="fl">0.4</span>, <span class="at">pgoodmet =</span> <span class="fl">0.2</span>, <span class="at">xomult =</span> <span class="fl">1.4188308</span>, </span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>  <span class="at">milestone =</span> <span class="dv">546</span>, <span class="at">swtrt_control_only =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  <span class="at">outputRawDataset =</span> <span class="dv">1</span>, <span class="at">seed =</span> <span class="dv">2000</span>)</span></code></pre></div>
+<p>Given that the observations are collected at regular intervals, we
+can use a pooled logistic regression switching model. In this model, the
+prognostic baseline variable is represented by <code>bprog</code>, while
+<code>catlag</code> and the interaction between <code>bprog</code> and
+<code>catlag</code> serve as time-dependent covariates. Additionally,
+<code>s1</code>, <code>s2</code>, and <code>s3</code> are the three
+terms for the natural cubic spline with <span class="math inline">\(\nu=3\)</span> degrees of freedom for
+visit-specific intercepts.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>fit1 <span class="ot">&lt;-</span> <span class="fu">ipcw</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  sim1<span class="sc">$</span>paneldata, <span class="at">id =</span> <span class="st">&quot;id&quot;</span>, <span class="at">tstart =</span> <span class="st">&quot;tstart&quot;</span>, </span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">tstop =</span> <span class="st">&quot;tstop&quot;</span>, <span class="at">event =</span> <span class="st">&quot;died&quot;</span>, <span class="at">treat =</span> <span class="st">&quot;trtrand&quot;</span>, </span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">swtrt =</span> <span class="st">&quot;xo&quot;</span>, <span class="at">swtrt_time =</span> <span class="st">&quot;xotime&quot;</span>, </span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="at">swtrt_time_lower =</span> <span class="st">&quot;timePFSobs&quot;</span>,</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  <span class="at">swtrt_time_upper =</span> <span class="st">&quot;xotime_upper&quot;</span>, <span class="at">base_cov =</span> <span class="st">&quot;bprog&quot;</span>, </span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  <span class="at">numerator =</span> <span class="st">&quot;bprog&quot;</span>, <span class="at">denominator =</span> <span class="st">&quot;bprog*catlag&quot;</span>, </span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>  <span class="at">logistic_switching_model =</span> <span class="cn">TRUE</span>, <span class="at">ns_df =</span> <span class="dv">3</span>,</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>  <span class="at">relative_time =</span> <span class="cn">TRUE</span>, <span class="at">swtrt_control_only =</span> <span class="cn">TRUE</span>, </span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>  <span class="at">boot =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<p>The fits for the denominator and numerator switching models are as
+follows, utilizing robust sandwich variance estimates to account for
+correlations among observations within the same subject.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># denominator switching model fit</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>fit1<span class="sc">$</span>fit_switch[[<span class="dv">1</span>]]<span class="sc">$</span>fit_den<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt;          param         beta    sebeta          z</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; 1  (Intercept) -3.634890835 0.3673680 -9.8944142</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; 2        bprog  1.873087075 0.3274510  5.7202059</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; 3       catlag  0.335398224 0.5674642  0.5910474</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; 4 bprog.catlag  0.007983132 0.6767029  0.0117971</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; 5           s1  0.291678448 0.5360600  0.5441153</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; 6           s2  1.029271932 0.7417310  1.3876620</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt; 7           s3  1.535968575 0.4393257  3.4961957</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co"># numerator switching model fit</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a>fit1<span class="sc">$</span>fit_switch[[<span class="dv">1</span>]]<span class="sc">$</span>fit_num<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt;         param       beta    sebeta          z</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; 1 (Intercept) -3.6701302 0.3544464 -10.354542</span></span>
+<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a><span class="co">#&gt; 2       bprog  1.9214977 0.2910121   6.602810</span></span>
+<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a><span class="co">#&gt; 3          s1  0.5108622 0.5036219   1.014376</span></span>
+<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="co">#&gt; 4          s2  1.1650715 0.7262563   1.604215</span></span>
+<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a><span class="co">#&gt; 5          s3  1.7329918 0.3890718   4.454170</span></span></code></pre></div>
+<p>Since treatment switching is not allowed in the experimental arm, the
+weights are identical to 1 for subjects in the experimental group. The
+unstabilized and stablized weights for the control group are plotted
+below.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>```{r weights example 1}</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a># unstabilized weights</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>ggplot(fit1$data_outcome %&gt;% filter(trtrand == 0), </span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>       aes(x = unstabilized_weight)) + </span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  geom_density(fill=&quot;#77bd89&quot;, color=&quot;#1f6e34&quot;, alpha=0.8) +</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  scale_x_continuous(&quot;unstabilized weights&quot;)</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a># stabilized weights</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a>ggplot(fit1$data_outcome %&gt;% filter(trtrand == 0), </span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>       aes(x = stabilized_weight)) + </span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>  geom_density(fill=&quot;#77bd89&quot;, color=&quot;#1f6e34&quot;, alpha=0.8) +</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>  scale_x_continuous(&quot;stabilized weights&quot;)</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>```</span></code></pre></div>
+<p>Now we fit a weighted outcome Cox model and compare the treatemnt
+hazard ratio estimate with the reported.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>fit1<span class="sc">$</span>fit_outcome<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="co">#&gt;     param       beta     sebeta         z</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt; 1 treated -0.1602649 0.11531445 -1.389807</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt; 2   bprog  0.2118190 0.09801192  2.161156</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>    </span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="fu">exp</span>(fit1<span class="sc">$</span>fit_outcome<span class="sc">$</span>parest[<span class="dv">1</span>, <span class="fu">c</span>(<span class="st">&quot;beta&quot;</span>, <span class="st">&quot;lower&quot;</span>, <span class="st">&quot;upper&quot;</span>)])</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt;        beta     lower    upper</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt; 1 0.8519181 0.6795822 1.067957</span></span></code></pre></div>
+</div>
+<div id="example-for-time-dependent-covariates-cox-switching-model" class="section level2">
+<h2>Example for Time-Dependent Covariates Cox Switching Model</h2>
+<p>Now we apply the IPCW method using a Cox proportional hazards model
+with time-dependent covariates as the switching model.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>fit2 <span class="ot">&lt;-</span> <span class="fu">ipcw</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  shilong, <span class="at">id =</span> <span class="st">&quot;id&quot;</span>, <span class="at">tstart =</span> <span class="st">&quot;tstart&quot;</span>, <span class="at">tstop =</span> <span class="st">&quot;tstop&quot;</span>, </span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">event =</span> <span class="st">&quot;event&quot;</span>, <span class="at">treat =</span> <span class="st">&quot;bras.f&quot;</span>, <span class="at">swtrt =</span> <span class="st">&quot;co&quot;</span>, </span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">swtrt_time =</span> <span class="st">&quot;dco&quot;</span>, </span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="at">base_cov =</span> <span class="fu">c</span>(<span class="st">&quot;agerand&quot;</span>, <span class="st">&quot;sex.f&quot;</span>, <span class="st">&quot;tt_Lnum&quot;</span>, <span class="st">&quot;rmh_alea.c&quot;</span>, </span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>               <span class="st">&quot;pathway.f&quot;</span>),</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>  <span class="at">numerator =</span> <span class="fu">c</span>(<span class="st">&quot;agerand&quot;</span>, <span class="st">&quot;sex.f&quot;</span>, <span class="st">&quot;tt_Lnum&quot;</span>, <span class="st">&quot;rmh_alea.c&quot;</span>, </span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>                <span class="st">&quot;pathway.f&quot;</span>),</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>  <span class="at">denominator =</span> <span class="fu">c</span>(<span class="st">&quot;agerand&quot;</span>, <span class="st">&quot;sex.f&quot;</span>, <span class="st">&quot;tt_Lnum&quot;</span>, <span class="st">&quot;rmh_alea.c&quot;</span>,</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>                  <span class="st">&quot;pathway.f&quot;</span>, <span class="st">&quot;ps&quot;</span>, <span class="st">&quot;ttc&quot;</span>, <span class="st">&quot;tran&quot;</span>),</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>  <span class="at">swtrt_control_only =</span> <span class="cn">FALSE</span>, <span class="at">boot =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<p>The fits for the denominator and numerator switching models for the
+control arm are as follows, utilizing robust sandwich variance estimates
+to account for correlations among observations within the same
+subject.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># denominator switching model for the control group</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>fit2<span class="sc">$</span>fit_switch[[<span class="dv">1</span>]]<span class="sc">$</span>fit_den<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co">#&gt;                    param         beta     sebeta          z</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt; 1                agerand  0.007642073 0.01009207  0.7572351</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co">#&gt; 2            sex.fFemale -0.364211003 0.26324814 -1.3835273</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co">#&gt; 3                tt_Lnum  0.042406215 0.04639827  0.9139611</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt; 4             rmh_alea.c -0.351616244 0.27378303 -1.2842880</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co">#&gt; 5            pathway.fHR -0.041768569 0.39817164 -0.1049009</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt; 6 pathway.fPI3K.AKT.mTOR  0.267055320 0.43180962  0.6184562</span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; 7                     ps  0.103478553 0.17788020  0.5817317</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt; 8                    ttc -0.480378314 0.32124349 -1.4953713</span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt; 9                   tran  0.295828936 0.36809457  0.8036765</span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="co"># numerator switching model for the control group</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>fit2<span class="sc">$</span>fit_switch[[<span class="dv">1</span>]]<span class="sc">$</span>fit_num<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="co">#&gt;                    param        beta     sebeta           z</span></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a><span class="co">#&gt; 1                agerand  0.01059477 0.00957653  1.10632644</span></span>
+<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a><span class="co">#&gt; 2            sex.fFemale -0.32452112 0.25680716 -1.26367627</span></span>
+<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a><span class="co">#&gt; 3                tt_Lnum  0.05956492 0.04488927  1.32693011</span></span>
+<span id="cb8-20"><a href="#cb8-20" tabindex="-1"></a><span class="co">#&gt; 4             rmh_alea.c -0.29758402 0.25884651 -1.14965436</span></span>
+<span id="cb8-21"><a href="#cb8-21" tabindex="-1"></a><span class="co">#&gt; 5            pathway.fHR  0.02467202 0.39869959  0.06188123</span></span>
+<span id="cb8-22"><a href="#cb8-22" tabindex="-1"></a><span class="co">#&gt; 6 pathway.fPI3K.AKT.mTOR  0.28245603 0.42341002  0.66709812</span></span></code></pre></div>
+<p>The fits for the denominator and numerator switching models for the
+experimental arm are as follows:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># denominator switching model for the experimental group</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>fit2<span class="sc">$</span>fit_switch[[<span class="dv">2</span>]]<span class="sc">$</span>fit_den<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt;                    param         beta     sebeta          z</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; 1                agerand -0.002639441 0.01482504 -0.1780394</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt; 2            sex.fFemale  0.428028469 0.49814996  0.8592362</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; 3                tt_Lnum -0.152758042 0.09460056 -1.6147689</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt; 4             rmh_alea.c  0.210365664 0.53818671  0.3908786</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt; 5            pathway.fHR  1.774466817 1.07337446  1.6531666</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt; 6 pathway.fPI3K.AKT.mTOR  0.859950234 1.06150371  0.8101246</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="co">#&gt; 7                     ps  0.261142698 0.28658566  0.9112204</span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#&gt; 8                    ttc -0.408175689 0.57303595 -0.7123038</span></span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a><span class="co">#&gt; 9                   tran  1.053347294 0.50568571  2.0830078</span></span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a></span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a><span class="co"># numerator switching model for the experimental group</span></span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>fit2<span class="sc">$</span>fit_switch[[<span class="dv">2</span>]]<span class="sc">$</span>fit_num<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a><span class="co">#&gt;                    param         beta     sebeta          z</span></span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a><span class="co">#&gt; 1                agerand  0.001625622 0.01543679  0.1053083</span></span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a><span class="co">#&gt; 2            sex.fFemale  0.476979559 0.47723504  0.9994647</span></span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a><span class="co">#&gt; 3                tt_Lnum -0.160020273 0.09602402 -1.6664609</span></span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a><span class="co">#&gt; 4             rmh_alea.c  0.154833260 0.49850922  0.3105926</span></span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a><span class="co">#&gt; 5            pathway.fHR  1.841535014 1.06349774  1.7315834</span></span>
+<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a><span class="co">#&gt; 6 pathway.fPI3K.AKT.mTOR  1.064637540 1.05309041  1.0109650</span></span></code></pre></div>
+<p>Below, the unstabilized and stabilized weights are plotted by
+treatment group: the left panel displays data for the control group,
+while the right panel shows data for the experimental group.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>```{r weights example 2}</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a># unstabilized weights</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>ggplot(fit2$data_outcome, aes(x = unstabilized_weight)) + </span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  geom_density(fill=&quot;#77bd89&quot;, color=&quot;#1f6e34&quot;, alpha=0.8) + </span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  scale_x_continuous(&quot;unstabilized weights&quot;) + </span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>  facet_wrap(~treated) </span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a># stabilized weights</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>ggplot(fit2$data_outcome, aes(x = stabilized_weight)) + </span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>  geom_density(fill=&quot;#77bd89&quot;, color=&quot;#1f6e34&quot;, alpha=0.8) + </span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>  scale_x_continuous(&quot;stabilized weights&quot;) + </span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>  facet_wrap(~treated)</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>```</span></code></pre></div>
+<p>Finally, we fit the weighted outcome Cox model and compare the
+treatment hazard ratio estimate with the reported.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>fit2<span class="sc">$</span>fit_outcome<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="co">#&gt;                    param         beta     sebeta          z</span></span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="co">#&gt; 1                treated  0.356390611 0.25526832  1.3961412</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co">#&gt; 2                agerand -0.006047034 0.01018596 -0.5936636</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt; 3            sex.fFemale -0.487409540 0.24458876 -1.9927716</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt; 4                tt_Lnum  0.011244574 0.04147245  0.2711336</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt; 5             rmh_alea.c  0.941651485 0.25315061  3.7197283</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co">#&gt; 6            pathway.fHR -0.127273307 0.35878557 -0.3547336</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co">#&gt; 7 pathway.fPI3K.AKT.mTOR -0.166035907 0.34997206 -0.4744262</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a></span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="fu">c</span>(fit2<span class="sc">$</span>hr, fit2<span class="sc">$</span>hr_CI)</span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a><span class="co">#&gt; [1] 1.4281653 0.8659517 2.3553924</span></span></code></pre></div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -1,7 +1,7 @@
 #' @title Iterative Parameter Estimation (IPE) for Treatment Switching
 #' @description Obtains the causal parameter estimate from the
 #' accelerated failure-time (AFT) model and the hazard ratio estimate
-#' from the Cox model to account for treatment switching.
+#' from the Cox model to adjust for treatment switching.
 #'
 #' @param data The input data frame that contains the following variables:
 #'
@@ -27,8 +27,8 @@
 #' @param treat The name of the treatment variable in the input data.
 #' @param rx The name of the rx variable in the input data.
 #' @param censor_time The name of the censor_time variable in the input data.
-#' @param base_cov The vector of names of baseline covariates (excluding
-#'   treat) in the input data.
+#' @param base_cov The names of baseline covariates (excluding
+#'   treat) in the input data for the outcome Cox model.
 #' @param aft_dist The assumed distribution for time to event for the AFT
 #'   model. Options include "exponential", "weibull", "loglogistic", and
 #'   "lognormal".
@@ -37,11 +37,11 @@
 #'   possible strata combinations will be considered in the AFT model.
 #' @param treat_modifier The optional sensitivity parameter for the
 #'   constant treatment effect assumption.
-#' @param recensor Whether to apply recensoring to counter-factual
+#' @param recensor Whether to apply recensoring to counterfactual
 #'   survival times. Defaults to \code{TRUE}.
 #' @param admin_recensor_only Whether to apply recensoring to administrative
-#'   censoring time only. Defaults to \code{FALSE}, in which case,
-#'   recensoring will be applied to the actual censoring time for dropouts.
+#'   censoring times only. Defaults to \code{TRUE}. If \code{FALSE},
+#'   recensoring will be applied to the actual censoring times for dropouts.
 #' @param autoswitch Whether to exclude recensoring for treatment arms
 #'   with no switching. Defaults to \code{TRUE}.
 #' @param alpha The significance level to calculate confidence intervals.
@@ -53,22 +53,26 @@
 #'   the confidence interval will be constructed to match the log-rank
 #'   test p-value.
 #' @param n_boot The number of bootstrap samples.
-#' @param seed The seed to reproduce the simulation results.
+#' @param seed The seed to reproduce the bootstrap results.
 #'   The seed from the environment will be used if left unspecified.
 #'
 #' @details We use the following steps to obtain the hazard ratio estimate
 #' and confidence interval had there been no treatment switching:
 #'
 #' * Use IPE to estimate the causal parameter \eqn{\psi} based on the AFT 
-#'   model for counter-factual survival times for both arms:
-#'   \eqn{U_{i,\psi} = T_{C_i} + e^{\psi}T_{E_i}} for the control arm, and
-#'   \eqn{V_{i,\psi} = T_{E_i} + e^{-\psi}T_{C_i}} for the experimental arm.
+#'   model for the observed survival times for the experimental arm and 
+#'   the counterfactual survival times for the control arm, 
+#'   \deqn{U_{i,\psi} = T_{C_i} + e^{\psi}T_{E_i}}
 #'
-#' * Fit the Cox proportional hazards model to the counter-factual survival
-#'   times to obtain the hazard ratio estimate.
+#' * Fit the Cox proportional hazards model to the observed survival times
+#'   for the experimental group and the counterfactual survival times 
+#'   for the control group to obtain the hazard ratio estimate.
 #'
-#' * Use either the log-rank test p-value for the treatment policy strategy
-#'   or bootstrap to construct the confidence interval for hazard ratio.
+#' * Use either the log-rank test p-value for the intention-to-treat (ITT)
+#'   analysis or bootstrap to construct the confidence interval for 
+#'   hazard ratio. If bootstrapping is used, the confidence interval 
+#'   and corresponding p-value are calculated based on a t-distribution with 
+#'   \code{n_boot - 1} degrees of freedom. 
 #'
 #' @return A list with the following components:
 #'
@@ -79,15 +83,8 @@
 #' * \code{psi_CI_type}: The type of confidence interval for \code{psi},
 #'   i.e., "log-rank p-value" or "bootstrap".
 #'
-#' * \code{Sstar}: A data frame containing the counter-factual unswitched
-#'   survival times and the event indicators.
-#'
-#' * \code{kmstar}: A data frame containing the Kaplan-Meier estimates
-#'   based on the counter-factual unswitched survival times by treatment 
-#'   arm.
-#'
 #' * \code{logrank_pvalue}: The two-sided p-value of the log-rank test
-#'   based on the treatment policy strategy.
+#'   for the ITT analysis.
 #'
 #' * \code{cox_pvalue}: The two-sided p-value for treatment effect based on 
 #'   the Cox model.
@@ -98,6 +95,21 @@
 #'
 #' * \code{hr_CI_type}: The type of confidence interval for hazard ratio,
 #'   either "log-rank p-value" or "bootstrap".
+#'
+#' * \code{Sstar}: A data frame containing the counterfactual untreated
+#'   survival times and event indicators for each treatment group.
+#'
+#' * \code{kmstar}: A data frame containing the Kaplan-Meier estimates
+#'   based on the counterfactual untreated survival times by treatment arm.
+#'   
+#' * \code{data_aft}: The input data for the AFT model for 
+#'   estimating \code{psi}.
+#' 
+#' * \code{fit_aft}: The fitted AFT model for estimating \code{psi}.
+#'
+#' * \code{data_outcome}: The input data for the outcome Cox model.
+#'
+#' * \code{fit_outcome}: The fitted outcome Cox model.
 #'
 #' * \code{settings}: A list with the following components:
 #'
@@ -110,11 +122,11 @@
 #'     - \code{treat_modifier}: The sensitivity parameter for the constant
 #'       treatment effect assumption.
 #'
-#'     - \code{recensor}: Whether to apply recensoring to counter-factual
+#'     - \code{recensor}: Whether to apply recensoring to counterfactual
 #'       survival times.
 #'
 #'     - \code{admin_recensor_only}: Whether to apply recensoring to
-#'       administrative censoring time only.
+#'       administrative censoring times only.
 #'
 #'     - \code{autoswitch}: Whether to exclude recensoring for treatment 
 #'       arms with no switching.
@@ -124,7 +136,8 @@
 #'
 #'     - \code{ties}: The method for handling ties in the Cox model.
 #'
-#'     - \code{tol}: The desired accuracy (convergence tolerance).
+#'     - \code{tol}: The desired accuracy (convergence tolerance) 
+#'       for \code{psi}.
 #'
 #'     - \code{boot}: Whether to use bootstrap to obtain the confidence
 #'       interval for hazard ratio.
@@ -173,7 +186,7 @@
 #' shilong1 <- shilong %>%
 #'   arrange(bras.f, id, tstop) %>%
 #'   group_by(bras.f, id) %>%
-#'   filter(row_number() == n()) %>%
+#'   slice(n()) %>%
 #'   select(-c("ps", "ttc", "tran"))
 #'
 #' shilong2 <- shilong1 %>%
@@ -195,7 +208,7 @@ ipe <- function(data, stratum = "", time = "time", event = "event",
                 treat = "treat", rx = "rx", censor_time = "censor_time",
                 base_cov = "", aft_dist = "weibull",
                 strata_main_effect_only = 1, treat_modifier = 1,
-                recensor = TRUE, admin_recensor_only = FALSE,
+                recensor = TRUE, admin_recensor_only = TRUE,
                 autoswitch = TRUE, alpha = 0.05, ties = "efron",
                 tol = 1.0e-6, boot = FALSE, n_boot = 1000, seed = NA) {
 

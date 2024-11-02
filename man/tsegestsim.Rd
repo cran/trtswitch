@@ -51,16 +51,16 @@ a randomization block.}
 \item{bprogsl}{The poor prognosis effect in terms of log hazard ratio.}
 
 \item{shape1}{The shape parameter for the Weibull event distribution
-for the treatment group.}
+for the first component.}
 
 \item{scale1}{The scale parameter for the Weibull event distribution
-for the treatment group.}
+for the first component.}
 
 \item{shape2}{The shape parameter for the Weibull event distribution
-for the control group.}
+for the second component.}
 
 \item{scale2}{The scale parameter for the Weibull event distribution
-for the control group.}
+for the second component.}
 
 \item{pmix}{The mixing probability of the first component Weibull
 distribution.}
@@ -82,8 +82,8 @@ on active treatment with good baseline prognosis.}
 \item{catmult}{The impact of metastatic disease on shortening remaining
 survival time.}
 
-\item{tdxo}{whether treatment crossover occurs immediately after
-disease progression.}
+\item{tdxo}{Whether treatment crossover depends on time-dependent
+covariates between disease progression and treatment switching.}
 
 \item{ppoor}{The probability of switching for poor baseline prognosis
 with no metastatic disease.}
@@ -106,13 +106,13 @@ time.}
 \item{swtrt_control_only}{Whether treatment switching occurred only in
 the control group.}
 
-\item{outputRawDataset}{whether to output the raw data set}
+\item{outputRawDataset}{Whether to output the raw data set.}
 
 \item{seed}{The seed to reproduce the simulation results.
 The seed from the environment will be used if left unspecified.}
 }
 \value{
-A list with two data frames
+A list with two data frames.
 \itemize{
 \item \code{sumdata}: A data frame with the following variables:
 \itemize{

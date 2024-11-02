@@ -150,8 +150,8 @@ DataFrame kmest(const DataFrame data,
   IntegerVector eventnz = data[event];
   IntegerVector eventn = clone(eventnz);
 
-  if (is_true(any(timen <= 0))) {
-    stop("time must be positive for each subject");
+  if (is_true(any(timen < 0))) {
+    stop("time must be nonnegative for each subject");
   }
 
   if (is_true(any((eventn != 1) & (eventn != 0)))) {
@@ -244,7 +244,7 @@ DataFrame kmest(const DataFrame data,
       IntegerVector event2 = event1[q2];
 
       int s = stratum1[q2[0]], n2 = static_cast<int>(q2.size());
-      double t, nrisk, nevent, surv = 1, vcumhaz = 0, sesurv;
+      double t = 0, nrisk = n2, nevent = 0, surv = 1, vcumhaz = 0, sesurv;
       bool cache = 0;
       for (j=0; j<n2; j++) {
         if (((j == 0) && (event2[j] == 1)) ||
@@ -567,8 +567,8 @@ DataFrame lrtest(const DataFrame data,
   IntegerVector eventnz = data[event];
   IntegerVector eventn = clone(eventnz);
 
-  if (is_true(any(timen <= 0))) {
-    stop("time must be positive for each subject");
+  if (is_true(any(timen < 0))) {
+    stop("time must be nonnegative for each subject");
   }
 
   if (is_true(any((eventn != 1) & (eventn != 0)))) {
@@ -729,7 +729,7 @@ DataFrame lrtest(const DataFrame data,
       }
 
       double nrisk = nriskx, nrisk1 = nrisk1x, nrisk2 = nrisk2x;
-      double nevent, nevent1, nevent2;
+      double nevent = 0, nevent1 = 0, nevent2 = 0;
       double surv = 1.0;
 
       NumericVector nrisk0(n2, NA_REAL), nevent0(n2);
@@ -1018,8 +1018,8 @@ DataFrame rmest(const DataFrame data,
   IntegerVector eventnz = data[event];
   IntegerVector eventn = clone(eventnz);
 
-  if (is_true(any(timen <= 0))) {
-    stop("time must be positive for each subject");
+  if (is_true(any(timen < 0))) {
+    stop("time must be nonnegative for each subject");
   }
 
   if (is_true(any((eventn != 1) & (eventn != 0)))) {
@@ -1176,7 +1176,7 @@ DataFrame rmest(const DataFrame data,
       NumericVector nrisk0(n2), nevent0(n2), surv0(n2);
       int index1 = 0;
 
-      double t, nrisk, nevent, surv = 1.0;
+      double t = 0, nrisk = n2, nevent = 0, surv = 1.0;
       bool cache = 0;
       for (j=0; j<n2; j++) {
         if (((j == 0) && (event2[j] == 1)) ||
@@ -1617,8 +1617,8 @@ DataFrame rmdiff(const DataFrame data,
   IntegerVector eventnz = data[event];
   IntegerVector eventn = clone(eventnz);
 
-  if (is_true(any(timen <= 0))) {
-    stop("time must be positive for each subject");
+  if (is_true(any(timen < 0))) {
+    stop("time must be nonnegative for each subject");
   }
 
   if (is_true(any((eventn != 1) & (eventn != 0)))) {
@@ -3050,7 +3050,7 @@ double liferegplloop(int p, NumericVector par, void *ex,
   aftparams *param = (aftparams *) ex;
 
   int i, j, iter;
-  bool fail;
+  bool fail = 0;
 
   NumericMatrix z1 = param->z;
 
@@ -4712,7 +4712,7 @@ double phregplloop(int p, NumericVector par, void *ex,
   coxparams *param = (coxparams *) ex;
 
   int i, j, iter;
-  bool fail;
+  bool fail = 0;
 
   NumericMatrix z1 = param->z;
 

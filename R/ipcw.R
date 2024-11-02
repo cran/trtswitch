@@ -1,7 +1,8 @@
 #' @title Inverse Probability of Censoring Weights (IPCW) Method
 #' for Treatment Switching
-#' @description Uses the IPCW method to obtain the hazard ratio estimate 
-#' of the Cox model to account for treatment switching.
+#' @description Uses the inverse probability of censoring weights (IPCW) 
+#' method to obtain the hazard ratio estimate of the Cox model to 
+#' adjust for treatment switching.
 #'
 #' @param data The input data frame that contains the following variables:
 #'
@@ -32,11 +33,11 @@
 #'   * \code{base_cov}: The baseline covariates (excluding treat) used in
 #'     the outcome model.
 #'
-#'   * \code{numerator}: The baseline covariates used in the switching
-#'     model for the numerator for stabilized weights.
+#'   * \code{numerator}: The baseline covariates (excluding treat) used in 
+#'     the switching model for the numerator for stabilized weights.
 #'
-#'   * \code{denominator}: The baseline and time-dependent covariates
-#'     used in the switching model for the denominator.
+#'   * \code{denominator}: The baseline and time-dependent covariates 
+#'     (excluding treat) used in the switching model for the denominator.
 #'
 #' @param id The name of the id variable in the input data.
 #' @param stratum The name(s) of the stratum variable(s) in the input data.
@@ -50,30 +51,36 @@
 #'   the input data.
 #' @param swtrt_time_upper The name of the swtrt_time_upper variable in 
 #'   the input data. 
-#' @param base_cov The vector of names of base_cov variables (excluding
+#' @param base_cov The names of baseline covariates (excluding
 #'   treat) in the input data for the Cox model.
-#' @param numerator The vector of names of variables in the input data
-#'   for the numerator switching model for stabilized weights.
-#' @param denominator The vector of names of variables in the input data
-#'   for the denominator switching model.
+#' @param numerator The names of baseline covariates 
+#'   (excluding treat) in the input data for the numerator switching 
+#'   model for stabilized weights.
+#' @param denominator The names of baseline and time-dependent
+#'   covariates (excluding treat) in the input data for the denominator 
+#'   switching model.
 #' @param logistic_switching_model Whether a pooled logistic regression 
 #'   switching model is used.
 #' @param strata_main_effect_only Whether to only include the strata main
 #'   effects in the logistic regression switching model. Defaults to 
 #'   \code{TRUE}, otherwise all possible strata combinations will be 
 #'   considered in the switching model.
-#' @param firth Whether the firth's bias reducing penalized likelihood
+#' @param firth Whether the Firth's bias reducing penalized likelihood
 #'   should be used. The default is \code{FALSE}.
 #' @param flic Whether to apply intercept correction to obtain more
 #'   accurate predicted probabilities. The default is \code{FALSE}.
-#' @param ns_df Degrees of freedom for the natural cubic spline. 
-#'   Defaults to 3 for two inner knots at the 33 and 67 percentiles
+#' @param ns_df Degrees of freedom for the natural cubic spline for 
+#'   visit-specific intercepts of the pooled logistic regression model. 
+#'   Defaults to 3 for two internal knots at the 33 and 67 percentiles
 #'   of the artificial censoring times due to treatment switching.
+#' @param relative_time Whether to use the time relative to 
+#'   \code{swtrt_time_lower} as the intercepts for the pooled logistic
+#'   regression model.
 #' @param stabilized_weights Whether to use the stabilized weights.
-#' @param trunc The pre-specified fraction of the weights. Defaults to 0
-#'   for no truncation in weights.
+#' @param trunc The truncation fraction of the weight distribution. 
+#'   Defaults to 0 for no truncation in weights.
 #' @param trunc_upper_only Whether to truncate the weights from the upper
-#'   end of the distribution only. Defaults to \code{TRUE}, otherwise
+#'   end of the weight distribution only. Defaults to \code{TRUE}, otherwise
 #'   the weights will be truncated from both the lower and upper ends of
 #'   the distribution.
 #' @param swtrt_control_only Whether treatment switching occurred only in
@@ -90,8 +97,10 @@
 #' @details We use the following steps to obtain the hazard ratio estimate
 #' and confidence interval had there been no treatment switching:
 #'
-#' * Exclude observations after treatment switch and set up the crossover
-#'   and event indicators for the last time interval for each subject.
+#' * Exclude observations after treatment switch.
+#' 
+#' * Set up the crossover and event indicators for the last time interval 
+#'   for each subject.
 #'
 #' * For time-dependent covariates Cox switching models, replicate unique 
 #'   event times across treatment arms within each subject.
@@ -99,18 +108,25 @@
 #' * Fit the denominator switching model (and the numerator switching model
 #'   for stabilized weights) to obtain the inverse probability
 #'   of censoring weights. This can be a Cox model with time-dependent 
-#'   covariates or a pooled logistic regression model.
+#'   covariates or a pooled logistic regression model. For pooled logistic
+#'   regression switching model, the probability of remaining uncensored
+#'   (i.e., not switching) will be calculated by subtracting the 
+#'   predicted probability of switching from 1 and then multiplied over 
+#'   time up to the current time point.
 #'
 #' * Fit the weighted Cox model to the censored outcome survival times
 #'   to obtain the hazard ratio estimate.
 #'
-#' * Use bootstrap to construct the p-value and confidence interval for
-#'   hazard ratio.
+#' * Use either robust sandwich variance or bootstrapping to construct the 
+#'   p-value and confidence interval for the hazard ratio. 
+#'   If bootstrapping is used, the confidence interval 
+#'   and corresponding p-value are calculated based on a t-distribution with 
+#'   \code{n_boot - 1} degrees of freedom. 
 #'
 #' @return A list with the following components:
 #'
-#' * \code{logrank_pvalue}: The two-sided p-value of the log-rank test
-#'   based on the treatment policy strategy.
+#' * \code{logrank_pvalue}:  The two-sided p-value of the log-rank test 
+#'   for an intention-to-treat (ITT) analysis.
 #'
 #' * \code{cox_pvalue}: The two-sided p-value for treatment effect based on
 #'   the Cox model.
@@ -122,13 +138,16 @@
 #' * \code{hr_CI_type}: The type of confidence interval for hazard ratio,
 #'   either "Cox model" or "bootstrap".
 #'
-#' * \code{fit_switch}: A list of the fitted switching models for the
+#' * \code{data_switch}: A list of input data for the switching models by 
+#'   treatment group.
+#'
+#' * \code{fit_switch}: A list of fitted switching models for the
 #'   denominator and numerator by treatment group.
 #'
-#' * \code{df_outcome}: The input data frame for the outcome Cox model
+#' * \code{data_outcome}: The input data for the outcome Cox model
 #'   including the inverse probability of censoring weights.
 #'
-#' * \code{fit_outcome}: The fitted outcome model.
+#' * \code{fit_outcome}: The fitted outcome Cox model.
 #'
 #' * \code{settings}: A list with the following components:
 #'
@@ -138,11 +157,16 @@
 #'     - \code{strata_main_effect_only}: Whether to only include the 
 #'       strata main effects in the logistic regression switching model. 
 #'       
-#'     - \code{firth}: Whether the firth's bias reducing penalized likelihood
+#'     - \code{firth}: Whether the Firth's bias reducing penalized likelihood
 #'       should be used.
 #'       
 #'     - \code{flic}: Whether to apply intercept correction to obtain more
 #'       accurate predicted probabilities.
+#'       
+#'     - \code{ns_df}: Degrees of freedom for the natural cubic spline.
+#'     
+#'     - \code{relative_time}: Whether to use the relative time as the 
+#'       intercepts.
 #'   
 #'     - \code{stabilized_weights}: Whether to use the stabilized weights.
 #'
@@ -164,7 +188,7 @@
 #'
 #'     - \code{n_boot}: The number of bootstrap samples.
 #'
-#'     - \code{seed}: The seed to reproduce the simulation results.
+#'     - \code{seed}: The seed to reproduce the bootstrap results.
 #'
 #' * \code{hr_boots}: The bootstrap hazard ratio estimates if \code{boot} is
 #'   \code{TRUE}.
@@ -180,8 +204,6 @@
 #' @examples
 #'
 #' # Example 1: pooled logistic regression switching model
-#' 
-#' library(dplyr)
 #' 
 #' sim1 <- tsegestsim(
 #'   n = 500, allocation1 = 2, allocation2 = 1, pbprog = 0.5, 
@@ -202,7 +224,8 @@
 #'   swtrt_time_upper = "xotime_upper", base_cov = "bprog", 
 #'   numerator = "bprog", denominator = "bprog*catlag", 
 #'   logistic_switching_model = TRUE, ns_df = 3,
-#'   swtrt_control_only = TRUE, boot = FALSE)
+#'   relative_time = TRUE, swtrt_control_only = TRUE, 
+#'   boot = FALSE)
 #'   
 #' c(fit1$hr, fit1$hr_CI) 
 #' 
@@ -230,7 +253,8 @@ ipcw <- function(data, id = "id", stratum = "", tstart = "tstart",
                  base_cov = "", numerator = "", denominator = "",
                  logistic_switching_model = FALSE, 
                  strata_main_effect_only = TRUE, firth = FALSE, 
-                 flic = FALSE, ns_df = 3, stabilized_weights = TRUE, 
+                 flic = FALSE, ns_df = 3, relative_time = TRUE,
+                 stabilized_weights = TRUE, 
                  trunc = 0, trunc_upper_only = TRUE,
                  swtrt_control_only = TRUE, alpha = 0.05, ties = "efron", 
                  boot = TRUE, n_boot = 1000, seed = NA) {
@@ -339,11 +363,12 @@ ipcw <- function(data, id = "id", stratum = "", tstart = "tstart",
                  logistic_switching_model = logistic_switching_model,
                  strata_main_effect_only = strata_main_effect_only,
                  firth = firth, flic = flic, ns_df = ns_df,
+                 relative_time = relative_time,
                  stabilized_weights = stabilized_weights, 
                  trunc = trunc, trunc_upper_only = trunc_upper_only,
                  swtrt_control_only = swtrt_control_only, alpha = alpha,
                  ties = ties, boot = boot, n_boot = n_boot, seed = seed)
 
-  fit$df_outcome$uid <- NULL
+  fit$data_outcome$uid <- NULL
   fit
 }

@@ -1,8 +1,7 @@
 library(dplyr, warn.conflicts = FALSE)
-library(survival)
 library(geepack)
 
-test_that("tsegest: logistic g-estimation", {
+testthat::test_that("tsegest: logistic g-estimation", {
   sim1 <- tsegestsim(
     n = 500, allocation1 = 2, allocation2 = 1, pbprog = 0.5, 
     trtlghr = -0.5, bprogsl = 0.3, shape1 = 1.8, 
@@ -22,7 +21,7 @@ test_that("tsegest: logistic g-estimation", {
     swtrt_time = "xotime", swtrt_time_upper = "xotime_upper",
     base_cov = "bprog", conf_cov = "bprog*catlag", 
     low_psi = -3, hi_psi = 3, strata_main_effect_only = TRUE,
-    recensor = TRUE, admin_recensor_only = FALSE, 
+    recensor = TRUE, admin_recensor_only = TRUE, 
     swtrt_control_only = TRUE, alpha = 0.05, ties = "efron", 
     tol = 1.0e-6, boot = FALSE)
   
@@ -42,7 +41,9 @@ test_that("tsegest: logistic g-estimation", {
   
   # re-baseline
   data3a <- data2 %>% 
-    left_join(data1 %>% select(id, os, ostime), by = "id") %>%
+    left_join(data1 %>% 
+                select(id, os, ostime), 
+              by = "id") %>%
     group_by(id) %>%
     slice(1) %>%
     mutate(ostime = ostime - timePFSobs,
@@ -52,21 +53,26 @@ test_that("tsegest: logistic g-estimation", {
   
   # setup treatment switching indicators
   data3b <- data2 %>%
-    left_join(data1 %>% select(id, os, ostime), by = "id") %>%
+    left_join(data1 %>% 
+                select(id, os, ostime), 
+              by = "id") %>%
     mutate(y = ifelse(xo == 1 & tstop == xotime, 1, 0))
   
-  g <- function(psi, target) {
+  f <- function(psi, target) {
     data4a <- data3a %>%
-      mutate(u = ifelse(xo==1, xotime + (ostime-xotime)*exp(psi), ostime), 
-             c = pmin(censor_time, censor_time*exp(psi)),
-             time_ts = pmin(u, c),
-             event_ts = os*(u <= c))
+      mutate(u_star = ifelse(xo == 1, xotime + (ostime - xotime)*exp(psi), 
+                             ostime), 
+             c_star = pmin(censor_time, censor_time*exp(psi)),
+             t_star = pmin(u_star, c_star),
+             d_star = os*(u_star <= c_star))
     
-    fit_cox <- coxph(Surv(time_ts, event_ts) ~ 1, data = data4a)
-    resid <- residuals(fit_cox)
+    fit_cox <- phregr(data4a, time = "t_star", event = "d_star", 
+                      est_resid = TRUE)
+    resid <- fit_cox$residuals
     
     data4b <- data3b %>%
-      left_join(data4a %>% mutate(resid = resid) %>%
+      left_join(data4a %>% 
+                  mutate(resid = resid) %>%
                   select(id, resid), by = "id")
     
     fit_lgs <- geeglm(y ~ resid + bprog*catlag,
@@ -77,23 +83,25 @@ test_that("tsegest: logistic g-estimation", {
     as.numeric(z_lgs["resid"]) - target
   }
   
-  psi <- uniroot(g, c(-3, 3), 0, tol = 1.0e-6)$root
+  psi <- uniroot(f, c(-3, 3), 0, tol = 1.0e-6)$root
   
   data4 <- data1 %>%
     filter(trtrand == 0) %>%
-    mutate(u = ifelse(xo==1, xotime + (ostime-xotime)*exp(psi), ostime), 
-           c = pmin(censor_time, censor_time*exp(psi)),
-           time_ts = pmin(u, c),
-           event_ts = os*(u <= c)) %>%
-    select(id, time_ts, event_ts, trtrand, bprog) %>%
+    mutate(u_star = ifelse(xo == 1, xotime + (ostime - xotime)*exp(psi), 
+                           ostime), 
+           c_star = pmin(censor_time, censor_time*exp(psi)),
+           t_star = pmin(u_star, c_star),
+           d_star = os*(u_star <= c_star)) %>%
+    select(id, t_star, d_star, trtrand, bprog) %>%
     bind_rows(data1 %>% 
                 filter(trtrand == 1) %>%
-                mutate(time_ts = ostime, event_ts = os) %>%
-                select(id, time_ts, event_ts, trtrand, bprog))
+                mutate(t_star = ostime, d_star = os) %>%
+                select(id, t_star, d_star, trtrand, bprog))
   
-  fit <- coxph(Surv(time_ts, event_ts) ~ trtrand + bprog, 
-               data = data4, ties = "efron")
+  fit <- phregr(data4, time = "t_star", event = "d_star", 
+                covariates = c("trtrand", "bprog"), ties = "efron")
   
-  hr1 <- exp(as.numeric(c(fit$coefficients[1], confint(fit)[1,])))
-  expect_equal(hr1, c(fit1$hr, fit1$hr_CI))
+  hr1 <- exp(as.numeric(c(fit$parest$beta[1], fit$parest$lower[1], 
+                          fit$parest$upper[1])))
+  testthat::expect_equal(hr1, c(fit1$hr, fit1$hr_CI))
 })

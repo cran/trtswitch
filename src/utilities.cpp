@@ -450,7 +450,42 @@ NumericMatrix invsympd(NumericMatrix matrix, int n, double toler) {
 }
 
 
-// adapt from survsplit.c in the survival package
+//' @title Split a survival data set at specified cut points
+//' @description For a given survival dataset and specified cut times, 
+//' each record is split into multiple subrecords at each cut time. 
+//' The resulting dataset is in counting process format, with each 
+//' subrecord containing a start time, stop time, and event status.
+//' This is adapted from the survplit.c function from the survival package.
+//'
+//' @param tstart The starting time of the time interval for 
+//'   counting-process data.
+//' @param tstop The stopping time of the time interval for 
+//'   counting-process data.
+//' @param cut The vector of cut points.
+//'
+//' @return A data frame with the following variables:
+//'
+//' * \code{row}: The row number of the observation in the input data 
+//'   (starting from 0).
+//'
+//' * \code{start}: The starting time of the resulting subrecord.
+//'
+//' * \code{stop}: The stopping time of the resulting subrecord.
+//'
+//' * \code{censor}: Whether the subrecord lies strictly within a record
+//'   in the input data.
+//'
+//' * \code{interval}: The interval number.
+//'
+//' @author Kaifeng Lu, \email{kaifenglu@@gmail.com}
+//'
+//' @keywords internal
+//'
+//' @examples
+//'
+//' survsplit(15, 60, c(10, 30, 40))
+//'
+//' @export
 // [[Rcpp::export]]
 DataFrame survsplit(NumericVector tstart,
                     NumericVector tstop,
@@ -470,7 +505,7 @@ DataFrame survsplit(NumericVector tstart,
   }
 
   int n2 = n + extra;
-  IntegerVector row(n2);
+  IntegerVector row(n2), interval(n2);
   NumericVector start(n2), end(n2);
   LogicalVector censor(n2);
 
@@ -480,12 +515,14 @@ DataFrame survsplit(NumericVector tstart,
       start[k] = tstart[i];
       end[k] = tstop[i];
       row[k] = i;           // row in the original data
+      interval[k] = 1;
       k++;
     } else {
       // find the first cut point after tstart
       for (j=0; j < ncut && cut[j] <= tstart[i]; j++);
       start[k] = tstart[i];
       row[k] = i;
+      interval[k] = j;
       for (; j < ncut && cut[j] < tstop[i]; j++) {
         if (cut[j] > tstart[i]) {
           end[k] = cut[j];
@@ -493,6 +530,7 @@ DataFrame survsplit(NumericVector tstart,
           k++; // create the next sub-interval
           start[k] = cut[j];
           row[k] = i;
+          interval[k] = j+1;
         }
       }
       end[k] = tstop[i]; // finish the last sub-interval
@@ -505,7 +543,8 @@ DataFrame survsplit(NumericVector tstart,
     Named("row") = row,
     Named("start") = start,
     Named("end") = end,
-    Named("censor") = censor);
+    Named("censor") = censor,
+    Named("interval") = interval);
 
   return result;
 }
@@ -728,6 +767,103 @@ List qrcpp(NumericMatrix x, double tol = 1e-12) {
     Named("pivot") = piv+1,
     Named("Q") = Q,
     Named("R") = R
+  );
+  
+  return result;
+}
+
+
+// counterfactual untreated survival times and event indicators
+DataFrame untreated(
+    const double psi,
+    const NumericVector& time,
+    const IntegerVector& event,
+    const IntegerVector& treat,
+    const NumericVector& rx,
+    const NumericVector& censor_time,
+    const bool recensor,
+    const bool autoswitch) {
+  
+  double a = exp(psi);
+  NumericVector u_star = time*((1 - rx) + rx*a);
+  NumericVector t_star = clone(u_star);
+  IntegerVector d_star = clone(event);
+  
+  if (recensor) {
+    NumericVector c_star = censor_time*std::min(1.0, a);
+    
+    if (autoswitch) {
+      NumericVector rx1 = rx[treat == 1];
+      NumericVector rx0 = rx[treat == 0];
+      if (is_true(all(rx1 == 1.0))) c_star[treat == 1] = R_PosInf;
+      if (is_true(all(rx0 == 0.0))) c_star[treat == 0] = R_PosInf;
+    }
+    
+    t_star = pmin(u_star, c_star);
+    d_star[c_star < u_star] = 0;
+  }
+  
+  DataFrame result = DataFrame::create(
+    Named("t_star") = t_star,
+    Named("d_star") = d_star,
+    Named("treated") = treat
+  );
+  
+  return result;
+}
+
+
+// counterfactual unswitched survival times and event indicators
+DataFrame unswitched(
+    const double psi,
+    const int n,
+    const NumericVector& time,
+    const IntegerVector& event,
+    const IntegerVector& treat,
+    const NumericVector& rx,
+    const NumericVector& censor_time,
+    const bool recensor,
+    const bool autoswitch) {
+  
+  int i;
+  double a = exp(psi), a1 = exp(-psi);
+  NumericVector u_star(n), t_star(n);
+  IntegerVector d_star(n);
+  for (i=0; i<n; i++) {
+    if (treat[i] == 0) {
+      u_star[i] = time[i]*((1 - rx[i]) + rx[i]*a);
+    } else {
+      u_star[i] = time[i]*(rx[i] + (1 - rx[i])*a1);
+    }
+    t_star[i] = u_star[i];
+    d_star[i] = event[i];
+  }
+  
+  if (recensor) {
+    NumericVector c_star(n);
+    for (i=0; i<n; i++) {
+      if (treat[i] == 0) {
+        c_star[i] = censor_time[i]*std::min(1.0, a);
+      } else {
+        c_star[i] = censor_time[i]*std::min(1.0, a1);
+      }
+    }
+    
+    if (autoswitch) {
+      NumericVector rx1 = rx[treat == 1];
+      NumericVector rx0 = rx[treat == 0];
+      if (is_true(all(rx1 == 1.0))) c_star[treat == 1] = R_PosInf;
+      if (is_true(all(rx0 == 0.0))) c_star[treat == 0] = R_PosInf;
+    }
+    
+    t_star = pmin(u_star, c_star);
+    d_star[c_star < u_star] = 0;
+  }
+  
+  DataFrame result = DataFrame::create(
+    Named("t_star") = t_star,
+    Named("d_star") = d_star,
+    Named("treated") = treat
   );
   
   return result;

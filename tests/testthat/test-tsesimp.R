@@ -1,12 +1,11 @@
 library(dplyr, warn.conflicts = FALSE)
-library(survival)
 
-test_that("tsesimp: weibull aft", {
+testthat::test_that("tsesimp: weibull aft", {
   # the eventual survival time
   shilong1 <- shilong %>%
     arrange(bras.f, id, tstop) %>%
     group_by(bras.f, id) %>%
-    filter(row_number() == n()) %>%
+    slice(n()) %>%
     select(-c("ps", "ttc", "tran"))
   
   # the last value of time-dependent covariates before pd
@@ -14,7 +13,7 @@ test_that("tsesimp: weibull aft", {
     filter(pd == 0 | tstart <= dpd) %>%
     arrange(bras.f, id, tstop) %>%
     group_by(bras.f, id) %>%
-    filter(row_number() == n()) %>%
+    slice(n()) %>%
     select(bras.f, id, ps, ttc, tran)
   
   # combine baseline and time-dependent covariates
@@ -26,7 +25,8 @@ test_that("tsesimp: weibull aft", {
     data = shilong3, time = "tstop", event = "event",
     treat = "bras.f", censor_time = "dcut", pd = "pd",
     pd_time = "dpd", swtrt = "co", swtrt_time = "dco",
-    base_cov = "",
+    base_cov = c("agerand", "sex.f", "tt_Lnum", "rmh_alea.c",
+                 "pathway.f"),
     base2_cov = c("agerand", "sex.f", "tt_Lnum", "rmh_alea.c",
                   "pathway.f", "ps", "ttc", "tran"),
     aft_dist = "weibull", alpha = 0.05,
@@ -35,35 +35,39 @@ test_that("tsesimp: weibull aft", {
 
   # numeric code of treatment and apply administrative censoring
   data1 <- shilong3 %>% 
-    mutate(treat = ifelse(bras.f == "CT", 0, 1),
-           swtrt = 1*co,
-           censor_time = ifelse(event == 1, dcut, tstop))
+    mutate(treated = 1*(bras.f == "MTA"),
+           swtrt = 1*co)
   
   tablist <- lapply(0:1, function(h) {
     df1 <- data1 %>% 
-      filter(treat == h & pd == 1) %>%
+      filter(treated == h & pd == 1) %>%
       mutate(time = tstop - dpd + 1)
     
-    fit_aft <- survreg(Surv(time, event) ~ swtrt + agerand + sex.f 
-                       + tt_Lnum + rmh_alea.c + pathway.f
-                       + ps + ttc + tran, 
-                       data = df1, dist = "weibull")
+    fit_aft <- liferegr(df1, time = "time", event = "event", 
+                        covariates = c("swtrt", "agerand", "sex.f", 
+                                       "tt_Lnum", "rmh_alea.c", "pathway.f",
+                                       "ps", "ttc", "tran"), 
+                        dist = "weibull")
     
-    psi = -fit_aft$coefficients[2]
+    psi = -fit_aft$beta[2]
 
     data1 %>% 
-      filter(treat == h) %>%
-      mutate(u = ifelse(swtrt == 1, 
-                        ifelse(pd == 1, dpd-1 + (tstop-dpd+1)*exp(psi), 
-                               dco-1 + (tstop-dco+1)*exp(psi)), tstop),
-             c = pmin(censor_time, censor_time*exp(psi)),
-             time_ts = pmin(u, c),
-             event_ts = event*(u <= c))
+      filter(treated == h) %>%
+      mutate(u_star = ifelse(swtrt == 1, 
+                             ifelse(pd == 1, dpd-1 + (tstop-dpd+1)*exp(psi), 
+                                    dco-1 + (tstop-dco+1)*exp(psi)), tstop),
+             c_star = pmin(dcut, dcut*exp(psi)),
+             t_star = pmin(u_star, c_star),
+             d_star = event*(u_star <= c_star))
   })
+  
   data2 <- do.call(rbind, tablist)
   
-  fit <- coxph(Surv(time_ts, event_ts) ~ treat, data = data2)
-  hr1 <- exp(as.numeric(c(fit$coefficients[1], confint(fit)[1,])))
+  fit <- phregr(data2, time = "t_star", event = "d_star", 
+                covariates = c("treated", "agerand", "sex.f", 
+                               "tt_Lnum", "rmh_alea.c", "pathway.f"))
   
-  expect_equal(hr1, c(fit1$hr, fit1$hr_CI))
+  hr1 <- exp(as.numeric(c(fit$parest$beta[1], fit$parest$lower[1], 
+                          fit$parest$upper[1])))
+  testthat::expect_equal(hr1, c(fit1$hr, fit1$hr_CI))
 })

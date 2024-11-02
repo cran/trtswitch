@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Rank Preserving Structural Failure Time Models</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Rank Preserving Structural Failure Time
+Models</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(trtswitch)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(dplyr, <span class="at">warn.conflicts =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code></pre></div>
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>In clinical trials, treatment switching occurs when patients in the
+control group switch to the experimental treatment after experiencing
+disease progression or other clinical criteria. While treatment
+switching can provide ethical benefits for trial participants, it
+introduces significant challenges in estimating the true effect of the
+experimental treatment on overall survival (OS). If left unadjusted,
+treatment switching can obscure the real difference between the
+treatment arms and lead to biased estimates, typically underestimating
+the treatment benefit.</p>
+<p>The rank preserving structural failure time model (RPSFTM) is a
+statistical approach developed to address this issue. RPSFTM adjusts for
+the effects of treatment switching by modeling what the survival times
+of patients who switched treatments would have been if they had remained
+on the control treatment. The model assumes that the treatment effect is
+the same regardless of when the patient received the treatment.</p>
+<p>The rank-preserving property means that the relative ordering of
+counterfactural survival times under the experimental treatment is the
+same as the relative ordering of counterfactural survival times under
+the control treatment. Formally, let <span class="math inline">\(Y_i^{a=1}\)</span> represent the potential outcome
+for subject <span class="math inline">\(i\)</span> under treatment
+condition <span class="math inline">\(a=1\)</span> (experimental), and
+<span class="math inline">\(Y_i^{a=0}\)</span> represent the potential
+outcome under treatment condition <span class="math inline">\(a=0\)</span> (control). If the ranking of <span class="math inline">\(\{Y_i^{a=1}: i=1,\ldots,n\}\)</span> is identical
+to the ranking of <span class="math inline">\(\{Y_i^{a=0}:
+i=1,\ldots,n\}\)</span>, we say that rank preservation holds.</p>
+<p>The structural failure time model refers to a framework used to
+estimate the true (unobserved) survival time in the absence of treatment
+switching, assuming that the experimental treatment has a multiplicative
+effect on survival. Specifically, each patient’s observed survival time,
+<span class="math inline">\(T_i\)</span>, is divided into the time spent
+on the control treatment, <span class="math inline">\(T_{C_i}\)</span>,
+and the time spent on the experimental treatment, <span class="math inline">\(T_{E_i}\)</span>, such that <span class="math inline">\(T_i = T_{C_i} + T_{E_i}\)</span>. The
+<code>rx</code> parameter in the <code>rpsftm</code> function represents
+the proportion of time spent on the experimental treatment, defined as
+the ratio <span class="math inline">\(T_{E_i}/T_i\)</span>. The
+structural model for counterfactual untreated survival times is
+expressed as <span class="math display">\[
+   U_{i,\psi} = T_{C_i} + e^{\psi} T_{E_i},
+\]</span> where there are three distinct cases:</p>
+<ul>
+<li><p><strong>Experimental Group Patients</strong>: <span class="math inline">\(T_{C_i} = 0\)</span>, and <span class="math inline">\(T_{E_i}\)</span> represents the time from
+randomization to either death or censoring.</p></li>
+<li><p><strong>Control Group Nonswitchers</strong>: <span class="math inline">\(T_{C_i}\)</span> is the time from randomization to
+either death or censoring, and <span class="math inline">\(T_{E_i} =
+0\)</span>.</p></li>
+<li><p><strong>Control Group Switchers</strong>: <span class="math inline">\(T_{C_i}\)</span> is the time from randomization to
+treatment switch, and <span class="math inline">\(T_{E_i}\)</span> is
+the time from the switch to either death or censoring.</p></li>
+</ul>
+</div>
+<div id="recensoring" class="section level1">
+<h1>Recensoring</h1>
+<p>The censoring time <span class="math inline">\(C_i\)</span> must be
+defined for all patients including those who experienced an event. We
+assume that censoring is noninformative in the absence of treatment
+switching. However, since time to treatment switching may be influenced
+by prognostic factors, the counterfactual censoring time <span class="math display">\[
+  f(T_{C_i}) = T_{C_i} + e^{\psi}(C_i - T_{C_i})
+\]</span> could become informative. To address this and make the
+counterfactual censoring time noninformative, we take the minimum of the
+counterfactual censoring time across all possible values of the time to
+switching <span class="math inline">\(T_{C_i}\)</span>. Specifically, we
+define: <span class="math display">\[
+  D_{i,\psi}^* = \min_{T_{C_i} \in [0, C_i]} f(T_{C_i}).
+\]</span></p>
+<div id="behavior-of-the-function-ft_c_i" class="section level2">
+<h2>Behavior of the function <span class="math inline">\(f(T_{C_i})\)</span>:</h2>
+<ul>
+<li><strong>If <span class="math inline">\(\psi &lt;
+0\)</span></strong>, then <span class="math inline">\(f(T_{C_i})\)</span> is an increasing function of
+<span class="math inline">\(T_{C_i}\)</span>. The minimum occurs at
+<span class="math inline">\(T_{C_i} = 0\)</span>, yielding a value of
+<span class="math inline">\(e^{\psi} C_i\)</span>.</li>
+<li><strong>If <span class="math inline">\(\psi &gt;
+0\)</span></strong>, <span class="math inline">\(f(T_{C_i})\)</span>
+decreases with <span class="math inline">\(T_{C_i}\)</span>, and the
+minimum is attained when <span class="math inline">\(T_{C_i} =
+C_i\)</span>, yielding <span class="math inline">\(C_i\)</span>.</li>
+<li><strong>When <span class="math inline">\(\psi = 0\)</span></strong>,
+<span class="math inline">\(f(T_{C_i}) = C_i\)</span> for all <span class="math inline">\(T_{C_i}\)</span>.</li>
+</ul>
+<p>Thus, we can summarize the relationship:</p>
+<p><span class="math display">\[
+  D_{i,\psi}^* = \min(C_i, e^{\psi} C_i).
+\]</span></p>
+<p>To ensure that the counterfactual censoring time is independent of
+prognostic factors, we define <span class="math inline">\(D_i^*(\psi)\)</span> for all control group
+patients, irrespective of whether or not they were observed to switch
+treatment.</p>
+</div>
+<div id="case-by-case-breakdown" class="section level2">
+<h2>Case-by-case breakdown</h2>
+<div id="control-group-switchers-who-experienced-an-event" class="section level3">
+<h3>Control group switchers who experienced an event:</h3>
+<p>For these patients, we have <span class="math inline">\(T_i = T_{C_i}
++ T_{E_i} \leq C_i\)</span>.</p>
+<ul>
+<li><strong>When <span class="math inline">\(\psi &lt;
+0\)</span></strong>:
+<ul>
+<li>Since <span class="math inline">\(e^{\psi} &lt; 1\)</span>, <span class="math inline">\(D_{i,\psi}^* = e^{\psi} C_i &lt; C_i\)</span>, and
+<span class="math inline">\(U_{i,\psi} &lt; T_{C_i} + T_{E_i} =
+T_i\)</span>.</li>
+<li>If <span class="math inline">\(e^{\psi} &lt; \frac{T_{C_i}}{C_i -
+T_{E_i}} \leq 1\)</span>, then <span class="math inline">\(D_{i,\psi}^*
+&lt; U_{i,\psi}\)</span>, meaning the event will be recensored and
+become a nonevent. The counterfactual survival time <span class="math inline">\(U_{i,\psi}\)</span> is replaced by <span class="math inline">\(D_{i,\psi}^* = e^{\psi} C_i\)</span>.</li>
+<li>If <span class="math inline">\(e^{\psi} \geq \frac{T_{C_i}}{C_i -
+T_{E_i}}\)</span>, then <span class="math inline">\(U_{i,\psi} \leq
+D_{i,\psi}^*\)</span>, and the event remains as such, with <span class="math inline">\(U_{i,\psi}\)</span> unchanged.</li>
+</ul></li>
+<li><strong>When <span class="math inline">\(\psi &gt;
+0\)</span></strong>:
+<ul>
+<li>Since <span class="math inline">\(e^{\psi} &gt; 1\)</span>, <span class="math inline">\(D_{i,\psi}^* = C_i\)</span>, and <span class="math inline">\(U_{i,\psi} &gt; T_{C_i} + T_{E_i} =
+T_i\)</span>.</li>
+<li>If <span class="math inline">\(e^{\psi} &gt; \frac{C_i -
+T_{C_i}}{T_{E_i}} \geq 1\)</span>, then <span class="math inline">\(D_{i,\psi}^* &lt; U_{i,\psi}\)</span>, and the
+event is recensored into a nonevent. The counterfactual survival time is
+replaced by <span class="math inline">\(D_{i,\psi}^* =
+C_i\)</span>.</li>
+<li>If <span class="math inline">\(e^{\psi} \leq \frac{C_i -
+T_{C_i}}{T_{E_i}}\)</span>, then <span class="math inline">\(U_{i,\psi}
+\leq D_{i,\psi}^*\)</span>, and the event remains unchanged.</li>
+</ul></li>
+<li><strong>When <span class="math inline">\(\psi = 0\)</span></strong>:
+<ul>
+<li>In this case, <span class="math inline">\(U_{i,\psi} = T_i \leq C_i
+= D_{i,\psi}^*\)</span>, so there is no change to either the event or
+censoring times. The event remains unchanged.</li>
+</ul></li>
+</ul>
+</div>
+<div id="control-group-switchers-who-were-censored" class="section level3">
+<h3>Control group switchers who were censored:</h3>
+<p>By definition, <span class="math inline">\(D_{i,\psi}^* \leq T_{C_i}
++ e^{\psi}(C_i - T_{C_i}) = U_{i,\psi}\)</span>, so the counterfactual
+survival time <span class="math inline">\(U_{i,\psi}\)</span> is
+replaced with <span class="math inline">\(D_{i,\psi}^*\)</span>.</p>
+</div>
+<div id="control-group-nonswitchers-who-experienced-an-event" class="section level3">
+<h3>Control group nonswitchers who experienced an event:</h3>
+<p>For these patients, <span class="math inline">\(U_{i,\psi} = T_{C_i}
+= T_i \leq C_i\)</span>.</p>
+<ul>
+<li><strong>When <span class="math inline">\(\psi &lt;
+0\)</span></strong>:
+<ul>
+<li>Since <span class="math inline">\(e^{\psi} &lt; 1\)</span>, <span class="math inline">\(D_{i,\psi}^* = e^{\psi} C_i\)</span>.</li>
+<li>If <span class="math inline">\(e^{\psi} &lt; \frac{T_i}{C_i} \leq
+1\)</span>, then <span class="math inline">\(D_{i,\psi}^* &lt;
+U_{i,\psi}\)</span>, and the event becomes a nonevent, with <span class="math inline">\(U_{i,\psi}\)</span> replaced by <span class="math inline">\(D_{i,\psi}^*\)</span>.</li>
+<li>If <span class="math inline">\(e^{\psi} \geq
+\frac{T_i}{C_i}\)</span>, then <span class="math inline">\(U_{i,\psi}
+\leq D_{i,\psi}^*\)</span>, and the event remains unchanged.</li>
+</ul></li>
+<li><strong>When <span class="math inline">\(\psi \geq
+0\)</span></strong>:
+<ul>
+<li>Since <span class="math inline">\(e^{\psi} \geq 1\)</span>, <span class="math inline">\(D_{i,\psi}^* = C_i \geq T_i = U_{i,\psi}\)</span>,
+so the event remains as it is, with <span class="math inline">\(U_{i,\psi}\)</span> unchanged.</li>
+</ul></li>
+</ul>
+</div>
+<div id="control-group-nonswitchers-who-were-censored" class="section level3">
+<h3>Control group nonswitchers who were censored:</h3>
+<p>In this case, <span class="math inline">\(U_{i,\psi} = C_i\)</span>.
+By definition, <span class="math inline">\(D_{i,\psi}^* \leq
+U_{i,\psi}\)</span>, meaning <span class="math inline">\(U_{i,\psi}\)</span> is replaced by <span class="math inline">\(D_{i,\psi}^*\)</span>.</p>
+</div>
+</div>
+<div id="summary" class="section level2">
+<h2>Summary:</h2>
+<p>An observed event can become a nonevent due to recensoring under two
+conditions:</p>
+<ol style="list-style-type: decimal">
+<li>If <span class="math inline">\(\psi &lt; 0\)</span> and <span class="math inline">\(e^{\psi} C_i &lt; U_{i,\psi}\)</span>.</li>
+<li>If <span class="math inline">\(\psi &gt; 0\)</span> and <span class="math inline">\(C_i &lt; U_{i,\psi}\)</span>.</li>
+</ol>
+<p>The recensored counterfactual survival time is defined as <span class="math display">\[
+  U_{i,\psi}^* = \min(U_{i,\psi}, D_{i,\psi}^*),
+\]</span> while the counterfactual event indicator is give by <span class="math display">\[
+  \Delta_{i,\psi}^* = \Delta_i I(U_{i,\psi} \leq D_{i,\psi}^*),
+\]</span> where <span class="math inline">\(\Delta_i\)</span> represents
+the observed event indicator.</p>
+<p>Recensoring is intended to reduce the bias in the treatment effect
+estimate at the expense of a loss of information for long-term
+survival.</p>
+</div>
+</div>
+<div id="common-treatment-effect-assumption" class="section level1">
+<h1>Common Treatment Effect Assumption</h1>
+<p>A key assumption for the validity of the RPSFTM is the existence of a
+common treatment effect, meaning that the time ratio, <span class="math inline">\(e^{-\psi}\)</span>, remains constant regardless of
+when treatment switching occurs. However, since treatment switching
+often happens after disease progression, the treatment effect
+post-progression may be weaker than the effect observed immediately
+following randomization. To account for this in sensitivity analyses,
+the <code>treat_modifier</code> parameter in the <code>rpsftm</code>
+function can be set to a value between 0 and 1, effectively diluting
+<span class="math inline">\(\psi\)</span> by multiplying it by
+<code>treat_modifier</code>.</p>
+</div>
+<div id="estimation-of-psi" class="section level1">
+<h1>Estimation of <span class="math inline">\(\psi\)</span></h1>
+<p>For a fixed value of <span class="math inline">\(\psi\)</span>, we
+can construct the counterfactual survival times <span class="math inline">\(U_{i,\psi}^*\)</span> and the corresponding event
+indicators <span class="math inline">\(\Delta_{i,\psi}^*\)</span>. A
+log-rank test (which may be stratified) can then be used to assess the
+difference in counterfactual survival times, accounting for potential
+censoring, between the two treatment groups. Let <span class="math inline">\(Z(\psi)\)</span> denote the Z-test statistic from
+the log-rank test.</p>
+<p>Under the assumption that potential outcomes are independent of the
+randomized treatment group, the estimate of <span class="math inline">\(\psi\)</span> is the value that makes <span class="math inline">\(Z(\psi)\)</span> closest to zero. The confidence
+limits for <span class="math inline">\(\psi\)</span> can be derived from
+the values of <span class="math inline">\(\psi\)</span> that yield <span class="math inline">\(Z(\psi)\)</span> closest to <span class="math inline">\(\Phi^{-1}(1 - \alpha/2)\)</span> and <span class="math inline">\(\Phi^{-1}(\alpha/2)\)</span>, where <span class="math inline">\(\Phi(x)\)</span> is the cumulative distribution
+function of the standard normal distribution and <span class="math inline">\(\alpha\)</span> is the two-sided significance
+level.</p>
+<p>The <code>rpsftm</code> function provides two methods for estimating
+the causal treatment effect, <span class="math inline">\(\psi\)</span>:</p>
+<ol style="list-style-type: decimal">
+<li><strong>Grid search method</strong>: This divides the interval from
+<code>low_psi</code> to <code>hi_psi</code> into
+<code>n_eval_z - 1</code> subintervals and evaluates <span class="math inline">\(Z(\psi)\)</span> at <code>n_eval_z</code> equally
+spaced points of <span class="math inline">\(\psi\)</span> (including
+the endpoints <code>low_psi</code> and <code>hi_psi</code>).</li>
+<li><strong>Root-finding method</strong>: This method uses numerical
+techniques, such as Brent’s method, to find the value of <span class="math inline">\(\psi\)</span> such that <span class="math inline">\(Z(\psi) = 0\)</span> for the point estimate, <span class="math inline">\(Z(\psi) = \Phi^{-1}(1 - \alpha/2)\)</span> for the
+lower confidence limit, and <span class="math inline">\(Z(\psi) =
+\Phi^{-1}(\alpha/2)\)</span> for the upper confidence limit. Owing to
+the discrete nature of the log-rank test, the solution for <span class="math inline">\(\psi\)</span> may not be unique and may depend on
+the search interval and convergence tolerance.</li>
+</ol>
+<p>Regardless of the method used for estimating <span class="math inline">\(\psi\)</span>, it is helpful to visualize the
+log-rank test statistic, <span class="math inline">\(Z(\psi)\)</span>,
+across a range of <span class="math inline">\(\psi\)</span> values.
+Additionally, a Kaplan-Meier plot of the counterfactual survival times
+for the two randomized groups provides further validation of the
+estimated value of <span class="math inline">\(\psi\)</span>.</p>
+</div>
+<div id="estimation-of-hazard-ratio" class="section level1">
+<h1>Estimation of Hazard Ratio</h1>
+<p>Let <span class="math inline">\(A_i\)</span> denote the randomized
+treatment group and <span class="math inline">\(Z_i\)</span> the
+baseline covariates for subject <span class="math inline">\(i\)</span>
+(<span class="math inline">\(i=1,\ldots,n\)</span>). Once <span class="math inline">\(\psi\)</span> has been estimated, we can fit a
+(potentially stratified) Cox proportional hazards model to the
+following:</p>
+<ul>
+<li><p>The observed survival times of the experimental group: <span class="math inline">\(\{(T_i,\Delta_i,Z_i): A_i = 1\}\)</span></p></li>
+<li><p>The counterfactual survival times for the control group: <span class="math inline">\(\{(U_{i,\psi}^*, \Delta_{i,\psi}^*, Z_i): A_i =
+0\}\)</span> evaluated at <span class="math inline">\(\psi =
+\hat{\psi}\)</span>.</p></li>
+</ul>
+<p>This allows us to obtain an estimate of the hazard ratio. The
+confidence interval for the hazard ratio can be derived by either</p>
+<ol style="list-style-type: decimal">
+<li>Matching the p-value from the log-rank test for an
+intention-to-treat (ITT) analysis, or</li>
+<li>Bootstrapping the entire adjustment and subsequent model-fitting
+process.</li>
+</ol>
+</div>
+<div id="concorde-trial-example" class="section level1">
+<h1>Concorde Trial Example</h1>
+<p>We will illustrate the <code>rpsftm</code> function using simulated
+data based on the randomized Concorde trial. In this trial, patients
+with asymptomatic HIV infection were randomly assigned to either
+immediate zidovudine treatment or deferred treatment. The primary
+outcome was the time to disease progression or death.</p>
+<p>An ITT analysis estimates the effect of immediately administering
+zidovudine compared to delaying its use. However, some patients in the
+deferred arm started zidovudine before developing symptoms, based on low
+CD4 cell counts—a marker of disease progression.</p>
+<div id="data" class="section level2">
+<h2>Data</h2>
+<p>The data are stored in the <code>immdef</code> data frame. Here’s a
+snapshot of the data:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">head</span>(immdef, <span class="dv">10</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="co">#&gt;    id def imm censyrs xo    xoyrs prog   progyrs entry</span></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co">#&gt; 1   1   0   1       3  0 0.000000    0 3.0000000     0</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#&gt; 2   2   1   0       3  1 2.652797    0 3.0000000     0</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co">#&gt; 3   3   0   1       3  0 0.000000    1 1.7378377     0</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&gt; 4   4   0   1       3  0 0.000000    1 2.1662905     0</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="co">#&gt; 5   5   1   0       3  1 2.122100    1 2.8846462     0</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co">#&gt; 6   6   1   0       3  1 0.557392    0 3.0000000     0</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co">#&gt; 7   7   1   0       3  0 2.189470    1 2.1894703     0</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co">#&gt; 8   8   0   1       3  0 0.000000    1 0.9226239     0</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co">#&gt; 9   9   0   1       3  0 0.000000    0 3.0000000     0</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&gt; 10 10   0   1       3  0 0.000000    0 3.0000000     0</span></span></code></pre></div>
+<p>For the immediate treatment arm, treatment crossover was not
+possible.</p>
+<ul>
+<li><p>Subject 1 was censored at 3 years.</p></li>
+<li><p>Subject 3 progressed at 1.74 years.</p></li>
+</ul>
+<p>For the deferred treatment arm, treatment crossover was allowed.</p>
+<ul>
+<li><p>Subject 2 crossed over at 2.65 years and was censored at 3
+years.</p></li>
+<li><p>Subject 5 crossed over at 2.12 years and progressed at 2.88
+years.</p></li>
+<li><p>Subject 7 progressed at 2.19 years without treatment
+crossover.</p></li>
+</ul>
+</div>
+<div id="analysis" class="section level2">
+<h2>Analysis</h2>
+<p>We begin by preparing the data and then apply the RPSFTM method:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>data <span class="ot">&lt;-</span> immdef <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">rx =</span> <span class="dv">1</span><span class="sc">-</span>xoyrs<span class="sc">/</span>progyrs)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>fit1 <span class="ot">&lt;-</span> <span class="fu">rpsftm</span>(</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  data, <span class="at">time =</span> <span class="st">&quot;progyrs&quot;</span>, <span class="at">event =</span> <span class="st">&quot;prog&quot;</span>, <span class="at">treat =</span> <span class="st">&quot;imm&quot;</span>,</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="at">rx =</span> <span class="st">&quot;rx&quot;</span>, <span class="at">censor_time =</span> <span class="st">&quot;censyrs&quot;</span>, <span class="at">boot =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<p>The log-rank test for an ITT analysis, which ignores treatment
+changes, produces a borderline significant p-value of <span class="math inline">\(0.056\)</span>.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>fit1<span class="sc">$</span>logrank_pvalue</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt; [1] 0.05563532</span></span></code></pre></div>
+<p>Using a root-finding algorithm, we estimate <span class="math inline">\(\hat{\psi} = -0.181\)</span>, with a 95%
+confidence interval of <span class="math inline">\((-0.350,
+0.002)\)</span>.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">c</span>(fit1<span class="sc">$</span>psi, fit1<span class="sc">$</span>psi_CI)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co">#&gt; [1] -0.181177429 -0.349655916  0.002047886</span></span></code></pre></div>
+<p>The plot of <span class="math inline">\(Z(\psi)\)</span> versus <span class="math inline">\(\psi\)</span> shows that the estimation process
+worked well.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>```{r Z(psi)}</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>psi_CI_width &lt;- fit1$psi_CI[2] - fit1$psi_CI[1]</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>ggplot(fit1$eval_z %&gt;% </span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>         filter(psi &gt; fit1$psi_CI[1] - psi_CI_width*0.25 &amp; </span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>                  psi &lt; fit1$psi_CI[2] + psi_CI_width*0.25), </span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>       aes(x=psi, y=Z)) + </span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>  geom_line() + </span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>  geom_hline(yintercept = c(0, -1.96, 1.96), linetype = 2) + </span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>  scale_y_continuous(breaks = c(0, -1.96, 1.96)) + </span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>  geom_vline(xintercept = c(fit1$psi, fit1$psi_CI), linetype = 2) + </span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>  scale_x_continuous(breaks = round(c(fit1$psi, fit1$psi_CI), 3)) + </span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>  ylab(&quot;log-rank Z&quot;) + </span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a>  theme(panel.grid.minor = element_blank())</span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>```</span></code></pre></div>
+<p>The Kaplan-Meier plot of counterfactual survival times supports the
+estimated <span class="math inline">\(\hat{\psi}\)</span>.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>```{r km}</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>ggplot(fit1$kmstar, aes(x=time, y=survival, group=treated,</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>                        linetype=as.factor(treated))) + </span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  geom_step() + </span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  scale_linetype_discrete(name = &quot;treated&quot;) + </span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  scale_y_continuous(limits = c(0,1))</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>```</span></code></pre></div>
+<p>The estimated hazard ratio from the Cox proportional hazards model is
+<span class="math inline">\(0.761\)</span>, with a 95% confidence
+interval of <span class="math inline">\((0.575, 1.007)\)</span>,
+constructed to be consistent with the p-value from the log-rank test for
+the ITT analysis.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">c</span>(fit1<span class="sc">$</span>hr, fit1<span class="sc">$</span>hr_CI)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co">#&gt; [1] 0.7610992 0.5754769 1.0065948</span></span></code></pre></div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -227,12 +227,12 @@ List logisregloop(int p, NumericVector par, void *ex,
   NumericVector u1(ncolfit);
   NumericMatrix imat1(ncolfit, ncolfit);
 
-  
+
   // initial beta and log likelihood
   for (i=0; i<p; i++) {
     beta[i] = par[i];
   }
-  
+
   if (!firth) {
     loglik = f_llik_0(p, beta, param);
     u = f_score_0(p, beta, param);
@@ -349,7 +349,7 @@ double logisregplloop(int p, NumericVector par, void *ex,
   logparams *param = (logparams *) ex;
 
   int i, j, iter;
-  bool fail;
+  bool fail = 0;
 
   NumericMatrix z1 = param->z;
 
@@ -406,28 +406,28 @@ double logisregplloop(int p, NumericVector par, void *ex,
   for (iter=0; iter<maxiter; iter++) {
     if (!firth) newlk = f_llik_0(p, newbeta, param);
     else newlk = f_pen_llik_0(p, newbeta, param);
-    
+
     // check convergence
     fail = std::isnan(newlk) || std::isinf(newlk) == 1;
-    
+
     if (!fail && fabs((newlk - l0)/l0) < eps) {
       break;
     }
-    
+
     for (i=0; i<p; i++) {
       beta[i] = newbeta[i];
     }
     loglik = newlk;
-    
+
     if (!firth) u = f_score_0(p, beta, param);
     else u = f_pen_score_0(p, beta, param);
-    
+
     imat = f_info_0(p, beta, param);
-    
+
     // Lagrange multiplier method as used in SAS PROC LOGISTIC
     v = invsympd(imat, p, toler);
     v = -1.0*v;
-    
+
     w = 0;
     for (i=0; i<p; i++) {
       for (j=0; j<p; j++) {
@@ -437,20 +437,20 @@ double logisregplloop(int p, NumericVector par, void *ex,
     underroot = 2*(l0 - loglik + 0.5*w)/v(k,k);
     lambda = underroot < 0.0 ? 0.0 : which*sqrt(underroot);
     u[k] += lambda;
-    
+
     delta.fill(0.0);
     for (i=0; i<p; i++) {
       for (j=0; j<p; j++) {
         delta[i] -= v(i,j)*u[j];
       }
     }
-    
+
     // update beta
     for (i=0; i<p; i++) {
       newbeta[i] = beta[i] + delta[i];
     }
   }
-  
+
   if (iter == maxiter) fail = 1;
 
   if (fail) {
@@ -600,12 +600,12 @@ List logisregcpp(const DataFrame data,
   offsetn = offsetn[order];
   idn = idn[order];
   zn = subset_matrix_by_row(zn, order);
-  
+
   // exclude observations with missing values
   LogicalVector sub(n,1);
   for (i=0; i<n; i++) {
-    if ((repn[i] == NA_INTEGER) || (eventn[i] == NA_INTEGER) || 
-        (std::isnan(freqn[i])) || (std::isnan(weightn[i])) || 
+    if ((repn[i] == NA_INTEGER) || (eventn[i] == NA_INTEGER) ||
+        (std::isnan(freqn[i])) || (std::isnan(weightn[i])) ||
         (std::isnan(offsetn[i])) || (idn[i] == NA_INTEGER)) {
       sub[i] = 0;
     }
@@ -613,7 +613,7 @@ List logisregcpp(const DataFrame data,
       if (std::isnan(zn(i,j+1))) sub[i] = 0;
     }
   }
-  
+
   order = which(sub);
   repn = repn[order];
   eventn = eventn[order];
@@ -648,7 +648,7 @@ List logisregcpp(const DataFrame data,
   NumericMatrix vbeta0(nreps*p,p), rvbeta0(nreps*p,p);
   NumericVector lb0(nreps*p), ub0(nreps*p), prob0(nreps*p);
   StringVector clparm0(nreps*p);
-  
+
   NumericVector linear_predictors(n), fitted_values(n);
 
   int N=0;
@@ -713,9 +713,9 @@ List logisregcpp(const DataFrame data,
             lp[person] += b[i]*z1(person,i);
           }
         }
-        
+
         logparams param0 = {n1, event1, z1, freq1, weight1, lp};
-        
+
         NumericVector bint00(1, bint0[0]);
         outint = logisregloop(1, bint00, &param0, 30, 1.0e-9, 0, colfit0, 1);
         double a = as<double>(outint["coef"]);
@@ -781,7 +781,7 @@ List logisregcpp(const DataFrame data,
       }
     }
 
-    
+
     // linear predictors and fitted values
     int person;
     NumericVector eta(n1);
@@ -791,20 +791,20 @@ List logisregcpp(const DataFrame data,
         eta[person] += b[i]*z1(person,i);
       }
     }
-    
+
     NumericVector pi(n1);
     for (person=0; person<n1; person++) {
       pi[person] = R::plogis(eta[person], 0, 1, 1, 0);
     }
-    
+
     for (person=0; person<n1; person++) {
       linear_predictors[N+person] = eta[person];
       fitted_values[N+person] = pi[person];
     }
-    
+
     N += n1;
-    
-    
+
+
     niter[h] = out["iter"];
 
     // robust variance estimates
@@ -1046,12 +1046,12 @@ List logisregcpp(const DataFrame data,
       _["vbeta_naive"] = vbeta0);
   }
 
-  
+
   DataFrame fitted = DataFrame::create(
     Named("linear_predictors") = linear_predictors,
     Named("fitted_values") = fitted_values);
-  
-  
+
+
   if (has_rep) {
     for (i=0; i<p_rep; i++) {
       String s = rep[i];
@@ -1073,7 +1073,7 @@ List logisregcpp(const DataFrame data,
       }
     }
   }
-  
+
 
   List result = List::create(
     _["sumstat"] = sumstat,
