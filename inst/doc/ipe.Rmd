@@ -82,7 +82,6 @@ fit1$psi
 ```
 
 The Kaplan-Meier plot of counterfactual survival times supports the estimated $\hat{\psi}$.
-````{verbatim}
 ```{r km}
 ggplot(fit1$kmstar, aes(x=time, y=survival, group=treated,
                         linetype=as.factor(treated))) + 
@@ -90,7 +89,6 @@ ggplot(fit1$kmstar, aes(x=time, y=survival, group=treated,
   scale_linetype_discrete(name = "treated") + 
   scale_y_continuous(limits = c(0,1))
 ```
-````
 
 The estimated hazard ratio from the Cox proportional hazards model is $0.766$, with a 95\% confidence interval of $(0.583, 1.006)$, closely aligning with the results from the RPSFTM analysis.
 ```{r hr}
@@ -166,13 +164,11 @@ data2 <- data.frame(index = 1:B, psi = psihats)
 tail(data2)
 ```
 
-````{verbatim}
 ```{r psi plot}
 ggplot(data2, aes(x = index, y = psi)) + 
   geom_point() + 
   geom_line()
 ```
-````
 
 
 

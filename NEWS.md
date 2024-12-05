@@ -1,3 +1,8 @@
+# trtswitch 0.1.2
+
+- Added probit and complementary log-log links to logistic regression
+- Removed verbatim environment for ggplot in vignettes
+
 # trtswitch 0.1.1
 
 - Fixed clang-UBSAN issues.

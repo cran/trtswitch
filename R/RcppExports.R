@@ -9,8 +9,8 @@ ipecpp <- function(data, stratum = "", time = "time", event = "event", treat = "
     .Call(`_trtswitch_ipecpp`, data, stratum, time, event, treat, rx, censor_time, base_cov, aft_dist, strata_main_effect_only, treat_modifier, recensor, admin_recensor_only, autoswitch, alpha, ties, tol, boot, n_boot, seed)
 }
 
-logisregcpp <- function(data, rep = "", event = "event", covariates = "", freq = "", weight = "", offset = "", id = "", robust = 0L, firth = 0L, flic = 0L, plci = 0L, alpha = 0.05) {
-    .Call(`_trtswitch_logisregcpp`, data, rep, event, covariates, freq, weight, offset, id, robust, firth, flic, plci, alpha)
+logisregcpp <- function(data, rep = "", event = "event", covariates = "", freq = "", weight = "", offset = "", id = "", link = "logit", robust = 0L, firth = 0L, flic = 0L, plci = 0L, alpha = 0.05) {
+    .Call(`_trtswitch_logisregcpp`, data, rep, event, covariates, freq, weight, offset, id, link, robust, firth, flic, plci, alpha)
 }
 
 rpsftmcpp <- function(data, stratum = "", time = "time", event = "event", treat = "treat", rx = "rx", censor_time = "censor_time", base_cov = "", low_psi = -1, hi_psi = 1, n_eval_z = 100L, treat_modifier = 1, recensor = 1L, admin_recensor_only = 1L, autoswitch = 1L, gridsearch = 0L, alpha = 0.05, ties = "efron", tol = 1.0e-6, boot = 0L, n_boot = 1000L, seed = NA_integer_) {

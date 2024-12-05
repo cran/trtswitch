@@ -195,7 +195,6 @@ c(fit1$psi, fit1$psi_CI)
 ```
 
 The plot of $Z(\psi)$ versus $\psi$ shows that the estimation process worked well. 
-````{verbatim}
 ```{r Z(psi)}
 psi_CI_width <- fit1$psi_CI[2] - fit1$psi_CI[1]
 
@@ -211,10 +210,8 @@ ggplot(fit1$eval_z %>%
   ylab("log-rank Z") + 
   theme(panel.grid.minor = element_blank())
 ```
-````
 
 The Kaplan-Meier plot of counterfactual survival times supports the estimated $\hat{\psi}$.
-````{verbatim}
 ```{r km}
 ggplot(fit1$kmstar, aes(x=time, y=survival, group=treated,
                         linetype=as.factor(treated))) + 
@@ -222,7 +219,6 @@ ggplot(fit1$kmstar, aes(x=time, y=survival, group=treated,
   scale_linetype_discrete(name = "treated") + 
   scale_y_continuous(limits = c(0,1))
 ```
-````
 
 The estimated hazard ratio from the Cox proportional hazards model is $0.761$, with a 95\% confidence interval of $(0.575, 1.007)$, constructed to be consistent with the p-value from the log-rank test for the ITT analysis.
 ```{r hr}

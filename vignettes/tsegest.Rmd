@@ -85,7 +85,6 @@ switched <- fit1$analysis_switch$data_switch[[1]]$data %>%
 table(switched$swtrt_time)
 ```
 
-````{verbatim}
 ```{r km}
 ggplot(fit1$analysis_switch$km_switch[[1]]$data, 
        aes(x=time, y=survival)) + 
@@ -97,7 +96,6 @@ ggplot(fit1$analysis_switch$km_switch[[1]]$data,
                 fit1$analysis_switch$km_switch[[1]]$trtrand)) + 
   theme(panel.grid.minor.x = element_blank())
 ```
-````
 
 We can examine the logistic regression switching model to confirm that the coefficient associated with the counterfactual survival time (the martingale residuals for the null Cox model) is effectively zero. To account for the potential correlation of multiple observations within a subject, a robust sandwich variance estimator is employed, clustering on the subject level for the logistic regression model.
 ```{r logis}

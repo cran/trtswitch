@@ -39,6 +39,17 @@ switched <- fit1$analysis_switch$data_switch[[1]]$data %>%
   filter(swtrt == 1)
 table(switched$swtrt_time)
 
+## ----km-----------------------------------------------------------------------
+ggplot(fit1$analysis_switch$km_switch[[1]]$data, 
+       aes(x=time, y=survival)) + 
+  geom_step() + 
+  scale_y_continuous(limits = c(0,1)) + 
+  scale_x_continuous(breaks = seq(0,105,21)) + 
+  xlab("time from progression to switch") + 
+  ggtitle(paste("trtrand: ", 
+                fit1$analysis_switch$km_switch[[1]]$trtrand)) + 
+  theme(panel.grid.minor.x = element_blank())
+
 ## ----logis--------------------------------------------------------------------
 parest <- fit1$analysis_switch$fit_logis[[1]]$fit$parest
 parest[, c("param", "beta", "sebeta", "z")]

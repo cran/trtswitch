@@ -80,8 +80,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // logisregcpp
-List logisregcpp(const DataFrame data, const StringVector& rep, const std::string event, const StringVector& covariates, const std::string freq, const std::string weight, const std::string offset, const std::string id, const bool robust, const bool firth, const bool flic, const bool plci, const double alpha);
-RcppExport SEXP _trtswitch_logisregcpp(SEXP dataSEXP, SEXP repSEXP, SEXP eventSEXP, SEXP covariatesSEXP, SEXP freqSEXP, SEXP weightSEXP, SEXP offsetSEXP, SEXP idSEXP, SEXP robustSEXP, SEXP firthSEXP, SEXP flicSEXP, SEXP plciSEXP, SEXP alphaSEXP) {
+List logisregcpp(const DataFrame data, const StringVector& rep, const std::string event, const StringVector& covariates, const std::string freq, const std::string weight, const std::string offset, const std::string id, const std::string link, const bool robust, const bool firth, const bool flic, const bool plci, const double alpha);
+RcppExport SEXP _trtswitch_logisregcpp(SEXP dataSEXP, SEXP repSEXP, SEXP eventSEXP, SEXP covariatesSEXP, SEXP freqSEXP, SEXP weightSEXP, SEXP offsetSEXP, SEXP idSEXP, SEXP linkSEXP, SEXP robustSEXP, SEXP firthSEXP, SEXP flicSEXP, SEXP plciSEXP, SEXP alphaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -93,12 +93,13 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const std::string >::type weight(weightSEXP);
     Rcpp::traits::input_parameter< const std::string >::type offset(offsetSEXP);
     Rcpp::traits::input_parameter< const std::string >::type id(idSEXP);
+    Rcpp::traits::input_parameter< const std::string >::type link(linkSEXP);
     Rcpp::traits::input_parameter< const bool >::type robust(robustSEXP);
     Rcpp::traits::input_parameter< const bool >::type firth(firthSEXP);
     Rcpp::traits::input_parameter< const bool >::type flic(flicSEXP);
     Rcpp::traits::input_parameter< const bool >::type plci(plciSEXP);
     Rcpp::traits::input_parameter< const double >::type alpha(alphaSEXP);
-    rcpp_result_gen = Rcpp::wrap(logisregcpp(data, rep, event, covariates, freq, weight, offset, id, robust, firth, flic, plci, alpha));
+    rcpp_result_gen = Rcpp::wrap(logisregcpp(data, rep, event, covariates, freq, weight, offset, id, link, robust, firth, flic, plci, alpha));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -692,7 +693,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_trtswitch_ipcwcpp", (DL_FUNC) &_trtswitch_ipcwcpp, 29},
     {"_trtswitch_ipecpp", (DL_FUNC) &_trtswitch_ipecpp, 20},
-    {"_trtswitch_logisregcpp", (DL_FUNC) &_trtswitch_logisregcpp, 13},
+    {"_trtswitch_logisregcpp", (DL_FUNC) &_trtswitch_logisregcpp, 14},
     {"_trtswitch_rpsftmcpp", (DL_FUNC) &_trtswitch_rpsftmcpp, 22},
     {"_trtswitch_splineDesigncpp", (DL_FUNC) &_trtswitch_splineDesigncpp, 4},
     {"_trtswitch_bscpp", (DL_FUNC) &_trtswitch_bscpp, 7},

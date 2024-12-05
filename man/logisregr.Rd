@@ -13,6 +13,7 @@ logisregr(
   weight = "",
   offset = "",
   id = "",
+  link = "logit",
   robust = FALSE,
   firth = FALSE,
   flic = FALSE,
@@ -50,6 +51,10 @@ cluster as indicated by the id. Thus freq is the cluster frequency.}
 
 \item{id}{The name of the id variable in the input data.}
 
+\item{link}{The link function linking the response probabilities to the
+linear predictors. Options include "logit" (default), "probit", and
+"cloglog" (complementary log-log).}
+
 \item{robust}{Whether a robust sandwich variance estimate should be
 computed. In the presence of the id variable, the score residuals
 will be aggregated for each id when computing the robust sandwich
@@ -78,6 +83,7 @@ with the following variables:
 \item \code{niter}: The number of Newton-Raphson iterations.
 \item \code{p}: The number of parameters, including the intercept,
 and regression coefficients associated with the covariates.
+\item \code{link}: The link function.
 \item \code{robust}: Whether a robust sandwich variance estimate should
 be computed.
 \item \code{firth}: Whether the firth's penalized likelihood is used.
@@ -114,6 +120,7 @@ the logit link.
 \item \code{rep}: The replication.
 }
 \item \code{p}: The number of parameters.
+\item \code{link}: The link function.
 \item \code{param}: The parameter names.
 \item \code{beta}: The parameter estimate.
 \item \code{vbeta}: The covariance matrix for parameter estimates.

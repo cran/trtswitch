@@ -23,6 +23,13 @@ fit1$logrank_pvalue
 ## ----psi----------------------------------------------------------------------
 fit1$psi
 
+## ----km-----------------------------------------------------------------------
+ggplot(fit1$kmstar, aes(x=time, y=survival, group=treated,
+                        linetype=as.factor(treated))) + 
+  geom_step() + 
+  scale_linetype_discrete(name = "treated") + 
+  scale_y_continuous(limits = c(0,1))
+
 ## ----hr-----------------------------------------------------------------------
 c(fit1$hr, fit1$hr_CI)
 
@@ -85,4 +92,9 @@ for (i in 2:B) {
 
 data2 <- data.frame(index = 1:B, psi = psihats)
 tail(data2)
+
+## ----psi plot-----------------------------------------------------------------
+ggplot(data2, aes(x = index, y = psi)) + 
+  geom_point() + 
+  geom_line()
 

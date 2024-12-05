@@ -90,7 +90,6 @@ fit1$fit_switch[[1]]$fit_num$parest[, c("param", "beta", "sebeta", "z")]
 ```
 
 Since treatment switching is not allowed in the experimental arm, the weights are identical to 1 for subjects in the experimental group. The unstabilized and stablized weights for the control group are plotted below.
-````{verbatim}
 ```{r weights example 1}
 # unstabilized weights
 ggplot(fit1$data_outcome %>% filter(trtrand == 0), 
@@ -104,7 +103,6 @@ ggplot(fit1$data_outcome %>% filter(trtrand == 0),
   geom_density(fill="#77bd89", color="#1f6e34", alpha=0.8) +
   scale_x_continuous("stabilized weights")
 ```
-````
 
 Now we fit a weighted outcome Cox model and compare the treatemnt hazard ratio estimate with the reported. 
 ```{r cox example 1}
@@ -150,7 +148,6 @@ fit2$fit_switch[[2]]$fit_num$parest[, c("param", "beta", "sebeta", "z")]
 
 
 Below, the unstabilized and stabilized weights are plotted by treatment group: the left panel displays data for the control group, while the right panel shows data for the experimental group.
-````{verbatim}
 ```{r weights example 2}
 # unstabilized weights
 ggplot(fit2$data_outcome, aes(x = unstabilized_weight)) + 
@@ -164,7 +161,6 @@ ggplot(fit2$data_outcome, aes(x = stabilized_weight)) +
   scale_x_continuous("stabilized weights") + 
   facet_wrap(~treated)
 ```
-````
 
 Finally, we fit the weighted outcome Cox model and compare the treatment hazard ratio estimate with the reported. 
 ```{r cox example 2}
