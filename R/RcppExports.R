@@ -9,8 +9,8 @@ ipecpp <- function(data, stratum = "", time = "time", event = "event", treat = "
     .Call(`_trtswitch_ipecpp`, data, stratum, time, event, treat, rx, censor_time, base_cov, aft_dist, strata_main_effect_only, treat_modifier, recensor, admin_recensor_only, autoswitch, alpha, ties, tol, boot, n_boot, seed)
 }
 
-logisregcpp <- function(data, rep = "", event = "event", covariates = "", freq = "", weight = "", offset = "", id = "", link = "logit", robust = 0L, firth = 0L, flic = 0L, plci = 0L, alpha = 0.05) {
-    .Call(`_trtswitch_logisregcpp`, data, rep, event, covariates, freq, weight, offset, id, link, robust, firth, flic, plci, alpha)
+logisregcpp <- function(data, rep = "", event = "event", covariates = "", freq = "", weight = "", offset = "", id = "", link = "logit", robust = 0L, firth = 0L, bc = 0L, flic = 0L, plci = 0L, alpha = 0.05) {
+    .Call(`_trtswitch_logisregcpp`, data, rep, event, covariates, freq, weight, offset, id, link, robust, firth, bc, flic, plci, alpha)
 }
 
 rpsftmcpp <- function(data, stratum = "", time = "time", event = "event", treat = "treat", rx = "rx", censor_time = "censor_time", base_cov = "", low_psi = -1, hi_psi = 1, n_eval_z = 100L, treat_modifier = 1, recensor = 1L, admin_recensor_only = 1L, autoswitch = 1L, gridsearch = 0L, alpha = 0.05, ties = "efron", tol = 1.0e-6, boot = 0L, n_boot = 1000L, seed = NA_integer_) {
@@ -136,10 +136,6 @@ nscpp <- function(x = NA_real_, df = NA_integer_, knots = NA_real_, intercept = 
     .Call(`_trtswitch_nscpp`, x, df, knots, intercept, boundary_knots)
 }
 
-fsurvci <- function(surv, sesurv, ct, z) {
-    .Call(`_trtswitch_fsurvci`, surv, sesurv, ct, z)
-}
-
 #' @title Kaplan-Meier Estimates of Survival Curve
 #' @description Obtains the Kaplan-Meier estimates of the survival curve.
 #'
@@ -199,6 +195,83 @@ fsurvci <- function(surv, sesurv, ct, z) {
 #' @export
 kmest <- function(data, rep = "", stratum = "", time = "time", event = "event", conftype = "log-log", conflev = 0.95) {
     .Call(`_trtswitch_kmest`, data, rep, stratum, time, event, conftype, conflev)
+}
+
+#' @title Estimate of Milestone Survival Difference
+#' @description Obtains the estimate of milestone survival difference
+#' between two treatment groups.
+#'
+#' @param data The input data frame that contains the following variables:
+#'
+#'   * \code{rep}: The replication for by-group processing.
+#'
+#'   * \code{stratum}: The stratum.
+#'
+#'   * \code{treat}: The treatment.
+#'
+#'   * \code{time}: The possibly right-censored survival time.
+#'
+#'   * \code{event}: The event indicator.
+#'
+#' @param rep The name of the replication variable in the input data.
+#' @param stratum The name of the stratum variable in the input data.
+#' @param treat The name of the treatment variable in the input data.
+#' @param time The name of the time variable in the input data.
+#' @param event The name of the event variable in the input data.
+#' @param milestone The milestone time at which to calculate the
+#'   survival probability.
+#' @param survDiffH0 The difference in milestone survival probabilities
+#'   under the null hypothesis. Defaults to 0 for superiority test.
+#' @param conflev The level of the two-sided confidence interval for
+#'   the difference in milestone survival probabilities. Defaults to 0.95.
+#'
+#' @return A data frame with the following variables:
+#'
+#' * \code{rep}: The replication.
+#'
+#' * \code{milestone}: The milestone time relative to randomization.
+#'
+#' * \code{survDiffH0}: The difference in milestone survival probabilities
+#'   under the null hypothesis.
+#'
+#' * \code{surv1}: The estimated milestone survival probability for
+#'   the treatment group.
+#'
+#' * \code{surv2}: The estimated milestone survival probability for
+#'   the control group.
+#'
+#' * \code{survDiff}: The estimated difference in milestone survival
+#'   probabilities.
+#'
+#' * \code{vsurv1}: The variance for surv1.
+#'
+#' * \code{vsurv2}: The variance for surv2.
+#'
+#' * \code{vsurvDiff}: The variance for survDiff.
+#'
+#' * \code{survDiffZ}: The Z-statistic value.
+#'
+#' * \code{survDiffPValue}: The one-sided p-value.
+#'
+#' * \code{lower}: The lower bound of confidence interval.
+#'
+#' * \code{upper}: The upper bound of confidence interval.
+#'
+#' * \code{conflev}: The level of confidence interval.
+#'
+#' @author Kaifeng Lu, \email{kaifenglu@@gmail.com}
+#'
+#' @examples
+#'
+#' df <- kmdiff(data = rawdata, rep = "iterationNumber",
+#'              stratum = "stratum", treat = "treatmentGroup",
+#'              time = "timeUnderObservation", event = "event",
+#'              milestone = 12)
+#' head(df)
+#'
+#' @export
+kmdiff <- function(data, rep = "", stratum = "", treat = "treat", time = "time", event = "event", milestone = NA_real_, survDiffH0 = 0, conflev = 0.95) {
+    .Call(`_trtswitch_kmdiff`, data, rep, stratum, treat, time, event, milestone, survDiffH0, conflev)
 }
 
 #' @title Log-Rank Test of Survival Curve Difference
@@ -569,10 +642,6 @@ tsesimpcpp <- function(data, stratum = "", time = "time", event = "event", treat
     .Call(`_trtswitch_tsesimpcpp`, data, stratum, time, event, treat, censor_time, pd, pd_time, swtrt, swtrt_time, base_cov, base2_cov, aft_dist, strata_main_effect_only, recensor, admin_recensor_only, swtrt_control_only, alpha, ties, offset, boot, n_boot, seed)
 }
 
-set_seed <- function(seed) {
-    invisible(.Call(`_trtswitch_set_seed`, seed))
-}
-
 #' @title Find Interval Numbers of Indices
 #' @description The implementation of \code{findInterval()} in R from
 #' Advanced R by Hadley Wickham. Given a vector of non-decreasing
@@ -602,46 +671,6 @@ findInterval3 <- function(x, v) {
 
 hasVariable <- function(df, varName) {
     .Call(`_trtswitch_hasVariable`, df, varName)
-}
-
-quantilecpp <- function(x, p) {
-    .Call(`_trtswitch_quantilecpp`, x, p)
-}
-
-c_vectors_i <- function(vec1, vec2) {
-    .Call(`_trtswitch_c_vectors_i`, vec1, vec2)
-}
-
-c_vectors <- function(vec1, vec2) {
-    .Call(`_trtswitch_c_vectors`, vec1, vec2)
-}
-
-subset_matrix_by_row <- function(a, q) {
-    .Call(`_trtswitch_subset_matrix_by_row`, a, q)
-}
-
-c_matrices <- function(a1, a2) {
-    .Call(`_trtswitch_c_matrices`, a1, a2)
-}
-
-bygroup <- function(data, variables) {
-    .Call(`_trtswitch_bygroup`, data, variables)
-}
-
-cholesky2 <- function(matrix, n, toler) {
-    .Call(`_trtswitch_cholesky2`, matrix, n, toler)
-}
-
-chsolve2 <- function(matrix, n, y) {
-    invisible(.Call(`_trtswitch_chsolve2`, matrix, n, y))
-}
-
-chinv2 <- function(matrix, n) {
-    invisible(.Call(`_trtswitch_chinv2`, matrix, n))
-}
-
-invsympd <- function(matrix, n, toler) {
-    .Call(`_trtswitch_invsympd`, matrix, n, toler)
 }
 
 #' @title Split a survival data set at specified cut points
@@ -684,65 +713,53 @@ survsplit <- function(tstart, tstop, cut) {
     .Call(`_trtswitch_survsplit`, tstart, tstop, cut)
 }
 
-is_sorted <- function(x) {
-    .Call(`_trtswitch_is_sorted`, x)
-}
-
-house <- function(x) {
-    .Call(`_trtswitch_house`, x)
-}
-
-row_house <- function(A, v) {
-    invisible(.Call(`_trtswitch_row_house`, A, v))
-}
-
 #' @title QR Decomposition of a Matrix
 #' @description Computes the QR decomposition of a matrix.
-#' 
-#' @param x A numeric matrix whose QR decomposition is to be computed.
-#' @param tol The tolerance for detecting linear dependencies in the 
-#'   columns of \code{x}.
-#' 
-#' @details 
-#' This function performs Householder QR with column pivoting: 
+#'
+#' @param X A numeric matrix whose QR decomposition is to be computed.
+#' @param tol The tolerance for detecting linear dependencies in the
+#'   columns of \code{X}.
+#'
+#' @details
+#' This function performs Householder QR with column pivoting:
 #' Given an \eqn{m}-by-\eqn{n} matrix \eqn{A} with \eqn{m \geq n},
-#' the following algorithm computes \eqn{r = \textrm{rank}(A)} and 
+#' the following algorithm computes \eqn{r = \textrm{rank}(A)} and
 #' the factorization \eqn{Q^T A P} equal to
-#' \tabular{ccccc}{ 
+#' \tabular{ccccc}{
 #' | \tab \eqn{R_{11}} \tab \eqn{R_{12}} \tab | \tab \eqn{r} \cr
-#' | \tab 0 \tab 0 \tab | \tab \eqn{m-r} \cr 
+#' | \tab 0 \tab 0 \tab | \tab \eqn{m-r} \cr
 #'   \tab \eqn{r} \tab \eqn{n-r} \tab \tab
 #' }
-#' with \eqn{Q = H_1 \cdots H_r} and \eqn{P = P_1 \cdots P_r}. 
+#' with \eqn{Q = H_1 \cdots H_r} and \eqn{P = P_1 \cdots P_r}.
 #' The upper triangular part of \eqn{A}
-#' is overwritten by the upper triangular part of \eqn{R} and 
+#' is overwritten by the upper triangular part of \eqn{R} and
 #' components \eqn{(j+1):m} of
-#' the \eqn{j}th Householder vector are stored in \eqn{A((j+1):m, j)}. 
+#' the \eqn{j}th Householder vector are stored in \eqn{A((j+1):m, j)}.
 #' The permutation \eqn{P} is encoded in an integer vector \code{pivot}.
-#' 
+#'
 #' @return A list with the following components:
-#' 
-#' * \code{qr}: A matrix with the same dimensions as \code{x}. The upper
+#'
+#' * \code{qr}: A matrix with the same dimensions as \code{X}. The upper
 #'   triangle contains the \code{R} of the decomposition and the lower
-#'   triangle contains Householder vectors (stored in compact form). 
-#'   
-#' * \code{rank}: The rank of \code{x} as computed by the decomposition.
-#' 
+#'   triangle contains Householder vectors (stored in compact form).
+#'
+#' * \code{rank}: The rank of \code{X} as computed by the decomposition.
+#'
 #' * \code{pivot}: The column permutation for the pivoting strategy used
 #'   during the decomposition.
-#'   
+#'
 #' * \code{Q}: The complete \eqn{m}-by-\eqn{m} orthogonal matrix \eqn{Q}.
-#' 
-#' * \code{R}: The complete \eqn{m}-by-\eqn{n} upper triangular 
+#'
+#' * \code{R}: The complete \eqn{m}-by-\eqn{n} upper triangular
 #'   matrix \eqn{R}.
-#' 
+#'
 #' @author Kaifeng Lu, \email{kaifenglu@@gmail.com}
 #'
 #' @references
-#' Gene N. Golub and Charles F. Van Loan. 
-#' Matrix Computations, second edition. Baltimore, Maryland: 
+#' Gene N. Golub and Charles F. Van Loan.
+#' Matrix Computations, second edition. Baltimore, Maryland:
 #' The John Hopkins University Press, 1989, p.235.
-#' 
+#'
 #' @examples
 #'
 #' hilbert <- function(n) { i <- 1:n; 1 / outer(i - 1, i, `+`) }
@@ -750,7 +767,7 @@ row_house <- function(A, v) {
 #' qrcpp(h9)
 #'
 #' @export
-qrcpp <- function(x, tol = 1e-12) {
-    .Call(`_trtswitch_qrcpp`, x, tol)
+qrcpp <- function(X, tol = 1e-12) {
+    .Call(`_trtswitch_qrcpp`, X, tol)
 }
 

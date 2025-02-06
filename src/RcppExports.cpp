@@ -80,8 +80,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // logisregcpp
-List logisregcpp(const DataFrame data, const StringVector& rep, const std::string event, const StringVector& covariates, const std::string freq, const std::string weight, const std::string offset, const std::string id, const std::string link, const bool robust, const bool firth, const bool flic, const bool plci, const double alpha);
-RcppExport SEXP _trtswitch_logisregcpp(SEXP dataSEXP, SEXP repSEXP, SEXP eventSEXP, SEXP covariatesSEXP, SEXP freqSEXP, SEXP weightSEXP, SEXP offsetSEXP, SEXP idSEXP, SEXP linkSEXP, SEXP robustSEXP, SEXP firthSEXP, SEXP flicSEXP, SEXP plciSEXP, SEXP alphaSEXP) {
+List logisregcpp(const DataFrame data, const StringVector& rep, const std::string event, const StringVector& covariates, const std::string freq, const std::string weight, const std::string offset, const std::string id, const std::string link, const bool robust, const bool firth, const bool bc, const bool flic, const bool plci, const double alpha);
+RcppExport SEXP _trtswitch_logisregcpp(SEXP dataSEXP, SEXP repSEXP, SEXP eventSEXP, SEXP covariatesSEXP, SEXP freqSEXP, SEXP weightSEXP, SEXP offsetSEXP, SEXP idSEXP, SEXP linkSEXP, SEXP robustSEXP, SEXP firthSEXP, SEXP bcSEXP, SEXP flicSEXP, SEXP plciSEXP, SEXP alphaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -96,10 +96,11 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const std::string >::type link(linkSEXP);
     Rcpp::traits::input_parameter< const bool >::type robust(robustSEXP);
     Rcpp::traits::input_parameter< const bool >::type firth(firthSEXP);
+    Rcpp::traits::input_parameter< const bool >::type bc(bcSEXP);
     Rcpp::traits::input_parameter< const bool >::type flic(flicSEXP);
     Rcpp::traits::input_parameter< const bool >::type plci(plciSEXP);
     Rcpp::traits::input_parameter< const double >::type alpha(alphaSEXP);
-    rcpp_result_gen = Rcpp::wrap(logisregcpp(data, rep, event, covariates, freq, weight, offset, id, link, robust, firth, flic, plci, alpha));
+    rcpp_result_gen = Rcpp::wrap(logisregcpp(data, rep, event, covariates, freq, weight, offset, id, link, robust, firth, bc, flic, plci, alpha));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -181,20 +182,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// fsurvci
-NumericVector fsurvci(double surv, double sesurv, String ct, double z);
-RcppExport SEXP _trtswitch_fsurvci(SEXP survSEXP, SEXP sesurvSEXP, SEXP ctSEXP, SEXP zSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< double >::type surv(survSEXP);
-    Rcpp::traits::input_parameter< double >::type sesurv(sesurvSEXP);
-    Rcpp::traits::input_parameter< String >::type ct(ctSEXP);
-    Rcpp::traits::input_parameter< double >::type z(zSEXP);
-    rcpp_result_gen = Rcpp::wrap(fsurvci(surv, sesurv, ct, z));
-    return rcpp_result_gen;
-END_RCPP
-}
 // kmest
 DataFrame kmest(const DataFrame data, const StringVector& rep, const StringVector& stratum, const std::string time, const std::string event, const std::string conftype, const double conflev);
 RcppExport SEXP _trtswitch_kmest(SEXP dataSEXP, SEXP repSEXP, SEXP stratumSEXP, SEXP timeSEXP, SEXP eventSEXP, SEXP conftypeSEXP, SEXP conflevSEXP) {
@@ -209,6 +196,25 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const std::string >::type conftype(conftypeSEXP);
     Rcpp::traits::input_parameter< const double >::type conflev(conflevSEXP);
     rcpp_result_gen = Rcpp::wrap(kmest(data, rep, stratum, time, event, conftype, conflev));
+    return rcpp_result_gen;
+END_RCPP
+}
+// kmdiff
+DataFrame kmdiff(const DataFrame data, const StringVector& rep, const StringVector& stratum, const std::string treat, const std::string time, const std::string event, const double milestone, const double survDiffH0, const double conflev);
+RcppExport SEXP _trtswitch_kmdiff(SEXP dataSEXP, SEXP repSEXP, SEXP stratumSEXP, SEXP treatSEXP, SEXP timeSEXP, SEXP eventSEXP, SEXP milestoneSEXP, SEXP survDiffH0SEXP, SEXP conflevSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const DataFrame >::type data(dataSEXP);
+    Rcpp::traits::input_parameter< const StringVector& >::type rep(repSEXP);
+    Rcpp::traits::input_parameter< const StringVector& >::type stratum(stratumSEXP);
+    Rcpp::traits::input_parameter< const std::string >::type treat(treatSEXP);
+    Rcpp::traits::input_parameter< const std::string >::type time(timeSEXP);
+    Rcpp::traits::input_parameter< const std::string >::type event(eventSEXP);
+    Rcpp::traits::input_parameter< const double >::type milestone(milestoneSEXP);
+    Rcpp::traits::input_parameter< const double >::type survDiffH0(survDiffH0SEXP);
+    Rcpp::traits::input_parameter< const double >::type conflev(conflevSEXP);
+    rcpp_result_gen = Rcpp::wrap(kmdiff(data, rep, stratum, treat, time, event, milestone, survDiffH0, conflev));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -476,16 +482,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// set_seed
-void set_seed(int seed);
-RcppExport SEXP _trtswitch_set_seed(SEXP seedSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
-    set_seed(seed);
-    return R_NilValue;
-END_RCPP
-}
 // findInterval3
 IntegerVector findInterval3(NumericVector x, NumericVector v);
 RcppExport SEXP _trtswitch_findInterval3(SEXP xSEXP, SEXP vSEXP) {
@@ -510,127 +506,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// quantilecpp
-double quantilecpp(const NumericVector& x, const double p);
-RcppExport SEXP _trtswitch_quantilecpp(SEXP xSEXP, SEXP pSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const NumericVector& >::type x(xSEXP);
-    Rcpp::traits::input_parameter< const double >::type p(pSEXP);
-    rcpp_result_gen = Rcpp::wrap(quantilecpp(x, p));
-    return rcpp_result_gen;
-END_RCPP
-}
-// c_vectors_i
-IntegerVector c_vectors_i(IntegerVector vec1, IntegerVector vec2);
-RcppExport SEXP _trtswitch_c_vectors_i(SEXP vec1SEXP, SEXP vec2SEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerVector >::type vec1(vec1SEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type vec2(vec2SEXP);
-    rcpp_result_gen = Rcpp::wrap(c_vectors_i(vec1, vec2));
-    return rcpp_result_gen;
-END_RCPP
-}
-// c_vectors
-NumericVector c_vectors(NumericVector vec1, NumericVector vec2);
-RcppExport SEXP _trtswitch_c_vectors(SEXP vec1SEXP, SEXP vec2SEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericVector >::type vec1(vec1SEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type vec2(vec2SEXP);
-    rcpp_result_gen = Rcpp::wrap(c_vectors(vec1, vec2));
-    return rcpp_result_gen;
-END_RCPP
-}
-// subset_matrix_by_row
-NumericMatrix subset_matrix_by_row(NumericMatrix a, IntegerVector q);
-RcppExport SEXP _trtswitch_subset_matrix_by_row(SEXP aSEXP, SEXP qSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type a(aSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type q(qSEXP);
-    rcpp_result_gen = Rcpp::wrap(subset_matrix_by_row(a, q));
-    return rcpp_result_gen;
-END_RCPP
-}
-// c_matrices
-NumericMatrix c_matrices(NumericMatrix a1, NumericMatrix a2);
-RcppExport SEXP _trtswitch_c_matrices(SEXP a1SEXP, SEXP a2SEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type a1(a1SEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type a2(a2SEXP);
-    rcpp_result_gen = Rcpp::wrap(c_matrices(a1, a2));
-    return rcpp_result_gen;
-END_RCPP
-}
-// bygroup
-List bygroup(DataFrame data, const StringVector& variables);
-RcppExport SEXP _trtswitch_bygroup(SEXP dataSEXP, SEXP variablesSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< DataFrame >::type data(dataSEXP);
-    Rcpp::traits::input_parameter< const StringVector& >::type variables(variablesSEXP);
-    rcpp_result_gen = Rcpp::wrap(bygroup(data, variables));
-    return rcpp_result_gen;
-END_RCPP
-}
-// cholesky2
-int cholesky2(NumericMatrix matrix, int n, double toler);
-RcppExport SEXP _trtswitch_cholesky2(SEXP matrixSEXP, SEXP nSEXP, SEXP tolerSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type matrix(matrixSEXP);
-    Rcpp::traits::input_parameter< int >::type n(nSEXP);
-    Rcpp::traits::input_parameter< double >::type toler(tolerSEXP);
-    rcpp_result_gen = Rcpp::wrap(cholesky2(matrix, n, toler));
-    return rcpp_result_gen;
-END_RCPP
-}
-// chsolve2
-void chsolve2(NumericMatrix matrix, int n, NumericVector y);
-RcppExport SEXP _trtswitch_chsolve2(SEXP matrixSEXP, SEXP nSEXP, SEXP ySEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type matrix(matrixSEXP);
-    Rcpp::traits::input_parameter< int >::type n(nSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type y(ySEXP);
-    chsolve2(matrix, n, y);
-    return R_NilValue;
-END_RCPP
-}
-// chinv2
-void chinv2(NumericMatrix matrix, int n);
-RcppExport SEXP _trtswitch_chinv2(SEXP matrixSEXP, SEXP nSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type matrix(matrixSEXP);
-    Rcpp::traits::input_parameter< int >::type n(nSEXP);
-    chinv2(matrix, n);
-    return R_NilValue;
-END_RCPP
-}
-// invsympd
-NumericMatrix invsympd(NumericMatrix matrix, int n, double toler);
-RcppExport SEXP _trtswitch_invsympd(SEXP matrixSEXP, SEXP nSEXP, SEXP tolerSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type matrix(matrixSEXP);
-    Rcpp::traits::input_parameter< int >::type n(nSEXP);
-    Rcpp::traits::input_parameter< double >::type toler(tolerSEXP);
-    rcpp_result_gen = Rcpp::wrap(invsympd(matrix, n, toler));
-    return rcpp_result_gen;
-END_RCPP
-}
 // survsplit
 DataFrame survsplit(NumericVector tstart, NumericVector tstop, NumericVector cut);
 RcppExport SEXP _trtswitch_survsplit(SEXP tstartSEXP, SEXP tstopSEXP, SEXP cutSEXP) {
@@ -644,48 +519,15 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// is_sorted
-bool is_sorted(NumericVector x);
-RcppExport SEXP _trtswitch_is_sorted(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericVector >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(is_sorted(x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// house
-NumericVector house(NumericVector x);
-RcppExport SEXP _trtswitch_house(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericVector >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(house(x));
-    return rcpp_result_gen;
-END_RCPP
-}
-// row_house
-void row_house(NumericMatrix A, NumericVector v);
-RcppExport SEXP _trtswitch_row_house(SEXP ASEXP, SEXP vSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type A(ASEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type v(vSEXP);
-    row_house(A, v);
-    return R_NilValue;
-END_RCPP
-}
 // qrcpp
-List qrcpp(NumericMatrix x, double tol);
-RcppExport SEXP _trtswitch_qrcpp(SEXP xSEXP, SEXP tolSEXP) {
+List qrcpp(const NumericMatrix& X, double tol);
+RcppExport SEXP _trtswitch_qrcpp(SEXP XSEXP, SEXP tolSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type x(xSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix& >::type X(XSEXP);
     Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    rcpp_result_gen = Rcpp::wrap(qrcpp(x, tol));
+    rcpp_result_gen = Rcpp::wrap(qrcpp(X, tol));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -693,13 +535,13 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_trtswitch_ipcwcpp", (DL_FUNC) &_trtswitch_ipcwcpp, 29},
     {"_trtswitch_ipecpp", (DL_FUNC) &_trtswitch_ipecpp, 20},
-    {"_trtswitch_logisregcpp", (DL_FUNC) &_trtswitch_logisregcpp, 14},
+    {"_trtswitch_logisregcpp", (DL_FUNC) &_trtswitch_logisregcpp, 15},
     {"_trtswitch_rpsftmcpp", (DL_FUNC) &_trtswitch_rpsftmcpp, 22},
     {"_trtswitch_splineDesigncpp", (DL_FUNC) &_trtswitch_splineDesigncpp, 4},
     {"_trtswitch_bscpp", (DL_FUNC) &_trtswitch_bscpp, 7},
     {"_trtswitch_nscpp", (DL_FUNC) &_trtswitch_nscpp, 5},
-    {"_trtswitch_fsurvci", (DL_FUNC) &_trtswitch_fsurvci, 4},
     {"_trtswitch_kmest", (DL_FUNC) &_trtswitch_kmest, 7},
+    {"_trtswitch_kmdiff", (DL_FUNC) &_trtswitch_kmdiff, 9},
     {"_trtswitch_lrtest", (DL_FUNC) &_trtswitch_lrtest, 8},
     {"_trtswitch_rmest", (DL_FUNC) &_trtswitch_rmest, 8},
     {"_trtswitch_rmdiff", (DL_FUNC) &_trtswitch_rmdiff, 10},
@@ -710,23 +552,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_trtswitch_tsegestcpp", (DL_FUNC) &_trtswitch_tsegestcpp, 30},
     {"_trtswitch_tsegestsim", (DL_FUNC) &_trtswitch_tsegestsim, 27},
     {"_trtswitch_tsesimpcpp", (DL_FUNC) &_trtswitch_tsesimpcpp, 23},
-    {"_trtswitch_set_seed", (DL_FUNC) &_trtswitch_set_seed, 1},
     {"_trtswitch_findInterval3", (DL_FUNC) &_trtswitch_findInterval3, 2},
     {"_trtswitch_hasVariable", (DL_FUNC) &_trtswitch_hasVariable, 2},
-    {"_trtswitch_quantilecpp", (DL_FUNC) &_trtswitch_quantilecpp, 2},
-    {"_trtswitch_c_vectors_i", (DL_FUNC) &_trtswitch_c_vectors_i, 2},
-    {"_trtswitch_c_vectors", (DL_FUNC) &_trtswitch_c_vectors, 2},
-    {"_trtswitch_subset_matrix_by_row", (DL_FUNC) &_trtswitch_subset_matrix_by_row, 2},
-    {"_trtswitch_c_matrices", (DL_FUNC) &_trtswitch_c_matrices, 2},
-    {"_trtswitch_bygroup", (DL_FUNC) &_trtswitch_bygroup, 2},
-    {"_trtswitch_cholesky2", (DL_FUNC) &_trtswitch_cholesky2, 3},
-    {"_trtswitch_chsolve2", (DL_FUNC) &_trtswitch_chsolve2, 3},
-    {"_trtswitch_chinv2", (DL_FUNC) &_trtswitch_chinv2, 2},
-    {"_trtswitch_invsympd", (DL_FUNC) &_trtswitch_invsympd, 3},
     {"_trtswitch_survsplit", (DL_FUNC) &_trtswitch_survsplit, 3},
-    {"_trtswitch_is_sorted", (DL_FUNC) &_trtswitch_is_sorted, 1},
-    {"_trtswitch_house", (DL_FUNC) &_trtswitch_house, 1},
-    {"_trtswitch_row_house", (DL_FUNC) &_trtswitch_row_house, 2},
     {"_trtswitch_qrcpp", (DL_FUNC) &_trtswitch_qrcpp, 2},
     {NULL, NULL, 0}
 };

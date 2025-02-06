@@ -112,7 +112,7 @@ NumericVector f_score_0(int p, NumericVector par, void *ex) {
 }
 
 
-// observed information matrix
+// expected information matrix
 NumericMatrix f_info_0(int p, NumericVector par, void *ex) {
   logparams *param = (logparams *) ex;
   int n = param->n;
@@ -198,7 +198,7 @@ double f_pen_llik_0(int p, NumericVector par, void *ex) {
 }
 
 
-// Firth's bias-reducing penalized score vector
+// Firth's penalized score vector
 NumericVector f_pen_score_0(int p, NumericVector par, void *ex) {
   logparams *param = (logparams *) ex;
   int n = param->n;
@@ -212,7 +212,6 @@ NumericVector f_pen_score_0(int p, NumericVector par, void *ex) {
     }
   }
 
-  // pi = E(y), d = d theta/d eta, a = diagonal of W, b = d log(a)/d eta
   NumericVector pi(n), d(n), a(n), b(n);
   if (param->link == "logit") {
     for (person = 0; person < n; person++) {
@@ -289,6 +288,123 @@ NumericVector f_pen_score_0(int p, NumericVector par, void *ex) {
 }
 
 
+// Firth's bias-reducing score vector
+NumericVector f_firth_score_0(int p, NumericVector par, void *ex) {
+  logparams *param = (logparams *) ex;
+  int n = param->n;
+  int person, i, j, k, l;
+
+  NumericVector eta(n);
+  for (person = 0; person < n; person++) {
+    eta[person] = param->offset[person];
+    for (i=0; i<p; i++) {
+      eta[person] += par[i]*param->z(person,i);
+    }
+  }
+
+  NumericVector pi(n), d(n), a(n), b(n), c(n);
+  if (param->link == "logit") {
+    for (person = 0; person < n; person++) {
+      double r = R::plogis(eta[person], 0, 1, 1, 0);
+      pi[person] = r;
+      d[person] = 1;
+      a[person] = r*(1-r);
+      b[person] = 0;
+      c[person] = 1-2*r;
+    }
+  } else if (param->link == "probit") {
+    for (person = 0; person < n; person++) {
+      double r = R::pnorm(eta[person], 0, 1, 1, 0);
+      double phi = R::dnorm(eta[person], 0, 1, 0);
+      double dphi = -eta[person];
+      pi[person] = r;
+      d[person] = phi/(r*(1-r));
+      a[person] = phi*phi/(r*(1-r));
+      b[person] = (2*r-1)*phi/(r*(1-r)) + dphi;
+      c[person] = 2*(2*r-1)*phi/(r*(1-r)) + 3*dphi;
+    }
+  } else if (param->link == "cloglog") {
+    for (person = 0; person < n; person++) {
+      double r = 1 - exp(-exp(eta[person]));
+      double phi = exp(eta[person] - exp(eta[person]));
+      double dphi = 1 - exp(eta[person]);
+      pi[person] = r;
+      d[person] = phi/(r*(1-r));
+      a[person] = phi*phi/(r*(1-r));
+      b[person] = (2*r-1)*phi/(r*(1-r)) + dphi;
+      c[person] = 2*(2*r-1)*phi/(r*(1-r)) + 3*dphi;
+    }
+  }
+
+  // information matrix and the covariance matrix of the score vector
+  NumericMatrix imat(p,p), kmat(p,p);
+  for (person = 0; person < n; person++) {
+    double f = param->freq[person];
+    double w = param->weight[person];
+    NumericVector z = param->z(person, _);
+    for (i=0; i<p; i++) {
+      for (j=0; j<=i; j++) {
+        imat(i,j) += f*w*a[person]*z[i]*z[j];
+        kmat(i,j) += f*w*w*a[person]*z[i]*z[j];
+      }
+    }
+  }
+
+  for (i=0; i<p-1; i++) {
+    for (j=i+1; j<p; j++) {
+      imat(i,j) = imat(j,i);
+      kmat(i,j) = kmat(j,i);
+    }
+  }
+
+  double toler = 1e-12;
+  NumericMatrix var = invsympd(imat, p, toler);
+
+  // sandwich variance of model parameters: inv(imat)*kmat*inv(imat)
+  NumericMatrix san(p,p);
+  for (i=0; i<p; i++) {
+    for (j=0; j<=i; j++) {
+      for (k=0; k<p; k++) {
+        for (l=0; l<p; l++) {
+          san(i,j) += var(i,k)*kmat(k,l)*var(l,j);
+        }
+      }
+    }
+  }
+
+  for (i=0; i<p-1; i++) {
+    for (j=i+1; j<p; j++) {
+      san(i,j) = san(j,i);
+    }
+  }
+
+
+  NumericVector score(p);
+  for (person = 0; person < n; person++) {
+    double f = param->freq[person];
+    double w = param->weight[person];
+    NumericVector z = param->z(person, _);
+    double g = 0, h = 0;
+    for (i=0; i<p; i++) {
+      for (j=0; j<p; j++) {
+        g += var(i,j)*z[i]*z[j];
+        h += san(i,j)*z[i]*z[j];
+      }
+    }
+    g *= f*w*w*a[person];
+    h *= f*w*a[person];
+
+    double resid = param->y[person] - pi[person];
+    double u = f*w*resid*d[person] + (-g*b[person] + 0.5*h*c[person]);
+    for (i=0; i<p; i++) {
+      score[i] += u*z[i];
+    }
+  }
+
+  return score;
+}
+
+
 // score residual matrix (without firth, weight and frequency)
 NumericMatrix f_ressco_0(int p, NumericVector par, void *ex) {
   logparams *param = (logparams *) ex;
@@ -342,8 +458,10 @@ NumericMatrix f_ressco_0(int p, NumericVector par, void *ex) {
 
 
 // underlying optimization algorithm for logisreg
+//   colfit: vector of indices of parameters to update
+//   ncolfit: number of parameters to update
 List logisregloop(int p, NumericVector par, void *ex,
-                  int maxiter, double eps, bool firth,
+                  int maxiter, double eps, bool firth, bool bc,
                   IntegerVector colfit, int ncolfit) {
   logparams *param = (logparams *) ex;
   int i, j, iter, halving = 0;
@@ -352,7 +470,7 @@ List logisregloop(int p, NumericVector par, void *ex,
   double toler = 1e-12;
   NumericVector beta(p), newbeta(p);
   double loglik, newlk = 0;
-  NumericVector u(p);
+  NumericVector u(p), oldu(p), newu(p);
   NumericMatrix imat(p,p);
   NumericVector u1(ncolfit);
   NumericMatrix imat1(ncolfit, ncolfit);
@@ -368,8 +486,14 @@ List logisregloop(int p, NumericVector par, void *ex,
     u = f_score_0(p, beta, param);
   } else {
     loglik = f_pen_llik_0(p, beta, param);
-    u = f_pen_score_0(p, beta, param);
+    if (bc) {
+      u = f_firth_score_0(p, beta, param);
+    } else {
+      u = f_pen_score_0(p, beta, param);
+    }
   }
+  if (firth && bc) oldu = clone(u);
+
   for (i=0; i<ncolfit; i++) {
     u1[i] = u[colfit[i]];
   }
@@ -398,6 +522,8 @@ List logisregloop(int p, NumericVector par, void *ex,
     if (!firth) newlk = f_llik_0(p, newbeta, param);
     else newlk = f_pen_llik_0(p, newbeta, param);
 
+    if (firth && bc) newu = f_firth_score_0(p, newbeta, param);
+
     // check convergence
     fail = std::isnan(newlk) || std::isinf(newlk) == 1;
 
@@ -405,7 +531,9 @@ List logisregloop(int p, NumericVector par, void *ex,
       break;
     }
 
-    if (fail || newlk < loglik) { // adjust step size if likelihood decreases
+    if (fail || (!(firth && bc) && newlk < loglik) ||
+        (firth && bc && sum(newu*newu) > sum(oldu*oldu))) {
+      // adjust step size if likelihood decreases
       halving++;
       for (i=0; i<p; i++) {
         newbeta[i] = (beta[i] + newbeta[i])/2;
@@ -418,8 +546,15 @@ List logisregloop(int p, NumericVector par, void *ex,
       }
       loglik = newlk;
 
-      if (!firth) u = f_score_0(p, beta, param);
-      else u = f_pen_score_0(p, beta, param);
+      if (!firth) {
+        u = f_score_0(p, beta, param);
+      } else if (bc) {
+        u = f_firth_score_0(p, beta, param);
+      } else {
+        u = f_pen_score_0(p, beta, param);
+      }
+      if (firth && bc) oldu = clone(u);
+
       for (i=0; i<ncolfit; i++) {
         u1[i] = u[colfit[i]];
       }
@@ -473,15 +608,18 @@ List logisregloop(int p, NumericVector par, void *ex,
 
 
 // confidence limit of profile likelihood method
+//   k: index of the parameter to obtain PL CI
+//   which: computation direction (-1 for lower limit or 1 for upper limit)
+//   l0: boundary of profile loglik = max loglik - 0.5*qchisq(1-alpha, 1)
+// refer to SAS PROC LOGISTIC documentation for Likelihood Ratio-Based
+// Confidence Intervals for Parameters
 double logisregplloop(int p, NumericVector par, void *ex,
-                      int maxiter, double eps, bool firth,
+                      int maxiter, double eps, bool firth, bool bc,
                       int k, int which, double l0) {
   logparams *param = (logparams *) ex;
 
   int i, j, iter;
   bool fail = 0;
-
-  NumericMatrix z1 = param->z;
 
   NumericVector beta(p), newbeta(p);
   double loglik, newlk;
@@ -500,7 +638,11 @@ double logisregplloop(int p, NumericVector par, void *ex,
     u = f_score_0(p, beta, param);
   } else {
     loglik = f_pen_llik_0(p, beta, param);
-    u = f_pen_score_0(p, beta, param);
+    if (bc) {
+      u = f_firth_score_0(p, beta, param);
+    } else {
+      u = f_pen_score_0(p, beta, param);
+    }
   }
 
   imat = f_info_0(p, beta, param);
@@ -540,7 +682,7 @@ double logisregplloop(int p, NumericVector par, void *ex,
     // check convergence
     fail = std::isnan(newlk) || std::isinf(newlk) == 1;
 
-    if (!fail && fabs((newlk - l0)/l0) < eps) {
+    if (!fail && fabs(newlk - l0) < eps && w < eps) {
       break;
     }
 
@@ -549,8 +691,13 @@ double logisregplloop(int p, NumericVector par, void *ex,
     }
     loglik = newlk;
 
-    if (!firth) u = f_score_0(p, beta, param);
-    else u = f_pen_score_0(p, beta, param);
+    if (!firth) {
+      u = f_score_0(p, beta, param);
+    } else if (bc) {
+      u = f_firth_score_0(p, beta, param);
+    } else {
+      u = f_pen_score_0(p, beta, param);
+    }
 
     imat = f_info_0(p, beta, param);
 
@@ -564,6 +711,7 @@ double logisregplloop(int p, NumericVector par, void *ex,
         w += u[i]*v(i,j)*u[j];
       }
     }
+
     underroot = 2*(l0 - loglik + 0.5*w)/v(k,k);
     lambda = underroot < 0.0 ? 0.0 : which*sqrt(underroot);
     u[k] += lambda;
@@ -603,6 +751,7 @@ List logisregcpp(const DataFrame data,
                  const std::string link = "logit",
                  const bool robust = 0,
                  const bool firth = 0,
+                 const bool bc = 0,
                  const bool flic = 0,
                  const bool plci = 0,
                  const double alpha = 0.05) {
@@ -631,7 +780,6 @@ List logisregcpp(const DataFrame data,
   if (!has_event) {
     stop("data must contain the event variable");
   }
-
   NumericVector eventn(n);
   if (has_event) {
     NumericVector eventnz = data[event];
@@ -649,7 +797,6 @@ List logisregcpp(const DataFrame data,
   for (i=0; i<n; i++) {
     zn(i,0) = 1; // intercept
   }
-
   for (j=0; j<p-1; j++) {
     String zj = covariates[j];
     if (!hasVariable(data, zj)) {
@@ -662,7 +809,6 @@ List logisregcpp(const DataFrame data,
   }
 
   bool has_freq = hasVariable(data, freq);
-
   NumericVector freqn(n, 1.0);
   if (has_freq) {
     NumericVector freqnz = data[freq];
@@ -673,7 +819,6 @@ List logisregcpp(const DataFrame data,
   }
 
   bool has_weight = hasVariable(data, weight);
-
   NumericVector weightn(n, 1.0);
   if (has_weight) {
     NumericVector weightnz = data[weight];
@@ -684,7 +829,6 @@ List logisregcpp(const DataFrame data,
   }
 
   bool has_offset = hasVariable(data, offset);
-
   NumericVector offsetn(n);
   if (has_offset) {
     NumericVector offsetnz = data[offset];
@@ -692,7 +836,6 @@ List logisregcpp(const DataFrame data,
   }
 
   bool has_id = hasVariable(data, id);
-
   IntegerVector idn(n);
   if (!has_id) {
     idn = seq(1,n);
@@ -721,7 +864,6 @@ List logisregcpp(const DataFrame data,
   std::for_each(link1.begin(), link1.end(), [](char & c) {
     c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
   });
-
   if (!(link1=="logit" || link1=="probit" || link1=="cloglog")) {
     stop("Invalid value for link");
   }
@@ -761,7 +903,7 @@ List logisregcpp(const DataFrame data,
   offsetn = offsetn[order];
   idn = idn[order];
   zn = subset_matrix_by_row(zn, order);
-  n = sum(sub);
+  n = sum(sub); // number of nonmissing observations
 
   // identify the locations of the unique values of rep
   IntegerVector idx(1,0);
@@ -778,7 +920,7 @@ List logisregcpp(const DataFrame data,
   IntegerVector rep01 = seq(1,nreps);
   NumericVector nobs(nreps), nevents(nreps);
   NumericVector loglik0(nreps), loglik1(nreps);
-  NumericVector regloglik0(nreps), regloglik1(nreps);
+  NumericVector regloglik0(nreps), regloglik1(nreps); // regular loglik
   IntegerVector niter(nreps);
 
   IntegerVector rep0(nreps*p);
@@ -790,7 +932,7 @@ List logisregcpp(const DataFrame data,
 
   NumericVector linear_predictors(n), fitted_values(n);
 
-  int N=0;
+  int N=0; // offset for the current replication data set
   for (h=0; h<nreps; h++) {
     IntegerVector q1 = Range(idx[h], idx[h+1]-1);
     int n1 = static_cast<int>(q1.size());
@@ -802,6 +944,7 @@ List logisregcpp(const DataFrame data,
     IntegerVector id1 = idn[q1];
     NumericMatrix z1 = subset_matrix_by_row(zn, q1);
 
+    // number of trials and number of events accounting for frequencies
     nobs[h] = sum(freq1);
     nevents[h] = sum(freq1*event1);
 
@@ -811,7 +954,6 @@ List logisregcpp(const DataFrame data,
       num += freq1[i]*weight1[i]*event1[i];
       den += freq1[i]*weight1[i];
     }
-
     if (firth) {
       num += 0.5;
       den += 1.0;
@@ -822,8 +964,14 @@ List logisregcpp(const DataFrame data,
 
     IntegerVector colfit0(1);
     logparams param = {n1, link1, event1, z1, freq1, weight1, offset1};
-    List outint = logisregloop(p, bint0, &param, 30, 1.0e-9, firth,
+    List outint = logisregloop(p, bint0, &param, 100, 1.0e-9, firth, 0,
                                colfit0, 1);
+
+    if (firth && bc) {
+      NumericVector bint1 = outint["coef"];
+      outint = logisregloop(p, bint1, &param, 100, 1.0e-9, firth, bc,
+                            colfit0, 1);
+    }
 
     NumericVector bint = outint["coef"];
     NumericMatrix vbint = as<NumericMatrix>(outint["var"]);
@@ -835,7 +983,13 @@ List logisregcpp(const DataFrame data,
     if (p > 1) {
       // parameter estimates and standard errors for the full model
       IntegerVector colfit = seq(0,p-1);
-      out = logisregloop(p, bint, &param, 30, 1.0e-9, firth, colfit, p);
+      out = logisregloop(p, bint, &param, 100, 1.0e-9, firth, 0, colfit, p);
+
+      if (firth && bc) {
+        NumericVector bint1 = out["coef"];
+        out = logisregloop(p, bint1, &param, 100, 1.0e-9, firth, bc,
+                           colfit, p);
+      }
 
       bool fail = out["fail"];
       if (fail) stop("The algorithm in logisregr did not converge");
@@ -854,9 +1008,9 @@ List logisregcpp(const DataFrame data,
         }
 
         logparams param0 = {n1, link1, event1, z1, freq1, weight1, lp};
-
         NumericVector bint00(1, bint0[0]);
-        outint = logisregloop(1, bint00, &param0, 30, 1.0e-9, 0, colfit0, 1);
+        outint = logisregloop(1, bint00, &param0, 100, 1.0e-9, 0, 0,
+                              colfit0, 1);
         double a = as<double>(outint["coef"]);
         double va = as<double>(outint["var"]);
 
@@ -893,7 +1047,7 @@ List logisregcpp(const DataFrame data,
       out = outint;
 
       if (flic) {
-        out = logisregloop(p, bint0, &param, 30, 1.0e-9, 0, colfit0, 1);
+        out = logisregloop(p, bint0, &param, 100, 1.0e-9, 0, 0, colfit0, 1);
         b = out["coef"];
         vb = as<NumericMatrix>(outint["var"]);
       }
@@ -906,20 +1060,17 @@ List logisregcpp(const DataFrame data,
 
     for (i=0; i<p; i++) {
       rep0[h*p+i] = h+1;
-
       if (i==0) {
         par0[h*p+i] = "(Intercept)";
       } else {
         par0[h*p+i] = covariates[i-1];
       }
-
       beta0[h*p+i] = b[i];
       sebeta0[h*p+i] = seb[i];
       for (j=0; j<p; j++) {
         vbeta0(h*p+i,j) = vb(i,j);
       }
     }
-
 
     // linear predictors and fitted values
     int person;
@@ -1054,8 +1205,10 @@ List logisregcpp(const DataFrame data,
 
       if (!(firth && flic)) {
         for (k=0; k<p; k++) {
-          lb[k] = logisregplloop(p, b, &param, 30, 1.0e-8, firth, k, -1, l0);
-          ub[k] = logisregplloop(p, b, &param, 30, 1.0e-8, firth, k, 1, l0);
+          lb[k] = logisregplloop(p, b, &param, 100, 1.0e-6, firth, bc,
+                                 k, -1, l0);
+          ub[k] = logisregplloop(p, b, &param, 100, 1.0e-6, firth, bc,
+                                 k, 1, l0);
 
           IntegerVector colfit1(p-1);
           for (i=0; i<k; i++) {
@@ -1066,8 +1219,13 @@ List logisregcpp(const DataFrame data,
           }
 
           NumericVector b0(p);
-          List out0 = logisregloop(p, b0, &param, 30, 1.0e-8, firth,
+          List out0 = logisregloop(p, b0, &param, 100, 1.0e-8, firth, 0,
                                    colfit1, p-1);
+          if (firth && bc) {
+            NumericVector b1 = out0["coef"];
+            out0 = logisregloop(p, b1, &param, 100, 1.0e-8, firth, bc,
+                                colfit1, p-1);
+          }
           double lmax0 = out0["loglik"];
           prob[k] = R::pchisq(-2*(lmax0 - lmax), 1, 0, 0);
           clparm[k] = "PL";
@@ -1085,8 +1243,10 @@ List logisregcpp(const DataFrame data,
         clparm[0] = "Wald";
 
         for (k=1; k<p; k++) {
-          lb[k] = logisregplloop(p, b, &param, 30, 1.0e-8, firth, k, -1, l0);
-          ub[k] = logisregplloop(p, b, &param, 30, 1.0e-8, firth, k, 1, l0);
+          lb[k] = logisregplloop(p, b, &param, 100, 1.0e-6, firth, bc,
+                                 k, -1, l0);
+          ub[k] = logisregplloop(p, b, &param, 100, 1.0e-6, firth, bc,
+                                 k, 1, l0);
 
           IntegerVector colfit1(p-1);
           for (i=0; i<k; i++) {
@@ -1097,8 +1257,13 @@ List logisregcpp(const DataFrame data,
           }
 
           NumericVector b0(p);
-          List out0 = logisregloop(p, b0, &param, 30, 1.0e-8, firth,
+          List out0 = logisregloop(p, b0, &param, 100, 1.0e-8, firth, 0,
                                    colfit1, p-1);
+          if (firth && bc) {
+            NumericVector b1 = out0["coef"];
+            out0 = logisregloop(p, b1, &param, 100, 1.0e-8, firth, bc,
+                                colfit1, p-1);
+          }
           double lmax0 = out0["loglik"];
           prob[k] = R::pchisq(-2*(lmax0 - lmax), 1, 0, 0);
           clparm[k] = "PL";
@@ -1130,7 +1295,6 @@ List logisregcpp(const DataFrame data,
     if (firth) {
       loglik0[h] = f_pen_llik_0(p, bint, &param);
       loglik1[h] = f_pen_llik_0(p, b, &param);
-
       regloglik0[h] = f_llik_0(p, bint, &param);
       regloglik1[h] = f_llik_0(p, b, &param);
     } else {
@@ -1154,6 +1318,7 @@ List logisregcpp(const DataFrame data,
     _["link"] = link1,
     _["robust"] = robust,
     _["firth"] = firth,
+    _["bc"] = bc,
     _["flic"] = flic);
 
   if (firth) {

@@ -73,7 +73,7 @@ List gest(int n2, int q, int p2, int nids2,
   
   List fit2 = logisregcpp(
     data2, "", "cross", covariates_lgs, "", "", 
-    "", "id", "logit", 1, firth, flic, 0, alpha);
+    "", "id", "logit", 1, firth, 0, flic, 0, alpha);
   
   DataFrame parest = DataFrame(fit2["parest"]);
   NumericVector z = parest["z"];

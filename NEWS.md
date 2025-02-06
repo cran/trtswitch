@@ -1,3 +1,7 @@
+# trtswitch 0.1.3
+
+- Updated logistic regression and associated programs
+
 # trtswitch 0.1.2
 
 - Added probit and complementary log-log links to logistic regression

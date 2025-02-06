@@ -57,8 +57,8 @@ be provided for all subjects including those who had events.
 treat) in the input data for the outcome Cox model.}
 
 \item{aft_dist}{The assumed distribution for time to event for the AFT
-model. Options include "exponential", "weibull", "loglogistic", and
-"lognormal".}
+model. Options include "exponential", "weibull" (default),
+"loglogistic", and "lognormal".}
 
 \item{strata_main_effect_only}{Whether to only include the strata main
 effects in the AFT model. Defaults to \code{TRUE}, otherwise all
@@ -91,8 +91,8 @@ test p-value.}
 
 \item{n_boot}{The number of bootstrap samples.}
 
-\item{seed}{The seed to reproduce the bootstrap results.
-The seed from the environment will be used if left unspecified.}
+\item{seed}{The seed to reproduce the bootstrap results. The default is
+missing, in which case, the seed from the environment will be used.}
 }
 \value{
 A list with the following components:

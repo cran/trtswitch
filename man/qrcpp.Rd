@@ -4,21 +4,21 @@
 \alias{qrcpp}
 \title{QR Decomposition of a Matrix}
 \usage{
-qrcpp(x, tol = 1e-12)
+qrcpp(X, tol = 1e-12)
 }
 \arguments{
-\item{x}{A numeric matrix whose QR decomposition is to be computed.}
+\item{X}{A numeric matrix whose QR decomposition is to be computed.}
 
 \item{tol}{The tolerance for detecting linear dependencies in the
-columns of \code{x}.}
+columns of \code{X}.}
 }
 \value{
 A list with the following components:
 \itemize{
-\item \code{qr}: A matrix with the same dimensions as \code{x}. The upper
+\item \code{qr}: A matrix with the same dimensions as \code{X}. The upper
 triangle contains the \code{R} of the decomposition and the lower
 triangle contains Householder vectors (stored in compact form).
-\item \code{rank}: The rank of \code{x} as computed by the decomposition.
+\item \code{rank}: The rank of \code{X} as computed by the decomposition.
 \item \code{pivot}: The column permutation for the pivoting strategy used
 during the decomposition.
 \item \code{Q}: The complete \eqn{m}-by-\eqn{m} orthogonal matrix \eqn{Q}.

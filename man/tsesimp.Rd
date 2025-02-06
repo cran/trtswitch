@@ -76,8 +76,8 @@ treat) in the input data for the outcome Cox model.}
 post-progression survival.}
 
 \item{aft_dist}{The assumed distribution for time to event for the AFT
-model. Options include "exponential", "weibull", "loglogistic", and
-"lognormal".}
+model. Options include "exponential", "weibull" (default),
+"loglogistic", and "lognormal".}
 
 \item{strata_main_effect_only}{Whether to only include the strata main
 effects in the AFT model. Defaults to \code{TRUE}, otherwise all
@@ -91,9 +91,10 @@ censoring times only. Defaults to \code{TRUE}. If \code{FALSE},
 recensoring will be applied to the actual censoring times for dropouts.}
 
 \item{swtrt_control_only}{Whether treatment switching occurred only in
-the control group.}
+the control group. The default is \code{TRUE}.}
 
-\item{alpha}{The significance level to calculate confidence intervals.}
+\item{alpha}{The significance level to calculate confidence intervals.
+The default value is 0.05.}
 
 \item{ties}{The method for handling ties in the Cox model, either
 "breslow" or "efron" (default).}
@@ -107,8 +108,8 @@ interval for hazard ratio. Defaults to \code{TRUE}.}
 
 \item{n_boot}{The number of bootstrap samples.}
 
-\item{seed}{The seed to reproduce the bootstrap results.
-The seed from the environment will be used if left unspecified.}
+\item{seed}{The seed to reproduce the bootstrap results. The default is
+missing, in which case, the seed from the environment will be used.}
 }
 \value{
 A list with the following components:
@@ -167,8 +168,8 @@ group if \code{swtrt_control_only} is \code{FALSE}.
 }
 \description{
 Obtains the causal parameter estimate of the AFT model
-and the hazard ratio estimate of the Cox model to adjust for
-treatment switching.
+for switching after disease progression and the hazard ratio estimate
+of the outcome Cox model to adjust for treatment switching.
 }
 \details{
 We use the following steps to obtain the hazard ratio estimate

@@ -98,8 +98,8 @@ test p-value.}
 
 \item{n_boot}{The number of bootstrap samples.}
 
-\item{seed}{The seed to reproduce the bootstrap results.
-The seed from the environment will be used if left unspecified.}
+\item{seed}{The seed to reproduce the bootstrap results. The default is
+missing, in which case, the seed from the environment will be used.}
 }
 \value{
 A list with the following components:

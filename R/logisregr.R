@@ -38,6 +38,10 @@
 #'   variance estimate.
 #' @param firth Whether the firth's bias reducing penalized likelihood
 #'   should be used. The default is \code{FALSE}.
+#' @param bc Whether to apply firth's bias correction for noncanonical
+#'   parameterization and weighted logistic regression. The default is
+#'   \code{FALSE}, in which case, the penalized likelihood with Jeffreys
+#'   prior will be used.
 #' @param flic Whether to apply intercept correction to obtain more
 #'   accurate predicted probabilities. The default is \code{FALSE}.
 #' @param plci Whether to obtain profile likelihood confidence interval.
@@ -89,6 +93,9 @@
 #'       be computed.
 #'
 #'     - \code{firth}: Whether the firth's penalized likelihood is used.
+#'
+#'     - \code{bc}: Whether to apply firth's bias correction for noncanonical
+#'       parameterization and weighted logistic regression.
 #'
 #'     - \code{flic}: Whether to apply intercept correction.
 #'
@@ -178,6 +185,9 @@
 #' * \code{robust}: Whether a robust sandwich variance estimate should be
 #'   computed.
 #'
+#' * \code{bc}: Whether to apply firth's bias correction for noncanonical
+#'   parameterization and weighted logistic regression.
+#'
 #' * \code{firth}: Whether to use the firth's bias reducing penalized
 #'   likelihood.
 #'
@@ -213,7 +223,7 @@
 logisregr <- function(data, rep = "", event = "event", covariates = "",
                       freq = "", weight = "", offset = "", id = "",
                       link = "logit", robust = FALSE, firth = FALSE,
-                      flic = FALSE, plci = FALSE, alpha = 0.05) {
+                      bc = FALSE, flic = FALSE, plci = FALSE, alpha = 0.05) {
   
   rownames(data) = NULL
   
@@ -258,7 +268,8 @@ logisregr <- function(data, rep = "", event = "event", covariates = "",
   fit <- logisregcpp(data = df, rep = rep, event = event,
                      covariates = varnames, freq = freq, weight = weight,
                      offset = offset, id = id, link = link, robust = robust,
-                     firth = firth, flic = flic, plci = plci, alpha = alpha)
+                     firth = firth, bc = bc, flic = flic, plci = plci,
+                     alpha = alpha)
   
   fit$p <- fit$sumstat$p[1]
   fit$link <- fit$sumstat$link[1]
@@ -303,6 +314,7 @@ logisregr <- function(data, rep = "", event = "event", covariates = "",
   fit$id = id
   fit$robust = robust
   fit$firth = firth
+  fit$bc = bc
   fit$flic = flic
   fit$plci = plci
   fit$alpha = alpha

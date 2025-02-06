@@ -961,7 +961,7 @@ List ipcwcpp(
                       
                       List fit_den = logisregcpp(
                         data1, "", "cross", covariates_lgs_den, "", "", 
-                        "", "id", "logit", 1, firth, flic, 0, alpha);
+                        "", "id", "logit", 1, firth, 0, flic, 0, alpha);
                       
                       DataFrame f_den = DataFrame(fit_den["fitted"]);
                       NumericVector h_den = f_den["fitted_values"];
@@ -1010,7 +1010,7 @@ List ipcwcpp(
                       
                       List fit_num = logisregcpp(
                         data1, "", "cross", covariates_lgs_num, "", "", 
-                        "", "id", "logit", 1, firth, flic, 0, alpha);
+                        "", "id", "logit", 1, firth, 0, flic, 0, alpha);
                       
                       DataFrame f_num = DataFrame(fit_num["fitted"]);
                       NumericVector h_num = f_num["fitted_values"];
