@@ -1,3 +1,10 @@
+# trtswitch 0.1.4
+
+- Added the keep_censor parameter to the kmest function and added the ncensor variable to the output data frame.
+- Added time 0 and the ncensor variable to the output data frame of the kmest function
+- Added time 0 and the ncensor variable to the output baseline hazard data frame of the phregr function
+- Added id to output data
+
 # trtswitch 0.1.3
 
 - Updated logistic regression and associated programs
@@ -32,7 +39,7 @@
     - Added treat variable to Sstar.
     - Changed the default value of admin_recensor_only from FALSE to TRUE.
     - Modified Sstar and kmstar to be consistent with rpsftm.
-    - Add data_aft and fit_aft to output.
+    - Added data_aft and fit_aft to output.
     - Added data_outcome and fit_outcome to output.
     - Added raw stratum and treat information to data_outcome.
 

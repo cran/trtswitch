@@ -40,7 +40,8 @@ switched <- fit1$analysis_switch$data_switch[[1]]$data %>%
 table(switched$swtrt_time)
 
 ## ----km-----------------------------------------------------------------------
-ggplot(fit1$analysis_switch$km_switch[[1]]$data, 
+ggplot(fit1$analysis_switch$km_switch[[1]]$data %>% 
+         filter(nevent > 0), 
        aes(x=time, y=survival)) + 
   geom_step() + 
   scale_y_continuous(limits = c(0,1)) + 

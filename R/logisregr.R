@@ -138,11 +138,11 @@
 #'
 #' * \code{fitted}: The data frame with the following variables:
 #'
-#'     - \code{linear_predictors}: The linear fit on the logit scale.
+#'     - \code{linear_predictors}: The linear fit on the link function scale.
 #'
 #'     - \code{fitted_values}: The fitted probabilities of having an event,
 #'       obtained by transforming the linear predictors by the inverse of
-#'       the logit link.
+#'       the link function.
 #'
 #'     - \code{rep}: The replication.
 #'
@@ -158,7 +158,7 @@
 #'
 #' * \code{vbeta_naive}: The naive covariance matrix for parameter estimates.
 #'
-#' * \code{linear_predictors}: The linear fit on the logit scale.
+#' * \code{linear_predictors}: The linear fit on the link function scale.
 #'
 #' * \code{fitted_values}: The fitted probabilities of having an event.
 #'

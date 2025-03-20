@@ -7,6 +7,7 @@ Switching}
 \usage{
 tsesimp(
   data,
+  id = "id",
   stratum = "",
   time = "time",
   event = "event",
@@ -34,6 +35,7 @@ tsesimp(
 \arguments{
 \item{data}{The input data frame that contains the following variables:
 \itemize{
+\item \code{id}: The subject id.
 \item \code{stratum}: The stratum.
 \item \code{time}: The survival time for right censored data.
 \item \code{event}: The event indicator, 1=event, 0=no event.
@@ -49,6 +51,8 @@ be provided for all subjects including those who had events.
 \item \code{base2_cov}: The baseline and secondary baseline
 covariates (excluding swtrt).
 }}
+
+\item{id}{The name of the id variable in the input data.}
 
 \item{stratum}{The name(s) of the stratum variable(s) in the input data.}
 
@@ -213,7 +217,7 @@ shilong3 <- shilong1 \%>\%
 
 # apply the two-stage method
 fit1 <- tsesimp(
-  data = shilong3, time = "tstop", event = "event",
+  data = shilong3, id = "id", time = "tstop", event = "event",
   treat = "bras.f", censor_time = "dcut", pd = "pd",
   pd_time = "dpd", swtrt = "co", swtrt_time = "dco",
   base_cov = c("agerand", "sex.f", "tt_Lnum", "rmh_alea.c",

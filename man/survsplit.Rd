@@ -32,7 +32,7 @@ For a given survival dataset and specified cut times,
 each record is split into multiple subrecords at each cut time.
 The resulting dataset is in counting process format, with each
 subrecord containing a start time, stop time, and event status.
-This is adapted from the survplit.c function from the survival package.
+This is adapted from the survsplit.c function from the survival package.
 }
 \examples{
 

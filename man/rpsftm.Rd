@@ -7,6 +7,7 @@ Treatment Switching}
 \usage{
 rpsftm(
   data,
+  id = "id",
   stratum = "",
   time = "time",
   event = "event",
@@ -33,6 +34,7 @@ rpsftm(
 \arguments{
 \item{data}{The input data frame that contains the following variables:
 \itemize{
+\item \code{id}: The subject id.
 \item \code{stratum}: The stratum.
 \item \code{time}: The survival time for right censored data.
 \item \code{event}: The event indicator, 1=event, 0=no event.
@@ -43,6 +45,8 @@ rpsftm(
 be provided for all subjects including those who had events.
 \item \code{base_cov}: The baseline covariates (excluding treat).
 }}
+
+\item{id}{The name of the id variable in the input data.}
 
 \item{stratum}{The name(s) of the stratum variable(s) in the input data.}
 
@@ -190,7 +194,7 @@ library(dplyr)
 data <- immdef \%>\% mutate(rx = 1-xoyrs/progyrs)
 
 fit1 <- rpsftm(
-  data, time = "progyrs", event = "prog", treat = "imm",
+  data, id = "id", time = "progyrs", event = "prog", treat = "imm",
   rx = "rx", censor_time = "censyrs", boot = FALSE)
 
 c(fit1$hr, fit1$hr_CI)
@@ -210,7 +214,7 @@ shilong2 <- shilong1 \%>\%
                      ifelse(bras.f == "MTA", 1, 0)))
 
 fit2 <- rpsftm(
-  shilong2, time = "tstop", event = "event",
+  shilong2, id = "id", time = "tstop", event = "event",
   treat = "bras.f", rx = "rx", censor_time = "dcut",
   base_cov = c("agerand", "sex.f", "tt_Lnum", "rmh_alea.c",
                "pathway.f"),

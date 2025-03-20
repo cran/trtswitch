@@ -5,16 +5,16 @@ ipcwcpp <- function(data, id = "id", stratum = "", tstart = "tstart", tstop = "t
     .Call(`_trtswitch_ipcwcpp`, data, id, stratum, tstart, tstop, event, treat, swtrt, swtrt_time, swtrt_time_lower, swtrt_time_upper, base_cov, numerator, denominator, logistic_switching_model, strata_main_effect_only, firth, flic, ns_df, relative_time, stabilized_weights, trunc, trunc_upper_only, swtrt_control_only, alpha, ties, boot, n_boot, seed)
 }
 
-ipecpp <- function(data, stratum = "", time = "time", event = "event", treat = "treat", rx = "rx", censor_time = "censor_time", base_cov = "", aft_dist = "weibull", strata_main_effect_only = 1L, treat_modifier = 1, recensor = 1L, admin_recensor_only = 1L, autoswitch = 1L, alpha = 0.05, ties = "efron", tol = 1.0e-6, boot = 0L, n_boot = 1000L, seed = NA_integer_) {
-    .Call(`_trtswitch_ipecpp`, data, stratum, time, event, treat, rx, censor_time, base_cov, aft_dist, strata_main_effect_only, treat_modifier, recensor, admin_recensor_only, autoswitch, alpha, ties, tol, boot, n_boot, seed)
+ipecpp <- function(data, id = "id", stratum = "", time = "time", event = "event", treat = "treat", rx = "rx", censor_time = "censor_time", base_cov = "", aft_dist = "weibull", strata_main_effect_only = 1L, treat_modifier = 1, recensor = 1L, admin_recensor_only = 1L, autoswitch = 1L, alpha = 0.05, ties = "efron", tol = 1.0e-6, boot = 0L, n_boot = 1000L, seed = NA_integer_) {
+    .Call(`_trtswitch_ipecpp`, data, id, stratum, time, event, treat, rx, censor_time, base_cov, aft_dist, strata_main_effect_only, treat_modifier, recensor, admin_recensor_only, autoswitch, alpha, ties, tol, boot, n_boot, seed)
 }
 
 logisregcpp <- function(data, rep = "", event = "event", covariates = "", freq = "", weight = "", offset = "", id = "", link = "logit", robust = 0L, firth = 0L, bc = 0L, flic = 0L, plci = 0L, alpha = 0.05) {
     .Call(`_trtswitch_logisregcpp`, data, rep, event, covariates, freq, weight, offset, id, link, robust, firth, bc, flic, plci, alpha)
 }
 
-rpsftmcpp <- function(data, stratum = "", time = "time", event = "event", treat = "treat", rx = "rx", censor_time = "censor_time", base_cov = "", low_psi = -1, hi_psi = 1, n_eval_z = 100L, treat_modifier = 1, recensor = 1L, admin_recensor_only = 1L, autoswitch = 1L, gridsearch = 0L, alpha = 0.05, ties = "efron", tol = 1.0e-6, boot = 0L, n_boot = 1000L, seed = NA_integer_) {
-    .Call(`_trtswitch_rpsftmcpp`, data, stratum, time, event, treat, rx, censor_time, base_cov, low_psi, hi_psi, n_eval_z, treat_modifier, recensor, admin_recensor_only, autoswitch, gridsearch, alpha, ties, tol, boot, n_boot, seed)
+rpsftmcpp <- function(data, id = "id", stratum = "", time = "time", event = "event", treat = "treat", rx = "rx", censor_time = "censor_time", base_cov = "", low_psi = -1, hi_psi = 1, n_eval_z = 100L, treat_modifier = 1, recensor = 1L, admin_recensor_only = 1L, autoswitch = 1L, gridsearch = 0L, alpha = 0.05, ties = "efron", tol = 1.0e-6, boot = 0L, n_boot = 1000L, seed = NA_integer_) {
+    .Call(`_trtswitch_rpsftmcpp`, data, id, stratum, time, event, treat, rx, censor_time, base_cov, low_psi, hi_psi, n_eval_z, treat_modifier, recensor, admin_recensor_only, autoswitch, gridsearch, alpha, ties, tol, boot, n_boot, seed)
 }
 
 #' @title B-Spline Design Matrix 
@@ -158,6 +158,8 @@ nscpp <- function(x = NA_real_, df = NA_integer_, knots = NA_real_, intercept = 
 #'   The arcsin option bases the intervals on asin(sqrt(survival)).
 #' @param conflev The level of the two-sided confidence interval for
 #'   the survival probabilities. Defaults to 0.95.
+#' @param keep_censor Whether to retain the censoring time in the output
+#'   data frame.
 #'
 #' @return A data frame with the following variables:
 #'
@@ -168,6 +170,8 @@ nscpp <- function(x = NA_real_, df = NA_integer_, knots = NA_real_, intercept = 
 #' * \code{nrisk}: The number of subjects at risk.
 #'
 #' * \code{nevent}: The number of subjects having the event.
+#'
+#' * \code{ncensor}: The number of censored subjects.
 #'
 #' * \code{survival}: The Kaplan-Meier estimate of the survival probability.
 #'
@@ -193,8 +197,8 @@ nscpp <- function(x = NA_real_, df = NA_integer_, knots = NA_real_, intercept = 
 #' kmest(data = aml, stratum = "x", time = "time", event = "status")
 #'
 #' @export
-kmest <- function(data, rep = "", stratum = "", time = "time", event = "event", conftype = "log-log", conflev = 0.95) {
-    .Call(`_trtswitch_kmest`, data, rep, stratum, time, event, conftype, conflev)
+kmest <- function(data, rep = "", stratum = "", time = "time", event = "event", conftype = "log-log", conflev = 0.95, keep_censor = 0L) {
+    .Call(`_trtswitch_kmest`, data, rep, stratum, time, event, conftype, conflev, keep_censor)
 }
 
 #' @title Estimate of Milestone Survival Difference
@@ -490,8 +494,8 @@ residuals_phregcpp <- function(p, beta, data, stratum = "", time = "time", time2
     .Call(`_trtswitch_residuals_phregcpp`, p, beta, data, stratum, time, time2, event, covariates, weight, offset, id, ties, type)
 }
 
-tsegestcpp <- function(data, id = "id", stratum = "", tstart = "tstart", tstop = "tstop", event = "event", treat = "treat", censor_time = "censor_time", pd = "pd", pd_time = "pd_time", swtrt = "swtrt", swtrt_time = "swtrt_time", swtrt_time_upper = "", base_cov = "", conf_cov = "", low_psi = -3, hi_psi = 3, n_eval_z = 100L, strata_main_effect_only = 1L, firth = 0L, flic = 0L, recensor = 1L, admin_recensor_only = 1L, swtrt_control_only = 1L, alpha = 0.05, ties = "efron", tol = 1.0e-6, boot = 1L, n_boot = 1000L, seed = NA_integer_) {
-    .Call(`_trtswitch_tsegestcpp`, data, id, stratum, tstart, tstop, event, treat, censor_time, pd, pd_time, swtrt, swtrt_time, swtrt_time_upper, base_cov, conf_cov, low_psi, hi_psi, n_eval_z, strata_main_effect_only, firth, flic, recensor, admin_recensor_only, swtrt_control_only, alpha, ties, tol, boot, n_boot, seed)
+tsegestcpp <- function(data, id = "id", stratum = "", tstart = "tstart", tstop = "tstop", event = "event", treat = "treat", censor_time = "censor_time", pd = "pd", pd_time = "pd_time", swtrt = "swtrt", swtrt_time = "swtrt_time", swtrt_time_upper = "", base_cov = "", conf_cov = "", low_psi = -3, hi_psi = 3, n_eval_z = 100L, strata_main_effect_only = 1L, firth = 0L, flic = 0L, recensor = 1L, admin_recensor_only = 1L, swtrt_control_only = 1L, alpha = 0.05, ties = "efron", tol = 1.0e-6, offset = 1, boot = 1L, n_boot = 1000L, seed = NA_integer_) {
+    .Call(`_trtswitch_tsegestcpp`, data, id, stratum, tstart, tstop, event, treat, censor_time, pd, pd_time, swtrt, swtrt_time, swtrt_time_upper, base_cov, conf_cov, low_psi, hi_psi, n_eval_z, strata_main_effect_only, firth, flic, recensor, admin_recensor_only, swtrt_control_only, alpha, ties, tol, offset, boot, n_boot, seed)
 }
 
 #' @title Simulate Survival Data for Two-Stage Estimation Method Using 
@@ -638,8 +642,8 @@ tsegestsim <- function(n = 500L, allocation1 = 2L, allocation2 = 1L, pbprog = 0.
     .Call(`_trtswitch_tsegestsim`, n, allocation1, allocation2, pbprog, trtlghr, bprogsl, shape1, scale1, shape2, scale2, pmix, admin, pcatnotrtbprog, pcattrtbprog, pcatnotrt, pcattrt, catmult, tdxo, ppoor, pgood, ppoormet, pgoodmet, xomult, milestone, swtrt_control_only, outputRawDataset, seed)
 }
 
-tsesimpcpp <- function(data, stratum = "", time = "time", event = "event", treat = "treat", censor_time = "censor_time", pd = "pd", pd_time = "pd_time", swtrt = "swtrt", swtrt_time = "swtrt_time", base_cov = "", base2_cov = "", aft_dist = "weibull", strata_main_effect_only = 1L, recensor = 1L, admin_recensor_only = 1L, swtrt_control_only = 1L, alpha = 0.05, ties = "efron", offset = 1, boot = 1L, n_boot = 1000L, seed = NA_integer_) {
-    .Call(`_trtswitch_tsesimpcpp`, data, stratum, time, event, treat, censor_time, pd, pd_time, swtrt, swtrt_time, base_cov, base2_cov, aft_dist, strata_main_effect_only, recensor, admin_recensor_only, swtrt_control_only, alpha, ties, offset, boot, n_boot, seed)
+tsesimpcpp <- function(data, id = "id", stratum = "", time = "time", event = "event", treat = "treat", censor_time = "censor_time", pd = "pd", pd_time = "pd_time", swtrt = "swtrt", swtrt_time = "swtrt_time", base_cov = "", base2_cov = "", aft_dist = "weibull", strata_main_effect_only = 1L, recensor = 1L, admin_recensor_only = 1L, swtrt_control_only = 1L, alpha = 0.05, ties = "efron", offset = 1, boot = 1L, n_boot = 1000L, seed = NA_integer_) {
+    .Call(`_trtswitch_tsesimpcpp`, data, id, stratum, time, event, treat, censor_time, pd, pd_time, swtrt, swtrt_time, base_cov, base2_cov, aft_dist, strata_main_effect_only, recensor, admin_recensor_only, swtrt_control_only, alpha, ties, offset, boot, n_boot, seed)
 }
 
 #' @title Find Interval Numbers of Indices
@@ -678,7 +682,7 @@ hasVariable <- function(df, varName) {
 #' each record is split into multiple subrecords at each cut time. 
 #' The resulting dataset is in counting process format, with each 
 #' subrecord containing a start time, stop time, and event status.
-#' This is adapted from the survplit.c function from the survival package.
+#' This is adapted from the survsplit.c function from the survival package.
 #'
 #' @param tstart The starting time of the time interval for 
 #'   counting-process data.

@@ -33,6 +33,7 @@ tsegest(
   alpha = 0.05,
   ties = "efron",
   tol = 1e-06,
+  offset = 1,
   boot = TRUE,
   n_boot = 1000,
   seed = NA
@@ -132,6 +133,10 @@ The default value is 0.05.}
 
 \item{tol}{The desired accuracy (convergence tolerance) for \code{psi}.}
 
+\item{offset}{The offset to calculate the time to event, PD, and
+treatment switch. We can set \code{offset} equal to 1 (default),
+1/30.4375, or 1/365.25 if the time unit is day, month, or year.}
+
 \item{boot}{Whether to use bootstrap to obtain the confidence
 interval for hazard ratio. Defaults to \code{TRUE}.}
 
@@ -207,6 +212,8 @@ intervals.
 \item \code{ties}: The method for handling ties in the Cox model.
 \item \code{tol}: The desired accuracy (convergence tolerance)
 for \code{psi}.
+\item \code{offset}: The offset to calculate the time to event, PD, and
+treatment switch.
 \item \code{boot}: Whether to use bootstrap to obtain the confidence
 interval for hazard ratio.
 \item \code{n_boot}: The number of bootstrap samples.
