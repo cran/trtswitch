@@ -1,8 +1,8 @@
 Package: trtswitch
 Type: Package
 Title: Treatment Switching
-Version: 0.1.4
-Date: 2025-03-19
+Version: 0.1.5
+Date: 2025-04-23
 Authors@R: 
     person("Kaifeng", "Lu", , "kaifenglu@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-6160-7119"))
@@ -19,9 +19,11 @@ Encoding: UTF-8
 NeedsCompilation: yes
 Depends: R (>= 2.10)
 LazyData: true
+URL: https://github.com/kaifenglu/trtswitch
+BugReports: https://github.com/kaifenglu/trtswitch/issues
 Config/testthat/edition: 3
-Packaged: 2025-03-20 02:23:35 UTC; kaife
+Packaged: 2025-04-24 00:35:10 UTC; kaife
 Author: Kaifeng Lu [aut, cre] (<https://orcid.org/0000-0002-6160-7119>)
 Maintainer: Kaifeng Lu <kaifenglu@gmail.com>
 Repository: CRAN
-Date/Publication: 2025-03-20 04:10:02 UTC
+Date/Publication: 2025-04-24 02:30:02 UTC

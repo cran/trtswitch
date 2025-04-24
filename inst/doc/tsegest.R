@@ -29,10 +29,11 @@ fit1 <- tsegest(
   pd = "progressed", pd_time = "timePFSobs", swtrt = "xo", 
   swtrt_time = "xotime", swtrt_time_upper = "xotime_upper",
   base_cov = "bprog", conf_cov = "bprog*catlag", 
-  low_psi = -3, hi_psi = 3, strata_main_effect_only = TRUE,
+  low_psi = -2, hi_psi = 2, n_eval_z = 101, 
+  strata_main_effect_only = TRUE,
   recensor = TRUE, admin_recensor_only = TRUE, 
   swtrt_control_only = TRUE, alpha = 0.05, ties = "efron", 
-  tol = 1.0e-6, boot = FALSE)
+  tol = 1.0e-6, offset = 1, boot = FALSE)
 
 ## ----switch time points-------------------------------------------------------
 switched <- fit1$analysis_switch$data_switch[[1]]$data %>% 
@@ -57,6 +58,21 @@ parest[, c("param", "beta", "sebeta", "z")]
 
 ## ----psi estimates------------------------------------------------------------
 c(fit1$psi, fit1$psi_CI)
+
+## ----Z(psi)-------------------------------------------------------------------
+psi_CI_width <- fit1$psi_CI[2] - fit1$psi_CI[1]
+
+ggplot(fit1$analysis_switch$eval_z[[1]]$data %>% 
+         filter(psi > fit1$psi_CI[1] - psi_CI_width*0.25 & 
+                  psi < fit1$psi_CI[2] + psi_CI_width*0.25), 
+       aes(x=psi, y=Z)) + 
+  geom_line() + 
+  geom_hline(yintercept = c(0, -1.96, 1.96), linetype = 2) + 
+  scale_y_continuous(breaks = c(0, -1.96, 1.96)) + 
+  geom_vline(xintercept = c(fit1$psi, fit1$psi_CI), linetype = 2) + 
+  scale_x_continuous(breaks = round(c(fit1$psi, fit1$psi_CI), 3)) + 
+  ylab("Wald Z for counterfactual") + 
+  theme(panel.grid.minor = element_blank())
 
 ## ----cox----------------------------------------------------------------------
 fit1$fit_outcome$parest[, c("param", "beta", "sebeta", "z")]

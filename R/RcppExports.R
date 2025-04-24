@@ -5,15 +5,15 @@ ipcwcpp <- function(data, id = "id", stratum = "", tstart = "tstart", tstop = "t
     .Call(`_trtswitch_ipcwcpp`, data, id, stratum, tstart, tstop, event, treat, swtrt, swtrt_time, swtrt_time_lower, swtrt_time_upper, base_cov, numerator, denominator, logistic_switching_model, strata_main_effect_only, firth, flic, ns_df, relative_time, stabilized_weights, trunc, trunc_upper_only, swtrt_control_only, alpha, ties, boot, n_boot, seed)
 }
 
-ipecpp <- function(data, id = "id", stratum = "", time = "time", event = "event", treat = "treat", rx = "rx", censor_time = "censor_time", base_cov = "", aft_dist = "weibull", strata_main_effect_only = 1L, treat_modifier = 1, recensor = 1L, admin_recensor_only = 1L, autoswitch = 1L, alpha = 0.05, ties = "efron", tol = 1.0e-6, boot = 0L, n_boot = 1000L, seed = NA_integer_) {
-    .Call(`_trtswitch_ipecpp`, data, id, stratum, time, event, treat, rx, censor_time, base_cov, aft_dist, strata_main_effect_only, treat_modifier, recensor, admin_recensor_only, autoswitch, alpha, ties, tol, boot, n_boot, seed)
+ipecpp <- function(data, id = "id", stratum = "", time = "time", event = "event", treat = "treat", rx = "rx", censor_time = "censor_time", base_cov = "", aft_dist = "weibull", strata_main_effect_only = 1L, low_psi = -1, hi_psi = 1, treat_modifier = 1, recensor = 1L, admin_recensor_only = 1L, autoswitch = 1L, alpha = 0.05, ties = "efron", tol = 1.0e-6, boot = 0L, n_boot = 1000L, seed = NA_integer_) {
+    .Call(`_trtswitch_ipecpp`, data, id, stratum, time, event, treat, rx, censor_time, base_cov, aft_dist, strata_main_effect_only, low_psi, hi_psi, treat_modifier, recensor, admin_recensor_only, autoswitch, alpha, ties, tol, boot, n_boot, seed)
 }
 
-logisregcpp <- function(data, rep = "", event = "event", covariates = "", freq = "", weight = "", offset = "", id = "", link = "logit", robust = 0L, firth = 0L, bc = 0L, flic = 0L, plci = 0L, alpha = 0.05) {
-    .Call(`_trtswitch_logisregcpp`, data, rep, event, covariates, freq, weight, offset, id, link, robust, firth, bc, flic, plci, alpha)
+logisregcpp <- function(data, rep = "", event = "event", covariates = "", freq = "", weight = "", offset = "", id = "", link = "logit", robust = 0L, firth = 0L, bc = 0L, flic = 0L, plci = 0L, alpha = 0.05, maxiter = 50L, eps = 1.0e-9) {
+    .Call(`_trtswitch_logisregcpp`, data, rep, event, covariates, freq, weight, offset, id, link, robust, firth, bc, flic, plci, alpha, maxiter, eps)
 }
 
-rpsftmcpp <- function(data, id = "id", stratum = "", time = "time", event = "event", treat = "treat", rx = "rx", censor_time = "censor_time", base_cov = "", low_psi = -1, hi_psi = 1, n_eval_z = 100L, treat_modifier = 1, recensor = 1L, admin_recensor_only = 1L, autoswitch = 1L, gridsearch = 0L, alpha = 0.05, ties = "efron", tol = 1.0e-6, boot = 0L, n_boot = 1000L, seed = NA_integer_) {
+rpsftmcpp <- function(data, id = "id", stratum = "", time = "time", event = "event", treat = "treat", rx = "rx", censor_time = "censor_time", base_cov = "", low_psi = -1, hi_psi = 1, n_eval_z = 101L, treat_modifier = 1, recensor = 1L, admin_recensor_only = 1L, autoswitch = 1L, gridsearch = 0L, alpha = 0.05, ties = "efron", tol = 1.0e-6, boot = 0L, n_boot = 1000L, seed = NA_integer_) {
     .Call(`_trtswitch_rpsftmcpp`, data, id, stratum, time, event, treat, rx, censor_time, base_cov, low_psi, hi_psi, n_eval_z, treat_modifier, recensor, admin_recensor_only, autoswitch, gridsearch, alpha, ties, tol, boot, n_boot, seed)
 }
 
@@ -134,6 +134,56 @@ bscpp <- function(x = NA_real_, df = NA_integer_, knots = NA_real_, degree = 3L,
 #' @export
 nscpp <- function(x = NA_real_, df = NA_integer_, knots = NA_real_, intercept = 0L, boundary_knots = NA_real_) {
     .Call(`_trtswitch_nscpp`, x, df, knots, intercept, boundary_knots)
+}
+
+#' @title Brookmeyer-Crowley Confidence Interval for Quantiles of
+#' Right-Censored Time-to-Event Data
+#' @description Obtains the Brookmeyer-Crowley confidence
+#' interval for quantiles of right-censored time-to-event data.
+#'
+#' @param time The vector of possibly right-censored survival times.
+#' @param event The vector of event indicators.
+#' @param cilevel The confidence interval level. Defaults to 0.95.
+#' @param transform The transformation of the survival function to use
+#'   to construct the confidence interval. Options include 
+#'   "linear" (alternatively "plain"), "log", 
+#'   "loglog" (alternatively "log-log" or "cloglog"), 
+#'   "asinsqrt" (alternatively "asin" or "arcsin"), and "logit". 
+#'   Defaults to "loglog".
+#'   
+#' @param probs The vector of probabilities to calculate the quantiles.
+#'   Defaults to c(0.25, 0.5, 0.75).
+#'
+#' @return A data frame containing the estimated quantile and
+#' confidence interval corresponding to each specified probability.
+#' It includes the following variables:
+#'
+#' * \code{prob}: The probability to calculate the quantile.
+#'
+#' * \code{quantile}: The estimated quantile.
+#'
+#' * \code{lower}: The lower limit of the confidence interval.
+#'
+#' * \code{upper}: The upper limit of the confidence interval.
+#'
+#' * \code{cilevel}: The confidence interval level.
+#'
+#' * \code{transform}: The transformation of the survival function to use
+#'   to construct the confidence interval.
+#'
+#' @author Kaifeng Lu, \email{kaifenglu@@gmail.com}
+#'
+#' @examples
+#'
+#' survQuantile(
+#'   time = c(33.7, 3.9, 10.5, 5.4, 19.5, 23.8, 7.9, 16.9, 16.6,
+#'            33.7, 17.1, 7.9, 10.5, 38),
+#'   event = c(0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1),
+#'   probs = c(0.25, 0.5, 0.75))
+#'
+#' @export
+survQuantile <- function(time = NA_real_, event = NA_real_, cilevel = 0.95, transform = "loglog", probs = NA_real_) {
+    .Call(`_trtswitch_survQuantile`, time, event, cilevel, transform, probs)
 }
 
 #' @title Kaplan-Meier Estimates of Survival Curve
@@ -478,12 +528,12 @@ rmdiff <- function(data, rep = "", stratum = "", treat = "treat", time = "time",
     .Call(`_trtswitch_rmdiff`, data, rep, stratum, treat, time, event, milestone, rmstDiffH0, conflev, biascorrection)
 }
 
-liferegcpp <- function(data, rep = "", stratum = "", time = "time", time2 = "", event = "event", covariates = "", weight = "", offset = "", id = "", dist = "weibull", robust = 0L, plci = 0L, alpha = 0.05) {
-    .Call(`_trtswitch_liferegcpp`, data, rep, stratum, time, time2, event, covariates, weight, offset, id, dist, robust, plci, alpha)
+liferegcpp <- function(data, rep = "", stratum = "", time = "time", time2 = "", event = "event", covariates = "", weight = "", offset = "", id = "", dist = "weibull", robust = 0L, plci = 0L, alpha = 0.05, maxiter = 50L, eps = 1.0e-9) {
+    .Call(`_trtswitch_liferegcpp`, data, rep, stratum, time, time2, event, covariates, weight, offset, id, dist, robust, plci, alpha, maxiter, eps)
 }
 
-phregcpp <- function(data, rep = "", stratum = "", time = "time", time2 = "", event = "event", covariates = "", weight = "", offset = "", id = "", ties = "efron", robust = 0L, est_basehaz = 1L, est_resid = 1L, firth = 0L, plci = 0L, alpha = 0.05) {
-    .Call(`_trtswitch_phregcpp`, data, rep, stratum, time, time2, event, covariates, weight, offset, id, ties, robust, est_basehaz, est_resid, firth, plci, alpha)
+phregcpp <- function(data, rep = "", stratum = "", time = "time", time2 = "", event = "event", covariates = "", weight = "", offset = "", id = "", ties = "efron", robust = 0L, est_basehaz = 1L, est_resid = 1L, firth = 0L, plci = 0L, alpha = 0.05, maxiter = 50L, eps = 1.0e-9) {
+    .Call(`_trtswitch_phregcpp`, data, rep, stratum, time, time2, event, covariates, weight, offset, id, ties, robust, est_basehaz, est_resid, firth, plci, alpha, maxiter, eps)
 }
 
 survfit_phregcpp <- function(p, beta, vbeta, basehaz, newdata, covariates = "", stratum = "", offset = "", id = "", tstart = "", tstop = "", sefit = 1L, conftype = "log-log", conflev = 0.95) {
@@ -494,8 +544,8 @@ residuals_phregcpp <- function(p, beta, data, stratum = "", time = "time", time2
     .Call(`_trtswitch_residuals_phregcpp`, p, beta, data, stratum, time, time2, event, covariates, weight, offset, id, ties, type)
 }
 
-tsegestcpp <- function(data, id = "id", stratum = "", tstart = "tstart", tstop = "tstop", event = "event", treat = "treat", censor_time = "censor_time", pd = "pd", pd_time = "pd_time", swtrt = "swtrt", swtrt_time = "swtrt_time", swtrt_time_upper = "", base_cov = "", conf_cov = "", low_psi = -3, hi_psi = 3, n_eval_z = 100L, strata_main_effect_only = 1L, firth = 0L, flic = 0L, recensor = 1L, admin_recensor_only = 1L, swtrt_control_only = 1L, alpha = 0.05, ties = "efron", tol = 1.0e-6, offset = 1, boot = 1L, n_boot = 1000L, seed = NA_integer_) {
-    .Call(`_trtswitch_tsegestcpp`, data, id, stratum, tstart, tstop, event, treat, censor_time, pd, pd_time, swtrt, swtrt_time, swtrt_time_upper, base_cov, conf_cov, low_psi, hi_psi, n_eval_z, strata_main_effect_only, firth, flic, recensor, admin_recensor_only, swtrt_control_only, alpha, ties, tol, offset, boot, n_boot, seed)
+tsegestcpp <- function(data, id = "id", stratum = "", tstart = "tstart", tstop = "tstop", event = "event", treat = "treat", censor_time = "censor_time", pd = "pd", pd_time = "pd_time", swtrt = "swtrt", swtrt_time = "swtrt_time", swtrt_time_upper = "", base_cov = "", conf_cov = "", low_psi = -1, hi_psi = 1, n_eval_z = 101L, strata_main_effect_only = 1L, firth = 0L, flic = 0L, recensor = 1L, admin_recensor_only = 1L, swtrt_control_only = 1L, gridsearch = 0L, alpha = 0.05, ties = "efron", tol = 1.0e-6, offset = 1, boot = 1L, n_boot = 1000L, seed = NA_integer_) {
+    .Call(`_trtswitch_tsegestcpp`, data, id, stratum, tstart, tstop, event, treat, censor_time, pd, pd_time, swtrt, swtrt_time, swtrt_time_upper, base_cov, conf_cov, low_psi, hi_psi, n_eval_z, strata_main_effect_only, firth, flic, recensor, admin_recensor_only, swtrt_control_only, gridsearch, alpha, ties, tol, offset, boot, n_boot, seed)
 }
 
 #' @title Simulate Survival Data for Two-Stage Estimation Method Using 
@@ -553,9 +603,9 @@ tsegestcpp <- function(data, id = "id", stratum = "", tstart = "tstart", tstop =
 #' @param seed The seed to reproduce the simulation results.
 #'   The seed from the environment will be used if left unspecified.
 #'
-#' @return A list with two data frames.
+#' @return A list with three data frames.
 #' 
-#' * \code{sumdata}: A data frame with the following variables:
+#' * \code{sumdata}: A summary data frame with the following variables:
 #'
 #'     - \code{simtrueconstmean}: The true control group restricted mean 
 #'       survival time (RMST).
@@ -582,8 +632,38 @@ tsegestcpp <- function(data, id = "id", stratum = "", tstart = "tstart", tstop =
 #'     - \code{simtrue_cox_hr}: The treatment hazard ratio from the Cox 
 #'       model without adjusting for baseline prognosis.
 #'
-#' * \code{paneldata}: A counting process style data frame with the 
-#'   following variables:
+#' * \code{adsldata}: A subject-level data frame containing one record 
+#'   per subject with the following variables:
+#'
+#'     - \code{id}: The subject ID.
+#'
+#'     - \code{trtrand}: The randomized treatment arm.
+#'
+#'     - \code{bprog}: Whether the patient had poor baseline prognosis. 
+#'     
+#'     - \code{timeOS}: The observed survival time.
+#'     
+#'     - \code{died}: Whether the patient died. 
+#'     
+#'     - \code{progressed}: Whether the patient had disease progression. 
+#'     
+#'     - \code{timePFSobs}: The observed time of disease progression at 
+#'       regular scheduled visits.
+#'       
+#'     - \code{catevent}: Whether the patient developed metastatic disease.
+#'     
+#'     - \code{cattime}: When the patient developed metastatic disease.
+#'     
+#'     - \code{xo}: Whether the patient switched treatment. 
+#'     
+#'     - \code{xotime}: When the patient switched treatment.
+#'     
+#'     - \code{xotime_upper}: The upper bound of treatment switching time.
+#'     
+#'     - \code{censor_time}: The administrative censoring time.
+#'
+#' * \code{paneldata}: A counting process style subject-level data frame 
+#'   with the following variables:
 #'
 #'     - \code{id}: The subject ID.
 #'
@@ -624,6 +704,12 @@ tsegestcpp <- function(data, id = "id", stratum = "", tstart = "tstart", tstop =
 #'     - \code{censor_time}: The administrative censoring time.
 #'     
 #' @author Kaifeng Lu, \email{kaifenglu@@gmail.com}
+#'
+#' @references
+#' NR Latimer, IR White, K Tilling, and U Siebert.
+#' Improved two-stage estimation to adjust for treatment switching in 
+#' randomised trials: g-estimation to address time-dependent confounding.
+#' Statistical Methods in Medical Research. 2020;29(10):2900-2918.
 #'
 #' @examples
 #'

@@ -342,7 +342,8 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(trtswitch)</span>
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(dplyr, <span class="at">warn.conflicts =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code></pre></div>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">library</span>(survival)</span></code></pre></div>
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
 <p>The iterative parameter estimation (IPE) method is an alternative to
@@ -412,7 +413,7 @@ changes, yields a borderline significant p-value of <span class="math inline">\(
 <p>Using the IPE method with a Weibull AFT model, we estimate <span class="math inline">\(\hat{\psi} = -0.183\)</span>, which is similar to
 the estimate obtained from the RPSFTM analysis.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>fit1<span class="sc">$</span>psi</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt; [1] -0.182931</span></span></code></pre></div>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt; [1] -0.1829312</span></span></code></pre></div>
 <p>The Kaplan-Meier plot of counterfactual survival times supports the
 estimated <span class="math inline">\(\hat{\psi}\)</span>.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">ggplot</span>(fit1<span class="sc">$</span>kmstar, <span class="fu">aes</span>(<span class="at">x=</span>time, <span class="at">y=</span>survival, <span class="at">group=</span>treated,</span>
@@ -457,15 +458,15 @@ the coefficient for the treatment variable in the updated AFT model fit
 equals <span class="math inline">\(0.950\)</span>:</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>fit2<span class="sc">$</span>fit_aft<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co">#&gt;                    param         beta      sebeta          z</span></span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt; 1            (Intercept)  6.934726162 0.495626815 13.9918301</span></span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; 2                treated -0.949765754 0.150227469 -6.3221843</span></span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt; 3                agerand -0.003290492 0.006498533 -0.5063439</span></span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; 4            sex.fFemale  0.322266214 0.156016644  2.0655887</span></span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt; 5                tt_Lnum -0.014139570 0.028712690 -0.4924502</span></span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt; 6             rmh_alea.c -0.671748356 0.156970327 -4.2794608</span></span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt; 7            pathway.fHR -0.174054293 0.239966698 -0.7253269</span></span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="co">#&gt; 8 pathway.fPI3K.AKT.mTOR -0.149492620 0.241468216 -0.6190985</span></span>
-<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#&gt; 9             Log(scale) -0.209508060 0.076278866 -2.7466069</span></span></code></pre></div>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt; 1            (Intercept)  6.934726252 0.495626805 13.9918305</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; 2                treated -0.949765905 0.150227465 -6.3221855</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt; 3                agerand -0.003290493 0.006498532 -0.5063440</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; 4            sex.fFemale  0.322266186 0.156016639  2.0655886</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt; 5                tt_Lnum -0.014139564 0.028712689 -0.4924500</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt; 6             rmh_alea.c -0.671748327 0.156970323 -4.2794607</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt; 7            pathway.fHR -0.174054298 0.239966691 -0.7253269</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="co">#&gt; 8 pathway.fPI3K.AKT.mTOR -0.149492615 0.241468209 -0.6190985</span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#&gt; 9             Log(scale) -0.209508089 0.076278867 -2.7466073</span></span></code></pre></div>
 <p>This suggests that the <span class="math inline">\(\psi\)</span>
 value has not converged. The following code demonstrates the oscillation
 of <span class="math inline">\(\psi\)</span> values between 0.955,
@@ -486,31 +487,27 @@ of <span class="math inline">\(\psi\)</span> values between 0.955,
 <span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>                       <span class="at">t_star =</span> <span class="fu">pmin</span>(u_star, c_star),</span>
 <span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>                       <span class="at">d_star =</span> event<span class="sc">*</span>(u_star <span class="sc">&lt;=</span> c_star)))</span>
 <span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>  </span>
-<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>  fit_aft <span class="ot">&lt;-</span> <span class="fu">liferegr</span>(data1, <span class="at">time =</span> <span class="st">&quot;t_star&quot;</span>, <span class="at">event =</span> <span class="st">&quot;d_star&quot;</span>, </span>
-<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a>                      <span class="at">covariates =</span> <span class="fu">c</span>(<span class="st">&quot;treated&quot;</span>, <span class="st">&quot;agerand&quot;</span>, <span class="st">&quot;sex.f&quot;</span>, </span>
-<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a>                                     <span class="st">&quot;tt_Lnum&quot;</span>, <span class="st">&quot;rmh_alea.c&quot;</span>, </span>
-<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a>                                     <span class="st">&quot;pathway.f&quot;</span>), </span>
-<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a>                      <span class="at">dist =</span> <span class="st">&quot;weibull&quot;</span>)</span>
-<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a>  </span>
-<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a>  <span class="sc">-</span>fit_aft<span class="sc">$</span>beta[<span class="dv">2</span>]</span>
-<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a>}</span>
-<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a></span>
-<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a>B <span class="ot">&lt;-</span> <span class="dv">30</span></span>
-<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a>psihats <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">0</span>, B)</span>
-<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a>psihats[<span class="dv">1</span>] <span class="ot">&lt;-</span> fit2<span class="sc">$</span>psi</span>
-<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>B) {</span>
-<span id="cb10-30"><a href="#cb10-30" tabindex="-1"></a>  psihats[i] <span class="ot">&lt;-</span> <span class="fu">f</span>(psihats[i<span class="dv">-1</span>])</span>
-<span id="cb10-31"><a href="#cb10-31" tabindex="-1"></a>}</span>
-<span id="cb10-32"><a href="#cb10-32" tabindex="-1"></a></span>
-<span id="cb10-33"><a href="#cb10-33" tabindex="-1"></a>data2 <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">index =</span> <span class="dv">1</span><span class="sc">:</span>B, <span class="at">psi =</span> psihats)</span>
-<span id="cb10-34"><a href="#cb10-34" tabindex="-1"></a><span class="fu">tail</span>(data2)</span>
-<span id="cb10-35"><a href="#cb10-35" tabindex="-1"></a><span class="co">#&gt;    index       psi</span></span>
-<span id="cb10-36"><a href="#cb10-36" tabindex="-1"></a><span class="co">#&gt; 25    25 0.9550293</span></span>
-<span id="cb10-37"><a href="#cb10-37" tabindex="-1"></a><span class="co">#&gt; 26    26 0.9511406</span></span>
-<span id="cb10-38"><a href="#cb10-38" tabindex="-1"></a><span class="co">#&gt; 27    27 0.9603835</span></span>
-<span id="cb10-39"><a href="#cb10-39" tabindex="-1"></a><span class="co">#&gt; 28    28 0.9550297</span></span>
-<span id="cb10-40"><a href="#cb10-40" tabindex="-1"></a><span class="co">#&gt; 29    29 0.9511409</span></span>
-<span id="cb10-41"><a href="#cb10-41" tabindex="-1"></a><span class="co">#&gt; 30    30 0.9603837</span></span></code></pre></div>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>  fit_aft <span class="ot">&lt;-</span> <span class="fu">survreg</span>(<span class="fu">Surv</span>(t_star, d_star) <span class="sc">~</span> treated <span class="sc">+</span> agerand <span class="sc">+</span> sex.f <span class="sc">+</span>  </span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a>                       tt_Lnum <span class="sc">+</span> rmh_alea.c <span class="sc">+</span> pathway.f, <span class="at">data =</span> data1)  </span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a>  <span class="sc">-</span>fit_aft<span class="sc">$</span>coefficients[<span class="dv">2</span>]</span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a>}</span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a></span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a>B <span class="ot">&lt;-</span> <span class="dv">30</span></span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a>psihats <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">0</span>, B)</span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a>psihats[<span class="dv">1</span>] <span class="ot">&lt;-</span> fit2<span class="sc">$</span>psi</span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">2</span><span class="sc">:</span>B) {</span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a>  psihats[i] <span class="ot">&lt;-</span> <span class="fu">f</span>(psihats[i<span class="dv">-1</span>])</span>
+<span id="cb10-27"><a href="#cb10-27" tabindex="-1"></a>}</span>
+<span id="cb10-28"><a href="#cb10-28" tabindex="-1"></a></span>
+<span id="cb10-29"><a href="#cb10-29" tabindex="-1"></a>data2 <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">index =</span> <span class="dv">1</span><span class="sc">:</span>B, <span class="at">psi =</span> psihats)</span>
+<span id="cb10-30"><a href="#cb10-30" tabindex="-1"></a><span class="fu">tail</span>(data2)</span>
+<span id="cb10-31"><a href="#cb10-31" tabindex="-1"></a><span class="co">#&gt;    index       psi</span></span>
+<span id="cb10-32"><a href="#cb10-32" tabindex="-1"></a><span class="co">#&gt; 25    25 0.9550293</span></span>
+<span id="cb10-33"><a href="#cb10-33" tabindex="-1"></a><span class="co">#&gt; 26    26 0.9511406</span></span>
+<span id="cb10-34"><a href="#cb10-34" tabindex="-1"></a><span class="co">#&gt; 27    27 0.9603835</span></span>
+<span id="cb10-35"><a href="#cb10-35" tabindex="-1"></a><span class="co">#&gt; 28    28 0.9550297</span></span>
+<span id="cb10-36"><a href="#cb10-36" tabindex="-1"></a><span class="co">#&gt; 29    29 0.9511409</span></span>
+<span id="cb10-37"><a href="#cb10-37" tabindex="-1"></a><span class="co">#&gt; 30    30 0.9603837</span></span></code></pre></div>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">ggplot</span>(data2, <span class="fu">aes</span>(<span class="at">x =</span> index, <span class="at">y =</span> psi)) <span class="sc">+</span> </span>
 <span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span> </span>
 <span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="fu">geom_line</span>()</span></code></pre></div>

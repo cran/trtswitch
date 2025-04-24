@@ -17,7 +17,7 @@ rpsftm(
   base_cov = "",
   low_psi = -1,
   hi_psi = 1,
-  n_eval_z = 100,
+  n_eval_z = 101,
   treat_modifier = 1,
   recensor = TRUE,
   admin_recensor_only = TRUE,
@@ -93,7 +93,8 @@ finding algorithm will be used.}
 \item{ties}{The method for handling ties in the Cox model, either
 "breslow" or "efron" (default).}
 
-\item{tol}{The desired accuracy (convergence tolerance) for \code{psi}.}
+\item{tol}{The desired accuracy (convergence tolerance) for \code{psi}
+for the root finding algorithm.}
 
 \item{boot}{Whether to use bootstrap to obtain the confidence
 interval for hazard ratio. Defaults to \code{FALSE}, in which case,
@@ -115,7 +116,9 @@ i.e., "grid search", "root finding", or "bootstrap".
 \item \code{logrank_pvalue}: The two-sided p-value of the log-rank test
 for the ITT analysis.
 \item \code{cox_pvalue}: The two-sided p-value for treatment effect based on
-the Cox model.
+the Cox model applied to counterfactual unswitched survival times.
+If \code{boot} is \code{TRUE}, this value represents the
+bootstrap p-value.
 \item \code{hr}: The estimated hazard ratio from the Cox model.
 \item \code{hr_CI}: The confidence interval for hazard ratio.
 \item \code{hr_CI_type}: The type of confidence interval for hazard ratio,
@@ -126,9 +129,15 @@ if the range of \code{psi} values to search for the solution and
 limits of confidence interval of \code{psi} need be modified.
 \item \code{Sstar}: A data frame containing the counterfactual untreated
 survival times and event indicators for each treatment group.
+The variables include \code{id}, \code{stratum},
+\code{"t_star"}, \code{"d_star"}, \code{"treated"}, and \code{treat}.
 \item \code{kmstar}: A data frame containing the Kaplan-Meier estimates
 based on the counterfactual untreated survival times by treatment arm.
-\item \code{data_outcome}: The input data for the outcome Cox model.
+\item \code{data_outcome}: The input data for the outcome Cox model of
+counterfactual unswitched survival times.
+The variables include \code{id}, \code{stratum},
+\code{"t_star"}, \code{"d_star"}, \code{"treated"}, \code{base_cov},
+and \code{treat}.
 \item \code{fit_outcome}: The fitted outcome Cox model.
 \item \code{settings}: A list with the following components:
 \itemize{
@@ -232,7 +241,7 @@ Communications in Statistics. 1991;20(8):2609-2631.
 Ian R. White, Adbel G. Babiker, Sarah Walker, and Janet H. Darbyshire.
 Randomization-based methods for correcting for treatment changes:
 Examples from the CONCORDE trial.
-Statistics in Medicine. 1999;18:2617-2634.
+Statistics in Medicine. 1999;18(19):2617-2634.
 }
 \author{
 Kaifeng Lu, \email{kaifenglu@gmail.com}

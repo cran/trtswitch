@@ -15,6 +15,8 @@ ipe(
   censor_time = "censor_time",
   base_cov = "",
   aft_dist = "weibull",
+  low_psi = -1,
+  hi_psi = 1,
   strata_main_effect_only = 1,
   treat_modifier = 1,
   recensor = TRUE,
@@ -58,11 +60,16 @@ be provided for all subjects including those who had events.
 \item{censor_time}{The name of the censor_time variable in the input data.}
 
 \item{base_cov}{The names of baseline covariates (excluding
-treat) in the input data for the outcome Cox model.}
+treat) in the input data for the causal AFT model and the outcome
+Cox model.}
 
 \item{aft_dist}{The assumed distribution for time to event for the AFT
 model. Options include "exponential", "weibull" (default),
 "loglogistic", and "lognormal".}
+
+\item{low_psi}{The lower limit of the causal parameter.}
+
+\item{hi_psi}{The upper limit of the causal parameter.}
 
 \item{strata_main_effect_only}{Whether to only include the strata main
 effects in the AFT model. Defaults to \code{TRUE}, otherwise all
@@ -86,7 +93,8 @@ with no switching. Defaults to \code{TRUE}.}
 \item{ties}{The method for handling ties in the Cox model, either
 "breslow" or "efron" (default).}
 
-\item{tol}{The desired accuracy (convergence tolerance) for \code{psi}.}
+\item{tol}{The desired accuracy (convergence tolerance) for \code{psi}
+for the root finding algorithm.}
 
 \item{boot}{Whether to use bootstrap to obtain the confidence
 interval for hazard ratio. Defaults to \code{FALSE}, in which case,
@@ -108,19 +116,28 @@ i.e., "log-rank p-value" or "bootstrap".
 \item \code{logrank_pvalue}: The two-sided p-value of the log-rank test
 for the ITT analysis.
 \item \code{cox_pvalue}: The two-sided p-value for treatment effect based on
-the Cox model.
+the Cox model applied to counterfactual unswitched survival times.
+If \code{boot} is \code{TRUE}, this value represents the
+bootstrap p-value.
 \item \code{hr}: The estimated hazard ratio from the Cox model.
 \item \code{hr_CI}: The confidence interval for hazard ratio.
 \item \code{hr_CI_type}: The type of confidence interval for hazard ratio,
 either "log-rank p-value" or "bootstrap".
 \item \code{Sstar}: A data frame containing the counterfactual untreated
 survival times and event indicators for each treatment group.
+The variables include \code{id}, \code{stratum},
+\code{"t_star"}, \code{"d_star"}, \code{"treated"}, and \code{treat}.
 \item \code{kmstar}: A data frame containing the Kaplan-Meier estimates
 based on the counterfactual untreated survival times by treatment arm.
 \item \code{data_aft}: The input data for the AFT model for
-estimating \code{psi}.
+estimating \code{psi}. The variables include \code{id}, \code{stratum},
+\code{"t_star"}, \code{"d_star"}, \code{"treated"}, \code{base_cov},
+and \code{treat}.
 \item \code{fit_aft}: The fitted AFT model for estimating \code{psi}.
-\item \code{data_outcome}: The input data for the outcome Cox model.
+\item \code{data_outcome}: The input data for the outcome Cox model of
+counterfactual unswitched survival times.
+The variables include \code{id}, \code{stratum}, \code{"t_star"},
+\code{"d_star"}, \code{"treated"}, \code{base_cov}, and \code{treat}.
 \item \code{fit_outcome}: The fitted outcome Cox model.
 \item \code{settings}: A list with the following components:
 \itemize{
@@ -128,6 +145,8 @@ estimating \code{psi}.
 model.
 \item \code{strata_main_effect_only}: Whether to only include the strata
 main effects in the AFT model.
+\item \code{low_psi}: The lower limit of the causal parameter.
+\item \code{hi_psi}: The upper limit of the causal parameter.
 \item \code{treat_modifier}: The sensitivity parameter for the constant
 treatment effect assumption.
 \item \code{recensor}: Whether to apply recensoring to counterfactual
@@ -218,12 +237,12 @@ c(fit2$hr, fit2$hr_CI)
 Michael Branson and John Whitehead.
 Estimating a treatment effect in survival studies in which patients
 switch treatment.
-Statistics in Medicine. 2002;21:2449-2463.
+Statistics in Medicine. 2002;21(17):2449-2463.
 
 Ian R White.
 Letter to the Editor: Estimating treatment effects in randomized
 trials with treatment switching.
-Statistics in Medicine. 2006;25:1619-1622.
+Statistics in Medicine. 2006;25(9):1619-1622.
 }
 \author{
 Kaifeng Lu, \email{kaifenglu@gmail.com}

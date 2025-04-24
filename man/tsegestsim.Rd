@@ -112,9 +112,9 @@ the control group.}
 The seed from the environment will be used if left unspecified.}
 }
 \value{
-A list with two data frames.
+A list with three data frames.
 \itemize{
-\item \code{sumdata}: A data frame with the following variables:
+\item \code{sumdata}: A summary data frame with the following variables:
 \itemize{
 \item \code{simtrueconstmean}: The true control group restricted mean
 survival time (RMST).
@@ -132,8 +132,26 @@ Cox model adjusting for baseline prognosis.
 \item \code{simtrue_cox_hr}: The treatment hazard ratio from the Cox
 model without adjusting for baseline prognosis.
 }
-\item \code{paneldata}: A counting process style data frame with the
-following variables:
+\item \code{adsldata}: A subject-level data frame containing one record
+per subject with the following variables:
+\itemize{
+\item \code{id}: The subject ID.
+\item \code{trtrand}: The randomized treatment arm.
+\item \code{bprog}: Whether the patient had poor baseline prognosis.
+\item \code{timeOS}: The observed survival time.
+\item \code{died}: Whether the patient died.
+\item \code{progressed}: Whether the patient had disease progression.
+\item \code{timePFSobs}: The observed time of disease progression at
+regular scheduled visits.
+\item \code{catevent}: Whether the patient developed metastatic disease.
+\item \code{cattime}: When the patient developed metastatic disease.
+\item \code{xo}: Whether the patient switched treatment.
+\item \code{xotime}: When the patient switched treatment.
+\item \code{xotime_upper}: The upper bound of treatment switching time.
+\item \code{censor_time}: The administrative censoring time.
+}
+\item \code{paneldata}: A counting process style subject-level data frame
+with the following variables:
 \itemize{
 \item \code{id}: The subject ID.
 \item \code{trtrand}: The randomized treatment arm.
@@ -175,6 +193,12 @@ sim1 <- tsegestsim(
   ppoormet = 0.4, pgoodmet = 0.2, xomult = 1.4188308, 
   milestone = 546, outputRawDataset = 1, seed = 2000)
 
+}
+\references{
+NR Latimer, IR White, K Tilling, and U Siebert.
+Improved two-stage estimation to adjust for treatment switching in
+randomised trials: g-estimation to address time-dependent confounding.
+Statistical Methods in Medical Research. 2020;29(10):2900-2918.
 }
 \author{
 Kaifeng Lu, \email{kaifenglu@gmail.com}

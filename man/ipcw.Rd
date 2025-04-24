@@ -57,9 +57,9 @@ counting-process data with time-dependent covariates.
 \item \code{base_cov}: The baseline covariates (excluding treat) used in
 the outcome model.
 \item \code{numerator}: The baseline covariates (excluding treat) used in
-the switching model for the numerator for stabilized weights.
-\item \code{denominator}: The baseline and time-dependent covariates
-(excluding treat) used in the switching model for the denominator.
+the numerator switching model for stabilized weights.
+\item \code{denominator}: The baseline (excluding treat) and time-dependent
+covariates used in the denominator switching model.
 }}
 
 \item{id}{The name of the id variable in the input data.}
@@ -91,8 +91,8 @@ treat) in the input data for the Cox model.}
 (excluding treat) in the input data for the numerator switching
 model for stabilized weights.}
 
-\item{denominator}{The names of baseline and time-dependent
-covariates (excluding treat) in the input data for the denominator
+\item{denominator}{The names of baseline  (excluding treat) and
+time-dependent covariates in the input data for the denominator
 switching model.}
 
 \item{logistic_switching_model}{Whether a pooled logistic regression
@@ -150,19 +150,28 @@ missing, in which case, the seed from the environment will be used.}
 A list with the following components:
 \itemize{
 \item \code{logrank_pvalue}:  The two-sided p-value of the log-rank test
-for an intention-to-treat (ITT) analysis.
+for the ITT analysis.
 \item \code{cox_pvalue}: The two-sided p-value for treatment effect based on
-the Cox model.
+the Cox model applied to counterfactual unswitched survival times.
+If \code{boot} is \code{TRUE}, this value represents the
+bootstrap p-value.
 \item \code{hr}: The estimated hazard ratio from the Cox model.
 \item \code{hr_CI}: The confidence interval for hazard ratio.
 \item \code{hr_CI_type}: The type of confidence interval for hazard ratio,
 either "Cox model" or "bootstrap".
 \item \code{data_switch}: A list of input data for the switching models by
-treatment group.
+treatment group. The variables include \code{id}, \code{stratum},
+\code{"tstart"}, \code{"tstop"}, \code{"cross"}, \code{denominator},
+\code{swtrt}, \code{swtrt_time}, \code{swtrt_time_lower},
+and \code{swtrt_time_upper}.
 \item \code{fit_switch}: A list of fitted switching models for the
 denominator and numerator by treatment group.
 \item \code{data_outcome}: The input data for the outcome Cox model
 including the inverse probability of censoring weights.
+The variables include \code{id}, \code{stratum}, \code{"tstart"},
+\code{"tstop"}, \code{"event"}, \code{"treated"},
+\code{"unstablized_weight"}, \code{"stabilized_weight"},
+\code{base_cov}, and \code{treat}.
 \item \code{fit_outcome}: The fitted outcome Cox model.
 \item \code{settings}: A list with the following components:
 \itemize{
@@ -275,7 +284,7 @@ c(fit2$hr, fit2$hr_CI)
 James M. Robins and Dianne M. Finkelstein.
 Correcting for noncompliance and dependent censoring in an AIDS clinical
 trial with inverse probability of censoring weighted (IPCW) log-rank tests.
-Biometrics. 2000;56:779-788.
+Biometrics. 2000;56(3):779-788.
 }
 \author{
 Kaifeng Lu, \email{kaifenglu@gmail.com}

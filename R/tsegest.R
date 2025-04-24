@@ -1,8 +1,8 @@
 #' @title The Two-Stage Estimation (TSE) Method Using g-estimation  
 #' for Treatment Switching
-#' @description Obtains the causal parameter estimate of the logistic
-#' regression switching model and the hazard ratio estimate of 
-#' the Cox model to adjust for treatment switching.
+#' @description Obtains the causal parameter estimate using g-estimation 
+#' based on the logistic regression switching model and the hazard ratio 
+#' estimate of the Cox model to adjust for treatment switching.
 #'
 #' @param data The input data frame that contains the following variables:
 #'
@@ -78,11 +78,15 @@
 #'   recensoring will be applied to the actual censoring times for dropouts.
 #' @param swtrt_control_only Whether treatment switching occurred only in
 #'   the control group. The default is \code{TRUE}.
+#' @param gridsearch Whether to use grid search to estimate the causal
+#'   parameter \code{psi}. Defaults to \code{FALSE}, in which case, a root
+#'   finding algorithm will be used.
 #' @param alpha The significance level to calculate confidence intervals. 
 #'   The default value is 0.05.
 #' @param ties The method for handling ties in the Cox model, either
 #'   "breslow" or "efron" (default).
-#' @param tol The desired accuracy (convergence tolerance) for \code{psi}. 
+#' @param tol The desired accuracy (convergence tolerance) for \code{psi}
+#'    for the root finding algorithm. 
 #' @param offset The offset to calculate the time to event, PD, and 
 #'   treatment switch. We can set \code{offset} equal to 1 (default), 
 #'   1/30.4375, or 1/365.25 if the time unit is day, month, or year.
@@ -104,20 +108,20 @@
 #'   \eqn{i} at observation \eqn{k}, 
 #'   \deqn{U_{i,\psi} = T_{C_i} + e^{\psi}T_{E_i}}
 #'   is the counterfactual survival time for individual \eqn{i} given a 
-#'   specific value for \eqn{\psi}, and \eqn{x_{ijk}} are the confounders
-#'   for individual \eqn{i} at observation \eqn{k}. 
+#'   specific value for \eqn{\psi}, and \eqn{x_{ijk}} is the confounder 
+#'   \eqn{j} for individual \eqn{i} at observation \eqn{k}. 
 #'   When applied from a secondary baseline, \eqn{U_{i,\psi}} 
 #'   refers to post-secondary baseline counterfactual survival, where 
 #'   \eqn{T_{C_i}} corresponds to the time spent after the secondary baseline 
 #'   on control treatment, and \eqn{T_{E_i}} corresponds to the time spent 
 #'   after the secondary baseline on the experimental treatment.
 #'   
-#' * Search for \eqn{\psi} such that the estimate of \eqn{\alpha} is close
-#'   to zero. This will be the estimate of the caual parameter. The 
+#' * Search for \eqn{\psi} such that the Z-statistic for \eqn{\alpha} is 
+#'   close to zero. This will be the estimate of the causal parameter. The 
 #'   confidence interval for \eqn{\psi} can be obtained as the value of 
 #'   \eqn{\psi} such that the corresponding two-sided p-value for 
-#'   testing \eqn{H_0:\alpha = 0} in the switching model is equal to the 
-#'   nominal significance level.   
+#'   testing \eqn{H_0: \alpha = 0} in the switching model is equal to the 
+#'   nominal significance level.
 #'
 #' * Derive the counterfactual survival times for control patients
 #'   had there been no treatment switching.
@@ -137,13 +141,15 @@
 #' * \code{psi_CI}: The confidence interval for \code{psi}.
 #'
 #' * \code{psi_CI_type}: The type of confidence interval for \code{psi},
-#'   i.e., "logistic model" or "bootstrap".
+#'   i.e., "grid search", "root finding", or "bootstrap".
 #'   
 #' * \code{logrank_pvalue}: The two-sided p-value of the log-rank test
-#'   for an intention-to-treat (ITT) analysis.
+#'   for the ITT analysis.
 #'
 #' * \code{cox_pvalue}: The two-sided p-value for treatment effect based on
-#'   the Cox model.
+#'   the Cox model applied to counterfactual unswitched survival times.
+#'   If \code{boot} is \code{TRUE}, this value represents the 
+#'   bootstrap p-value.
 #'
 #' * \code{hr}: The estimated hazard ratio from the Cox model.
 #'
@@ -157,13 +163,13 @@
 #'   
 #'     - \code{data_switch}: The list of input data for the time from 
 #'       secondary baseline to switch by treatment group. The variables 
-#'       include \code{id}, \code{stratum} (if applicable), \code{swtrt}, 
-#'       and \code{swtrt_time}. If \code{swtrt == 0}, then \code{swtrt_time} 
+#'       include \code{id}, \code{stratum}, \code{"swtrt"}, 
+#'       and \code{"swtrt_time"}. If \code{swtrt == 0}, then \code{swtrt_time} 
 #'       is censored at the time from secondary baseline to either 
 #'       death or censoring.
 #'   
-#'     - \code{km_switch}: The list of Kaplan-Meier plots for the time 
-#'       from secondary baseline to switch by treatment group.
+#'     - \code{km_switch}: The list of Kaplan-Meier plot data for the 
+#'       time from secondary baseline to switch by treatment group.
 #'   
 #'     - \code{eval_z}: The list of data by treatment group containing 
 #'       the Wald statistics for the coefficient of the counterfactual 
@@ -174,6 +180,8 @@
 #'   
 #'     - \code{data_nullcox}: The list of input data for counterfactual 
 #'       survival times for the null Cox model by treatment group.
+#'       The variables include \code{id}, \code{stratum},
+#'       \code{"t_star"} and \code{"d_star"}.
 #'   
 #'     - \code{fit_nullcox}: The list of fitted null Cox models for 
 #'       counterfactual survival times by treatment group, which contains
@@ -181,11 +189,19 @@
 #' 
 #'     - \code{data_logis}: The list of input data for pooled logistic 
 #'       regression models for treatment switching using g-estimation.
+#'       The variables include \code{id}, \code{stratum}, 
+#'       \code{"tstart"}, \code{"tstop"}, \code{"cross"}, 
+#'       \code{"counterfactual"}, \code{conf_cov}, 
+#'       \code{pd_time}, \code{swtrt}, 
+#'       \code{swtrt_time}, and \code{swtrt_time_upper}.
 #'   
 #'     - \code{fit_logis}: The list of fitted pooled logistic regression 
 #'       models for treatment switching using g-estimation.
 #'   
-#' * \code{data_outcome}: The input data for the outcome Cox model.
+#' * \code{data_outcome}: The input data for the outcome Cox model
+#'   of counterfactual unswitched survival times. 
+#'   The variables include \code{id}, \code{stratum}, \code{"t_star"}, 
+#'   \code{"d_star"}, \code{"treated"}, \code{base_cov} and \code{treat}.
 #'
 #' * \code{fit_outcome}: The fitted outcome Cox model.
 #'
@@ -216,6 +232,9 @@
 #'     - \code{swtrt_control_only}: Whether treatment switching occurred
 #'       only in the control group.
 #'
+#'     - \code{gridsearch}: Whether to use grid search to estimate the 
+#'       causal parameter \code{psi}.
+#'       
 #'     - \code{alpha}: The significance level to calculate confidence
 #'       intervals.
 #'
@@ -280,7 +299,7 @@
 #'   pd = "progressed", pd_time = "timePFSobs", swtrt = "xo", 
 #'   swtrt_time = "xotime", swtrt_time_upper = "xotime_upper",
 #'   base_cov = "bprog", conf_cov = "bprog*catlag", 
-#'   low_psi = -3, hi_psi = 3, strata_main_effect_only = TRUE,
+#'   strata_main_effect_only = TRUE,
 #'   recensor = TRUE, admin_recensor_only = TRUE, 
 #'   swtrt_control_only = TRUE, alpha = 0.05, ties = "efron", 
 #'   tol = 1.0e-6, boot = FALSE)
@@ -307,7 +326,7 @@
 #'   pd = "progressed", pd_time = "timePFSobs", swtrt = "xo", 
 #'   swtrt_time = "xotime", swtrt_time_upper = "xotime_upper",
 #'   base_cov = "bprog", conf_cov = "bprog*catlag", 
-#'   low_psi = -3, hi_psi = 3, strata_main_effect_only = TRUE,
+#'   strata_main_effect_only = TRUE,
 #'   recensor = TRUE, admin_recensor_only = TRUE, 
 #'   swtrt_control_only = FALSE, alpha = 0.05, ties = "efron", 
 #'   tol = 1.0e-6, boot = FALSE)
@@ -321,12 +340,12 @@ tsegest <- function(data, id = "id", stratum = "",
                     pd = "pd", pd_time = "pd_time",
                     swtrt = "swtrt", swtrt_time = "swtrt_time",
                     swtrt_time_upper = "", base_cov = "", conf_cov = "",
-                    low_psi = -3, hi_psi = 3, n_eval_z = 100,
+                    low_psi = -1, hi_psi = 1, n_eval_z = 101,
                     strata_main_effect_only = TRUE,
                     firth = FALSE, flic = FALSE,
                     recensor = TRUE, admin_recensor_only = TRUE,
-                    swtrt_control_only = TRUE, alpha = 0.05, 
-                    ties = "efron", tol = 1.0e-6, offset = 1, 
+                    swtrt_control_only = TRUE, gridsearch = FALSE, 
+                    alpha = 0.05, ties = "efron", tol = 1.0e-6, offset = 1, 
                     boot = TRUE, n_boot = 1000, seed = NA) {
 
   rownames(data) = NULL
@@ -405,8 +424,8 @@ tsegest <- function(data, id = "id", stratum = "",
     strata_main_effect_only = strata_main_effect_only,
     firth = firth, flic = flic,
     recensor = recensor, admin_recensor_only = admin_recensor_only,
-    swtrt_control_only = swtrt_control_only, alpha = alpha,
-    ties = ties, tol = tol, offset = offset, 
+    swtrt_control_only = swtrt_control_only, gridsearch = gridsearch, 
+    alpha = alpha, ties = ties, tol = tol, offset = offset, 
     boot = boot, n_boot = n_boot, seed = seed)
   
   K = ifelse(swtrt_control_only, 1, 2)
@@ -417,6 +436,57 @@ tsegest <- function(data, id = "id", stratum = "",
   
   out$data_outcome$uid <- NULL
   out$data_outcome$ustratum <- NULL
+  
+  df[, "tstart"] = df[, tstart]
+  df[, "tstop"] = df[, tstop]
+  
+  if (p >= 1) {
+    t1 = terms(formula(paste("~", paste(base_cov, collapse = "+"))))
+    t2 = attr(t1, "factors")
+    t3 = rownames(t2)
+    
+    add_vars <- setdiff(t3, varnames)
+    if (length(add_vars) > 0) {
+      out$data_outcome <- merge(out$data_outcome, df[, c(id, add_vars)], 
+                                by = id, all.x = TRUE, sort = FALSE)
+    }
+    
+    del_vars <- setdiff(varnames, t3)
+    if (length(del_vars) > 0) {
+      out$data_outcome[, del_vars] <- NULL
+    }
+  }
+  
+  if (p2 >= 1) {
+    t1 = terms(formula(paste("~", paste(conf_cov, collapse = "+"))))
+    t2 = attr(t1, "factors")
+    t3 = rownames(t2)
+    
+    tem_vars <- c(pd_time, swtrt, swtrt_time, swtrt_time_upper)
+    add_vars <- c(setdiff(t3, varnames2), tem_vars)
+    if (length(add_vars) > 0) {
+      for (h in 1:K) {
+        out$analysis_switch$data_logis[[h]]$data <- 
+          merge(out$analysis_switch$data_logis[[h]]$data, 
+                df[, c(id, "tstart", "tstop", add_vars)], 
+                by = c(id, "tstart", "tstop"), all.x = TRUE, sort = FALSE)
+      }
+    }
+    
+    del_vars <- setdiff(varnames2, t3)
+    if (length(del_vars) > 0) {
+      for (h in 1:K) {
+        out$analysis_switch$data_logis[[h]]$data[, del_vars] <- NULL
+      }
+    }
+    
+    for (h in 1:K) {
+      out$analysis_switch$data_logis[[h]]$data <- 
+        out$analysis_switch$data_logis[[h]]$data[
+          , !startsWith(names(out$analysis_switch$data_logis[[h]]$data), 
+                        "stratum_")]
+    }
+  }
   
   out
 }

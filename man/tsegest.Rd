@@ -21,15 +21,16 @@ tsegest(
   swtrt_time_upper = "",
   base_cov = "",
   conf_cov = "",
-  low_psi = -3,
-  hi_psi = 3,
-  n_eval_z = 100,
+  low_psi = -1,
+  hi_psi = 1,
+  n_eval_z = 101,
   strata_main_effect_only = TRUE,
   firth = FALSE,
   flic = FALSE,
   recensor = TRUE,
   admin_recensor_only = TRUE,
   swtrt_control_only = TRUE,
+  gridsearch = FALSE,
   alpha = 0.05,
   ties = "efron",
   tol = 1e-06,
@@ -125,13 +126,18 @@ recensoring will be applied to the actual censoring times for dropouts.}
 \item{swtrt_control_only}{Whether treatment switching occurred only in
 the control group. The default is \code{TRUE}.}
 
+\item{gridsearch}{Whether to use grid search to estimate the causal
+parameter \code{psi}. Defaults to \code{FALSE}, in which case, a root
+finding algorithm will be used.}
+
 \item{alpha}{The significance level to calculate confidence intervals.
 The default value is 0.05.}
 
 \item{ties}{The method for handling ties in the Cox model, either
 "breslow" or "efron" (default).}
 
-\item{tol}{The desired accuracy (convergence tolerance) for \code{psi}.}
+\item{tol}{The desired accuracy (convergence tolerance) for \code{psi}
+for the root finding algorithm.}
 
 \item{offset}{The offset to calculate the time to event, PD, and
 treatment switch. We can set \code{offset} equal to 1 (default),
@@ -151,11 +157,13 @@ A list with the following components:
 \item \code{psi}: The estimated causal parameter for the control group.
 \item \code{psi_CI}: The confidence interval for \code{psi}.
 \item \code{psi_CI_type}: The type of confidence interval for \code{psi},
-i.e., "logistic model" or "bootstrap".
+i.e., "grid search", "root finding", or "bootstrap".
 \item \code{logrank_pvalue}: The two-sided p-value of the log-rank test
-for an intention-to-treat (ITT) analysis.
+for the ITT analysis.
 \item \code{cox_pvalue}: The two-sided p-value for treatment effect based on
-the Cox model.
+the Cox model applied to counterfactual unswitched survival times.
+If \code{boot} is \code{TRUE}, this value represents the
+bootstrap p-value.
 \item \code{hr}: The estimated hazard ratio from the Cox model.
 \item \code{hr_CI}: The confidence interval for hazard ratio.
 \item \code{hr_CI_type}: The type of confidence interval for hazard ratio,
@@ -165,12 +173,12 @@ treatment switching.
 \itemize{
 \item \code{data_switch}: The list of input data for the time from
 secondary baseline to switch by treatment group. The variables
-include \code{id}, \code{stratum} (if applicable), \code{swtrt},
-and \code{swtrt_time}. If \code{swtrt == 0}, then \code{swtrt_time}
+include \code{id}, \code{stratum}, \code{"swtrt"},
+and \code{"swtrt_time"}. If \code{swtrt == 0}, then \code{swtrt_time}
 is censored at the time from secondary baseline to either
 death or censoring.
-\item \code{km_switch}: The list of Kaplan-Meier plots for the time
-from secondary baseline to switch by treatment group.
+\item \code{km_switch}: The list of Kaplan-Meier plot data for the
+time from secondary baseline to switch by treatment group.
 \item \code{eval_z}: The list of data by treatment group containing
 the Wald statistics for the coefficient of the counterfactual
 in the logistic regression switching model, evaluated at
@@ -179,15 +187,25 @@ if the range of \code{psi} values to search for the solution
 and limits of confidence interval of \code{psi} need be modified.
 \item \code{data_nullcox}: The list of input data for counterfactual
 survival times for the null Cox model by treatment group.
+The variables include \code{id}, \code{stratum},
+\code{"t_star"} and \code{"d_star"}.
 \item \code{fit_nullcox}: The list of fitted null Cox models for
 counterfactual survival times by treatment group, which contains
 the martingale residuals.
 \item \code{data_logis}: The list of input data for pooled logistic
 regression models for treatment switching using g-estimation.
+The variables include \code{id}, \code{stratum},
+\code{"tstart"}, \code{"tstop"}, \code{"cross"},
+\code{"counterfactual"}, \code{conf_cov},
+\code{pd_time}, \code{swtrt},
+\code{swtrt_time}, and \code{swtrt_time_upper}.
 \item \code{fit_logis}: The list of fitted pooled logistic regression
 models for treatment switching using g-estimation.
 }
-\item \code{data_outcome}: The input data for the outcome Cox model.
+\item \code{data_outcome}: The input data for the outcome Cox model
+of counterfactual unswitched survival times.
+The variables include \code{id}, \code{stratum}, \code{"t_star"},
+\code{"d_star"}, \code{"treated"}, \code{base_cov} and \code{treat}.
 \item \code{fit_outcome}: The fitted outcome Cox model.
 \item \code{settings}: A list with the following components:
 \itemize{
@@ -207,6 +225,8 @@ survival times.
 administrative censoring times only.
 \item \code{swtrt_control_only}: Whether treatment switching occurred
 only in the control group.
+\item \code{gridsearch}: Whether to use grid search to estimate the
+causal parameter \code{psi}.
 \item \code{alpha}: The significance level to calculate confidence
 intervals.
 \item \code{ties}: The method for handling ties in the Cox model.
@@ -233,9 +253,9 @@ group if \code{swtrt_control_only} is \code{FALSE}.
 }
 }
 \description{
-Obtains the causal parameter estimate of the logistic
-regression switching model and the hazard ratio estimate of
-the Cox model to adjust for treatment switching.
+Obtains the causal parameter estimate using g-estimation
+based on the logistic regression switching model and the hazard ratio
+estimate of the Cox model to adjust for treatment switching.
 }
 \details{
 We use the following steps to obtain the hazard ratio estimate
@@ -250,18 +270,18 @@ where \eqn{E_{ik}} is the observed switch indicator for individual
 \eqn{i} at observation \eqn{k},
 \deqn{U_{i,\psi} = T_{C_i} + e^{\psi}T_{E_i}}
 is the counterfactual survival time for individual \eqn{i} given a
-specific value for \eqn{\psi}, and \eqn{x_{ijk}} are the confounders
-for individual \eqn{i} at observation \eqn{k}.
+specific value for \eqn{\psi}, and \eqn{x_{ijk}} is the confounder
+\eqn{j} for individual \eqn{i} at observation \eqn{k}.
 When applied from a secondary baseline, \eqn{U_{i,\psi}}
 refers to post-secondary baseline counterfactual survival, where
 \eqn{T_{C_i}} corresponds to the time spent after the secondary baseline
 on control treatment, and \eqn{T_{E_i}} corresponds to the time spent
 after the secondary baseline on the experimental treatment.
-\item Search for \eqn{\psi} such that the estimate of \eqn{\alpha} is close
-to zero. This will be the estimate of the caual parameter. The
+\item Search for \eqn{\psi} such that the Z-statistic for \eqn{\alpha} is
+close to zero. This will be the estimate of the causal parameter. The
 confidence interval for \eqn{\psi} can be obtained as the value of
 \eqn{\psi} such that the corresponding two-sided p-value for
-testing \eqn{H_0:\alpha = 0} in the switching model is equal to the
+testing \eqn{H_0: \alpha = 0} in the switching model is equal to the
 nominal significance level.
 \item Derive the counterfactual survival times for control patients
 had there been no treatment switching.
@@ -295,7 +315,7 @@ fit1 <- tsegest(
   pd = "progressed", pd_time = "timePFSobs", swtrt = "xo", 
   swtrt_time = "xotime", swtrt_time_upper = "xotime_upper",
   base_cov = "bprog", conf_cov = "bprog*catlag", 
-  low_psi = -3, hi_psi = 3, strata_main_effect_only = TRUE,
+  strata_main_effect_only = TRUE,
   recensor = TRUE, admin_recensor_only = TRUE, 
   swtrt_control_only = TRUE, alpha = 0.05, ties = "efron", 
   tol = 1.0e-6, boot = FALSE)
@@ -322,7 +342,7 @@ fit2 <- tsegest(
   pd = "progressed", pd_time = "timePFSobs", swtrt = "xo", 
   swtrt_time = "xotime", swtrt_time_upper = "xotime_upper",
   base_cov = "bprog", conf_cov = "bprog*catlag", 
-  low_psi = -3, hi_psi = 3, strata_main_effect_only = TRUE,
+  strata_main_effect_only = TRUE,
   recensor = TRUE, admin_recensor_only = TRUE, 
   swtrt_control_only = FALSE, alpha = 0.05, ties = "efron", 
   tol = 1.0e-6, boot = FALSE)

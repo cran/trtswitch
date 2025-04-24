@@ -21,7 +21,9 @@ phregr(
   est_resid = TRUE,
   firth = FALSE,
   plci = FALSE,
-  alpha = 0.05
+  alpha = 0.05,
+  maxiter = 50,
+  eps = 1e-09
 )
 }
 \arguments{
@@ -86,6 +88,10 @@ Defaults to \code{FALSE}.}
 \item{plci}{Whether to obtain profile likelihood confidence interval.}
 
 \item{alpha}{The two-sided significance level.}
+
+\item{maxiter}{The maximum number of iterations.}
+
+\item{eps}{The tolerance to declare convergence.}
 }
 \value{
 A list with the following components:

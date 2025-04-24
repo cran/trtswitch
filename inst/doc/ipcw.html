@@ -389,7 +389,7 @@ indicates that visit time is relative to the secondary baseline defined
 by the <code>swtrt_time_lower</code> parameter. Setting
 <code>relative_time = FALSE</code> makes visit time relative to
 randomization.</p></li>
-<li><p><strong>Stratification Factors</strong>: If more more than one
+<li><p><strong>Stratification Factors</strong>: If more than one
 stratification factor exists, they can be included in the logistic model
 either as main effects only
 (<code>strata_main_effect_only = TRUE</code>) or as all possible
@@ -460,7 +460,7 @@ can use a pooled logistic regression switching model. In this model, the
 prognostic baseline variable is represented by <code>bprog</code>, while
 <code>catlag</code> and the interaction between <code>bprog</code> and
 <code>catlag</code> serve as time-dependent covariates. Additionally,
-<code>s1</code>, <code>s2</code>, and <code>s3</code> are the three
+<code>ns1</code>, <code>ns2</code>, and <code>ns3</code> are the three
 terms for the natural cubic spline with <span class="math inline">\(\nu=3\)</span> degrees of freedom for
 visit-specific intercepts.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>fit1 <span class="ot">&lt;-</span> <span class="fu">ipcw</span>(</span>
@@ -523,8 +523,8 @@ hazard ratio estimate with the reported.</p>
 <span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co">#&gt;        beta     lower    upper</span></span>
 <span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt; 1 0.8519181 0.6795822 1.067957</span></span></code></pre></div>
 </div>
-<div id="example-for-time-dependent-covariates-cox-switching-model" class="section level2">
-<h2>Example for Time-Dependent Covariates Cox Switching Model</h2>
+<div id="example-for-time-dependent-cox-switching-model" class="section level2">
+<h2>Example for Time-Dependent Cox Switching Model</h2>
 <p>Now we apply the IPCW method using a Cox proportional hazards model
 with time-dependent covariates as the switching model.</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>fit2 <span class="ot">&lt;-</span> <span class="fu">ipcw</span>(</span>

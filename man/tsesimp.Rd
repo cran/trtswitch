@@ -75,7 +75,7 @@ covariates (excluding swtrt).
 \item{base_cov}{The names of baseline covariates (excluding
 treat) in the input data for the outcome Cox model.}
 
-\item{base2_cov}{The names of secondary baseline covariates
+\item{base2_cov}{The names of baseline and secondary baseline covariates
 (excluding swtrt) in the input data for the AFT model for
 post-progression survival.}
 
@@ -123,17 +123,24 @@ A list with the following components:
 \item \code{psi_CI_type}: The type of confidence interval for \code{psi},
 i.e., "AFT model" or "bootstrap".
 \item \code{logrank_pvalue}: The two-sided p-value of the log-rank test
-for an intention-to-treat (ITT) analysis.
+for the ITT analysis.
 \item \code{cox_pvalue}: The two-sided p-value for treatment effect based on
-the Cox model.
+the Cox model applied to counterfactual unswitched survival times.
+If \code{boot} is \code{TRUE}, this value represents the
+bootstrap p-value.
 \item \code{hr}: The estimated hazard ratio from the Cox model.
 \item \code{hr_CI}: The confidence interval for hazard ratio.
 \item \code{hr_CI_type}: The type of confidence interval for hazard ratio,
 either "Cox model" or "bootstrap".
 \item \code{data_aft}: A list of input data for the AFT model by treatment
-group.
+group. The variables include \code{id}, \code{stratum}, \code{"pps"},
+\code{"event"}, \code{"swtrt"}, \code{base2_cov}, \code{pd_time},
+\code{swtrt_time}, and \code{time}.
 \item \code{fit_aft}: A list of fitted AFT models by treatment group.
-\item \code{data_outcome}: The input data for the outcome Cox model.
+\item \code{data_outcome}: The input data for the outcome Cox model
+of counterfactual unswitched survival times.
+The variables include \code{id}, \code{stratum}, \code{"t_star"},
+\code{"d_star"}, \code{"treated"}, \code{base_cov}, and \code{treat}.
 \item \code{fit_outcome}: The fitted outcome Cox model.
 \item \code{settings}: A list with the following components:
 \itemize{
@@ -171,7 +178,8 @@ group if \code{swtrt_control_only} is \code{FALSE}.
 }
 }
 \description{
-Obtains the causal parameter estimate of the AFT model
+Obtains the causal parameter estimate of the accelerated
+failure-time (AFT) model
 for switching after disease progression and the hazard ratio estimate
 of the outcome Cox model to adjust for treatment switching.
 }

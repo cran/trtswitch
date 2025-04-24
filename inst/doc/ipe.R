@@ -8,6 +8,7 @@ knitr::opts_chunk$set(
 library(trtswitch)
 library(dplyr, warn.conflicts = FALSE)
 library(ggplot2)
+library(survival)
 
 ## ----analysis-----------------------------------------------------------------
 data <- immdef %>% mutate(rx = 1-xoyrs/progyrs)
@@ -74,13 +75,9 @@ f <- function(psi) {
                        t_star = pmin(u_star, c_star),
                        d_star = event*(u_star <= c_star)))
   
-  fit_aft <- liferegr(data1, time = "t_star", event = "d_star", 
-                      covariates = c("treated", "agerand", "sex.f", 
-                                     "tt_Lnum", "rmh_alea.c", 
-                                     "pathway.f"), 
-                      dist = "weibull")
-  
-  -fit_aft$beta[2]
+  fit_aft <- survreg(Surv(t_star, d_star) ~ treated + agerand + sex.f +  
+                       tt_Lnum + rmh_alea.c + pathway.f, data = data1)  
+  -fit_aft$coefficients[2]
 }
 
 B <- 30
