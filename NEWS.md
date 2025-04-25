@@ -1,3 +1,7 @@
+# trtswitch 0.1.6
+
+- fixed an ASAN issue in survQuantile
+
 # trtswitch 0.1.5
 
 - updated the default search interval for psi to [-2,2] at 101 points in rpsftm

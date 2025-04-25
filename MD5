@@ -1,6 +1,6 @@
-a266d748b25279e3da7b75bc0f803df8 *DESCRIPTION
+98dbbb70f662fbf2867e6f0caf3ad88f *DESCRIPTION
 19e69e2fd90aef4115a48f7899805055 *NAMESPACE
-e231dbe865fc2968da9f23ae9b18824d *NEWS.md
+8c1bc1cc5a9f18a27d0605a6ddabbaa0 *NEWS.md
 a5562865cbb1094b6a981e74dd8c8748 *R/RcppExports.R
 a375f5d5a4f54a6be4da41418e3996d6 *R/data.R
 d946fdee935b9e2fce7e9b7ac0171bb1 *R/ipcw.R
@@ -87,7 +87,7 @@ dc62613e8bc9606980ae2c46124c6f2a *man/tsegestsim.Rd
 aacf30f93d1a2ad6f30347caf5dbc416 *src/rpsftm.cpp
 91bbed604c5a1a2f0de34daeb9f39cac *src/splines.cpp
 b68df4168113fb266261a6699f77be60 *src/splines.h
-3a1b91a6a1f4f4cf14512133874e9158 *src/survival_analysis.cpp
+9255253ff95949ab281cc008b039572f *src/survival_analysis.cpp
 fe5a98a32ebbef3ea150a553264c3de2 *src/survival_analysis.h
 995c920cb44d2f7d9d8d05c920eae398 *src/tsegest.cpp
 44f179f1da37b3c62d6f91f5d5616017 *src/tsegestsim.cpp

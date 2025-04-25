@@ -230,33 +230,41 @@ DataFrame survQuantile(const NumericVector& time = NA_REAL,
   
 
   int n0 = sum(sub);
-  NumericVector z(n0), grad(n0);
+  NumericVector z(n0, NA_REAL), grad(n0, NA_REAL);
   double zcrit = R::qnorm((1.0 + cilevel)/2.0, 0, 1, 1, 0);
 
   int m = static_cast<int>(probs.size());
   NumericVector quantile(m), lower(m), upper(m);
   for (j=0; j<m; j++) {
-    double p = probs[j];
+    double q = 1.0 - probs[j];
     for (i=0; i<n0; i++) {
-      if (ct == "linear" || ct == "plain") {
-        z[i] = (surv0[i] - (1-p))/sesurv0[i];
-      } else if (ct == "loglog" || ct == "log-log" || ct == "cloglog") {
-        grad[i] = 1.0/(surv0[i]*log(surv0[i]));
-        z[i] = (log(-log(surv0[i])) - log(-log(1-p)))/(grad[i]*sesurv0[i]);
-      } else if (ct == "log") {
-        grad[i] = 1.0/surv0[i];
-        z[i] = (log(surv0[i]) - log(1-p))/(grad[i]*sesurv0[i]);
-      } else if (ct == "asinsqrt" || ct == "asin"|| ct == "arcsin") {
-        grad[i] = 1.0/(2.0*sqrt(surv0[i]*(1-surv0[i])));
-        z[i] = (asin(sqrt(surv0[i])) - asin(sqrt(1-p)))/(grad[i]*sesurv0[i]);
-      } else if (ct == "logit") {
-        grad[i] = 1/(surv0[i]*(1-surv0[i]));
-        z[i] = (R::qlogis(surv0[i], 0, 1, 1, 0) - 
-          R::qlogis(1-p, 0, 1, 1, 0))/(grad[i]*sesurv0[i]);
+      if (nrisk0[i] > nevent0[i]) {
+        if (ct == "linear" || ct == "plain") {
+          z[i] = (surv0[i] - (q))/sesurv0[i];
+        } else if (ct == "loglog" || ct == "log-log" || ct == "cloglog") {
+          grad[i] = 1.0/(surv0[i]*log(surv0[i]));
+          z[i] = (log(-log(surv0[i])) - log(-log(q)))/(grad[i]*sesurv0[i]);
+        } else if (ct == "log") {
+          grad[i] = 1.0/surv0[i];
+          z[i] = (log(surv0[i]) - log(q))/(grad[i]*sesurv0[i]);
+        } else if (ct == "asinsqrt" || ct == "asin"|| ct == "arcsin") {
+          grad[i] = 1.0/(2.0*sqrt(surv0[i]*(1-surv0[i])));
+          z[i] = (asin(sqrt(surv0[i])) - asin(sqrt(q)))/(grad[i]*sesurv0[i]);
+        } else if (ct == "logit") {
+          grad[i] = 1/(surv0[i]*(1-surv0[i]));
+          z[i] = (R::qlogis(surv0[i], 0, 1, 1, 0) - 
+            R::qlogis(q, 0, 1, 1, 0))/(grad[i]*sesurv0[i]);
+        }
       }
     }
     
-    IntegerVector index = which(abs(z[!is_na(z)]) <= zcrit);
+    IntegerVector index;
+    for (i = 0; i < z.size(); i++) {
+      if (!std::isnan(z[i]) && std::abs(z[i]) <= zcrit) {
+        index.push_back(i);
+      }
+    }
+    
     if (index.size() == 0) {
       lower[j] = NA_REAL;
       upper[j] = NA_REAL;
@@ -265,8 +273,8 @@ DataFrame survQuantile(const NumericVector& time = NA_REAL,
       upper[j] = max(index) < n0-1 ? time0[max(index)+1] : NA_REAL;
     }
     
-    if (is_true(any(surv0 < 1-p))) {
-      quantile[j] = time0[min(which(surv0 < 1-p))];
+    if (is_true(any(surv0 < q))) {
+      quantile[j] = time0[min(which(surv0 < q))];
     } else {
       quantile[j] = NA_REAL;
     }
