@@ -15,8 +15,8 @@ ipe(
   censor_time = "censor_time",
   base_cov = "",
   aft_dist = "weibull",
-  low_psi = -1,
-  hi_psi = 1,
+  low_psi = -2,
+  hi_psi = 2,
   strata_main_effect_only = 1,
   treat_modifier = 1,
   recensor = TRUE,
@@ -126,7 +126,8 @@ either "log-rank p-value" or "bootstrap".
 \item \code{Sstar}: A data frame containing the counterfactual untreated
 survival times and event indicators for each treatment group.
 The variables include \code{id}, \code{stratum},
-\code{"t_star"}, \code{"d_star"}, \code{"treated"}, and \code{treat}.
+\code{"t_star"}, \code{"d_star"}, \code{"treated"}, \code{base_cov},
+and \code{treat}.
 \item \code{kmstar}: A data frame containing the Kaplan-Meier estimates
 based on the counterfactual untreated survival times by treatment arm.
 \item \code{data_aft}: The input data for the AFT model for

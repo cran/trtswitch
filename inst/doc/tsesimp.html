@@ -430,62 +430,62 @@ of <span class="math inline">\(\hat{\psi}\)</span>.</p>
 <span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt; 9                      ps -0.473179085 0.135589101 -3.4898018</span></span>
 <span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt; 10                    ttc  0.062793519 0.262081632  0.2395953</span></span>
 <span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt; 11                   tran  0.375669348 0.377943241  0.9939835</span></span>
-<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; 12             Log(scale) -0.459858421 0.105871866 -4.3435375</span></span>
-<span id="cb4-16"><a href="#cb4-16" tabindex="-1"></a></span>
-<span id="cb4-17"><a href="#cb4-17" tabindex="-1"></a>fit1<span class="sc">$</span>psi</span>
-<span id="cb4-18"><a href="#cb4-18" tabindex="-1"></a><span class="co">#&gt; [1] -1.13619</span></span>
-<span id="cb4-19"><a href="#cb4-19" tabindex="-1"></a></span>
-<span id="cb4-20"><a href="#cb4-20" tabindex="-1"></a><span class="co"># experimental group</span></span>
-<span id="cb4-21"><a href="#cb4-21" tabindex="-1"></a>fit1<span class="sc">$</span>fit_aft[[<span class="dv">2</span>]]<span class="sc">$</span>fit<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
-<span id="cb4-22"><a href="#cb4-22" tabindex="-1"></a><span class="co">#&gt;                     param         beta      sebeta          z</span></span>
-<span id="cb4-23"><a href="#cb4-23" tabindex="-1"></a><span class="co">#&gt; 1             (Intercept)  4.819297086 0.760270309  6.3389258</span></span>
-<span id="cb4-24"><a href="#cb4-24" tabindex="-1"></a><span class="co">#&gt; 2                   swtrt  0.983747429 0.271723182  3.6204030</span></span>
-<span id="cb4-25"><a href="#cb4-25" tabindex="-1"></a><span class="co">#&gt; 3                 agerand  0.001253863 0.009513484  0.1317985</span></span>
-<span id="cb4-26"><a href="#cb4-26" tabindex="-1"></a><span class="co">#&gt; 4             sex.fFemale  0.395790503 0.237599761  1.6657866</span></span>
-<span id="cb4-27"><a href="#cb4-27" tabindex="-1"></a><span class="co">#&gt; 5                 tt_Lnum  0.066813220 0.051717213  1.2918952</span></span>
-<span id="cb4-28"><a href="#cb4-28" tabindex="-1"></a><span class="co">#&gt; 6              rmh_alea.c -0.714216404 0.209567497 -3.4080495</span></span>
-<span id="cb4-29"><a href="#cb4-29" tabindex="-1"></a><span class="co">#&gt; 7             pathway.fHR -0.301948754 0.296989949 -1.0166969</span></span>
-<span id="cb4-30"><a href="#cb4-30" tabindex="-1"></a><span class="co">#&gt; 8  pathway.fPI3K.AKT.mTOR -0.076210123 0.281075448 -0.2711376</span></span>
-<span id="cb4-31"><a href="#cb4-31" tabindex="-1"></a><span class="co">#&gt; 9                      ps -0.401333183 0.114040814 -3.5192066</span></span>
-<span id="cb4-32"><a href="#cb4-32" tabindex="-1"></a><span class="co">#&gt; 10                    ttc  0.414584864 0.377881586  1.0971290</span></span>
-<span id="cb4-33"><a href="#cb4-33" tabindex="-1"></a><span class="co">#&gt; 11                   tran -0.615854802 0.390436761 -1.5773484</span></span>
-<span id="cb4-34"><a href="#cb4-34" tabindex="-1"></a><span class="co">#&gt; 12             Log(scale) -0.414571270 0.116718016 -3.5519047</span></span>
-<span id="cb4-35"><a href="#cb4-35" tabindex="-1"></a></span>
-<span id="cb4-36"><a href="#cb4-36" tabindex="-1"></a>fit1<span class="sc">$</span>psi_trt</span>
-<span id="cb4-37"><a href="#cb4-37" tabindex="-1"></a><span class="co">#&gt; [1] -0.9837474</span></span></code></pre></div>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt; 12             Log(scale) -0.459858421 0.105871866 -4.3435375</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>fit1<span class="sc">$</span>psi</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt; [1] -1.13619</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="co"># experimental group</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>fit1<span class="sc">$</span>fit_aft[[<span class="dv">2</span>]]<span class="sc">$</span>fit<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt;                     param         beta      sebeta          z</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt; 1             (Intercept)  4.819297086 0.760270309  6.3389258</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt; 2                   swtrt  0.983747429 0.271723182  3.6204030</span></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt; 3                 agerand  0.001253863 0.009513484  0.1317985</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt; 4             sex.fFemale  0.395790503 0.237599761  1.6657866</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt; 5                 tt_Lnum  0.066813220 0.051717213  1.2918952</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co">#&gt; 6              rmh_alea.c -0.714216404 0.209567497 -3.4080495</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt; 7             pathway.fHR -0.301948754 0.296989949 -1.0166969</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt; 8  pathway.fPI3K.AKT.mTOR -0.076210123 0.281075448 -0.2711376</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt; 9                      ps -0.401333183 0.114040814 -3.5192066</span></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co">#&gt; 10                    ttc  0.414584864 0.377881586  1.0971290</span></span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a><span class="co">#&gt; 11                   tran -0.615854802 0.390436761 -1.5773484</span></span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a><span class="co">#&gt; 12             Log(scale) -0.414571270 0.116718016 -3.5519047</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>fit1<span class="sc">$</span>psi_trt</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="co">#&gt; [1] -0.9837474</span></span></code></pre></div>
 <p>Now we fit the outcome Cox model and compare the treatment hazard
 ratio estimate with the reported.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>fit1<span class="sc">$</span>fit_outcome<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co">#&gt;                    param         beta      sebeta          z</span></span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt; 1                treated -0.130373883 0.185429595 -0.7030910</span></span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt; 2                agerand  0.005589227 0.008101401  0.6899087</span></span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt; 3            sex.fFemale -0.443153389 0.192503561 -2.3020529</span></span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt; 4                tt_Lnum -0.010977575 0.037305714 -0.2942599</span></span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt; 5             rmh_alea.c  0.708929840 0.192039389  3.6915856</span></span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt; 6            pathway.fHR  0.151164769 0.299114625  0.5053740</span></span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; 7 pathway.fPI3K.AKT.mTOR  0.200302360 0.304414444  0.6579923</span></span>
-<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a></span>
-<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="fu">c</span>(fit1<span class="sc">$</span>hr, fit1<span class="sc">$</span>hr_CI)</span>
-<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt; [1] 0.8777672 0.6102972 1.2624590</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>fit1<span class="sc">$</span>fit_outcome<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co">#&gt;                    param         beta      sebeta          z</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co">#&gt; 1                treated -0.130373883 0.185429595 -0.7030910</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt; 2                agerand  0.005589227 0.008101401  0.6899087</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co">#&gt; 3            sex.fFemale -0.443153389 0.192503561 -2.3020529</span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co">#&gt; 4                tt_Lnum -0.010977575 0.037305714 -0.2942599</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt; 5             rmh_alea.c  0.708929840 0.192039389  3.6915856</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co">#&gt; 6            pathway.fHR  0.151164769 0.299114625  0.5053740</span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt; 7 pathway.fPI3K.AKT.mTOR  0.200302360 0.304414444  0.6579923</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="fu">c</span>(fit1<span class="sc">$</span>hr, fit1<span class="sc">$</span>hr_CI)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt; [1] 0.8777672 0.6102972 1.2624590</span></span></code></pre></div>
 <p>Finally, to ensure the uncertainty is accurately represented, the
 entire adjustment process and subsequent survival modeling can be
 bootstrapped.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>```{r boot}</span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>fit2 &lt;- tsesimp(</span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  data = shilong3, time = &quot;tstop&quot;, event = &quot;event&quot;,</span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  treat = &quot;bras.f&quot;, censor_time = &quot;dcut&quot;, pd = &quot;pd&quot;,</span>
-<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>  pd_time = &quot;dpd&quot;, swtrt = &quot;co&quot;, swtrt_time = &quot;dco&quot;,</span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  base_cov = c(&quot;agerand&quot;, &quot;sex.f&quot;, &quot;tt_Lnum&quot;, &quot;rmh_alea.c&quot;,</span>
-<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>                &quot;pathway.f&quot;),</span>
-<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>  base2_cov = c(&quot;agerand&quot;, &quot;sex.f&quot;, &quot;tt_Lnum&quot;, &quot;rmh_alea.c&quot;,</span>
-<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>                &quot;pathway.f&quot;, &quot;ps&quot;, &quot;ttc&quot;, &quot;tran&quot;),</span>
-<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>  aft_dist = &quot;weibull&quot;, alpha = 0.05,</span>
-<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>  recensor = TRUE, swtrt_control_only = FALSE, offset = 1,</span>
-<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>  boot = TRUE, n_boot = 1000, seed = 12345)</span>
-<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a></span>
-<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>c(fit2$hr, fit2$hr_CI)</span>
-<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a>```</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>```{r boot}</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>fit2 &lt;- tsesimp(</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  data = shilong3, time = &quot;tstop&quot;, event = &quot;event&quot;,</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  treat = &quot;bras.f&quot;, censor_time = &quot;dcut&quot;, pd = &quot;pd&quot;,</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>  pd_time = &quot;dpd&quot;, swtrt = &quot;co&quot;, swtrt_time = &quot;dco&quot;,</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>  base_cov = c(&quot;agerand&quot;, &quot;sex.f&quot;, &quot;tt_Lnum&quot;, &quot;rmh_alea.c&quot;,</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>                &quot;pathway.f&quot;),</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>  base2_cov = c(&quot;agerand&quot;, &quot;sex.f&quot;, &quot;tt_Lnum&quot;, &quot;rmh_alea.c&quot;,</span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>                &quot;pathway.f&quot;, &quot;ps&quot;, &quot;ttc&quot;, &quot;tran&quot;),</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>  aft_dist = &quot;weibull&quot;, alpha = 0.05,</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>  recensor = TRUE, swtrt_control_only = FALSE, offset = 1,</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>  boot = TRUE, n_boot = 1000, seed = 12345)</span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>c(fit2$hr, fit2$hr_CI)</span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>```</span></code></pre></div>
 </div>
 
 

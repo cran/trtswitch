@@ -5,7 +5,7 @@
 \title{Survival Curve for Proportional Hazards Regression Models}
 \usage{
 survfit_phregr(
-  fit_phregr,
+  object,
   newdata,
   sefit = TRUE,
   conftype = "log-log",
@@ -13,7 +13,7 @@ survfit_phregr(
 )
 }
 \arguments{
-\item{fit_phregr}{The output from the \code{phregr} call.}
+\item{object}{The output from the \code{phregr} call.}
 
 \item{newdata}{A data frame with the same variable names as those that
 appear in the \code{phregr} call. For right-censored data, one curve is

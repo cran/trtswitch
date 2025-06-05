@@ -15,8 +15,6 @@ ipcw(
   treat = "treat",
   swtrt = "swtrt",
   swtrt_time = "swtrt_time",
-  swtrt_time_lower = "",
-  swtrt_time_upper = "",
   base_cov = "",
   numerator = "",
   denominator = "",
@@ -25,7 +23,6 @@ ipcw(
   firth = FALSE,
   flic = FALSE,
   ns_df = 3,
-  relative_time = TRUE,
   stabilized_weights = TRUE,
   trunc = 0,
   trunc_upper_only = TRUE,
@@ -52,8 +49,6 @@ counting-process data with time-dependent covariates.
 0=control.
 \item \code{swtrt}: The treatment switch indicator, 1=switch, 0=no switch.
 \item \code{swtrt_time}: The time from randomization to treatment switch.
-\item \code{swtrt_time_lower}: The lower bound of treatment switching time.
-\item \code{swtrt_time_upper}: The upper bound of treatment switching time.
 \item \code{base_cov}: The baseline covariates (excluding treat) used in
 the outcome model.
 \item \code{numerator}: The baseline covariates (excluding treat) used in
@@ -78,12 +73,6 @@ covariates used in the denominator switching model.
 
 \item{swtrt_time}{The name of the swtrt_time variable in the input data.}
 
-\item{swtrt_time_lower}{The name of the swtrt_time_lower variable in
-the input data.}
-
-\item{swtrt_time_upper}{The name of the swtrt_time_upper variable in
-the input data.}
-
 \item{base_cov}{The names of baseline covariates (excluding
 treat) in the input data for the Cox model.}
 
@@ -104,19 +93,15 @@ effects in the logistic regression switching model. Defaults to
 considered in the switching model.}
 
 \item{firth}{Whether the Firth's bias reducing penalized likelihood
-should be used. The default is \code{FALSE}.}
+should be used.}
 
 \item{flic}{Whether to apply intercept correction to obtain more
-accurate predicted probabilities. The default is \code{FALSE}.}
+accurate predicted probabilities.}
 
 \item{ns_df}{Degrees of freedom for the natural cubic spline for
 visit-specific intercepts of the pooled logistic regression model.
 Defaults to 3 for two internal knots at the 33 and 67 percentiles
 of the artificial censoring times due to treatment switching.}
-
-\item{relative_time}{Whether to use the time relative to
-\code{swtrt_time_lower} as the intercepts for the pooled logistic
-regression model. The default is \code{TRUE}.}
 
 \item{stabilized_weights}{Whether to use the stabilized weights.
 The default is \code{TRUE}.}
@@ -162,8 +147,7 @@ either "Cox model" or "bootstrap".
 \item \code{data_switch}: A list of input data for the switching models by
 treatment group. The variables include \code{id}, \code{stratum},
 \code{"tstart"}, \code{"tstop"}, \code{"cross"}, \code{denominator},
-\code{swtrt}, \code{swtrt_time}, \code{swtrt_time_lower},
-and \code{swtrt_time_upper}.
+\code{swtrt}, and \code{swtrt_time}.
 \item \code{fit_switch}: A list of fitted switching models for the
 denominator and numerator by treatment group.
 \item \code{data_outcome}: The input data for the outcome Cox model
@@ -184,8 +168,6 @@ should be used.
 \item \code{flic}: Whether to apply intercept correction to obtain more
 accurate predicted probabilities.
 \item \code{ns_df}: Degrees of freedom for the natural cubic spline.
-\item \code{relative_time}: Whether to use the relative time as the
-intercepts.
 \item \code{stabilized_weights}: Whether to use the stabilized weights.
 \item \code{trunc}: The truncation fraction of the weight distribution.
 \item \code{trunc_upper_only}: Whether to truncate the weights from the
@@ -242,24 +224,20 @@ and corresponding p-value are calculated based on a t-distribution with
 sim1 <- tsegestsim(
   n = 500, allocation1 = 2, allocation2 = 1, pbprog = 0.5, 
   trtlghr = -0.5, bprogsl = 0.3, shape1 = 1.8, 
-  scale1 = 0.000025, shape2 = 1.7, scale2 = 0.000015, 
+  scale1 = 360, shape2 = 1.7, scale2 = 688, 
   pmix = 0.5, admin = 5000, pcatnotrtbprog = 0.5, 
   pcattrtbprog = 0.25, pcatnotrt = 0.2, pcattrt = 0.1, 
   catmult = 0.5, tdxo = 1, ppoor = 0.1, pgood = 0.04, 
   ppoormet = 0.4, pgoodmet = 0.2, xomult = 1.4188308, 
-  milestone = 546, swtrt_control_only = TRUE,
-  outputRawDataset = 1, seed = 2000)
+  milestone = 546, outputRawDataset = 1, seed = 2000)
 
 fit1 <- ipcw(
   sim1$paneldata, id = "id", tstart = "tstart", 
-  tstop = "tstop", event = "died", treat = "trtrand", 
-  swtrt = "xo", swtrt_time = "xotime", 
-  swtrt_time_lower = "timePFSobs",
-  swtrt_time_upper = "xotime_upper", base_cov = "bprog", 
+  tstop = "tstop", event = "event", treat = "trtrand", 
+  swtrt = "xo", swtrt_time = "xotime", base_cov = "bprog", 
   numerator = "bprog", denominator = "bprog*catlag", 
   logistic_switching_model = TRUE, ns_df = 3,
-  relative_time = TRUE, swtrt_control_only = TRUE, 
-  boot = FALSE)
+  swtrt_control_only = TRUE, boot = FALSE)
   
 c(fit1$hr, fit1$hr_CI) 
 

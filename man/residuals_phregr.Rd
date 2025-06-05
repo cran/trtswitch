@@ -5,7 +5,7 @@
 \title{Residuals for Proportional Hazards Regression Models}
 \usage{
 residuals_phregr(
-  fit_phregr,
+  object,
   type = c("martingale", "deviance", "score", "schoenfeld", "dfbeta", "dfbetas",
     "scaledsch"),
   collapse = FALSE,
@@ -13,7 +13,7 @@ residuals_phregr(
 )
 }
 \arguments{
-\item{fit_phregr}{The output from the \code{phregr} call.}
+\item{object}{The output from the \code{phregr} call.}
 
 \item{type}{The type of residuals desired, with options including
 \code{"martingale"}, \code{"deviance"}, \code{"score"},

@@ -13,9 +13,9 @@ tsegestsim(
   trtlghr = -0.5,
   bprogsl = 0.3,
   shape1 = 1.8,
-  scale1 = 2.5e-05,
+  scale1 = 360,
   shape2 = 1.7,
-  scale2 = 1.5e-05,
+  scale2 = 688,
   pmix = 0.5,
   admin = 5000,
   pcatnotrtbprog = 0.5,
@@ -30,7 +30,6 @@ tsegestsim(
   pgoodmet = 0.2,
   xomult = 1.4188308,
   milestone = 546,
-  swtrt_control_only = 1L,
   outputRawDataset = 1L,
   seed = NA_integer_
 )
@@ -103,16 +102,13 @@ survival time.}
 \item{milestone}{The milestone to calculate restricted mean survival
 time.}
 
-\item{swtrt_control_only}{Whether treatment switching occurred only in
-the control group.}
-
 \item{outputRawDataset}{Whether to output the raw data set.}
 
 \item{seed}{The seed to reproduce the simulation results.
 The seed from the environment will be used if left unspecified.}
 }
 \value{
-A list with three data frames.
+A list with two data frames.
 \itemize{
 \item \code{sumdata}: A summary data frame with the following variables:
 \itemize{
@@ -132,24 +128,6 @@ Cox model adjusting for baseline prognosis.
 \item \code{simtrue_cox_hr}: The treatment hazard ratio from the Cox
 model without adjusting for baseline prognosis.
 }
-\item \code{adsldata}: A subject-level data frame containing one record
-per subject with the following variables:
-\itemize{
-\item \code{id}: The subject ID.
-\item \code{trtrand}: The randomized treatment arm.
-\item \code{bprog}: Whether the patient had poor baseline prognosis.
-\item \code{timeOS}: The observed survival time.
-\item \code{died}: Whether the patient died.
-\item \code{progressed}: Whether the patient had disease progression.
-\item \code{timePFSobs}: The observed time of disease progression at
-regular scheduled visits.
-\item \code{catevent}: Whether the patient developed metastatic disease.
-\item \code{cattime}: When the patient developed metastatic disease.
-\item \code{xo}: Whether the patient switched treatment.
-\item \code{xotime}: When the patient switched treatment.
-\item \code{xotime_upper}: The upper bound of treatment switching time.
-\item \code{censor_time}: The administrative censoring time.
-}
 \item \code{paneldata}: A counting process style subject-level data frame
 with the following variables:
 \itemize{
@@ -158,7 +136,9 @@ with the following variables:
 \item \code{bprog}: Whether the patient had poor baseline prognosis.
 \item \code{tstart}: The left end of time interval.
 \item \code{tstop}: The right end of time interval.
-\item \code{died}: Whether the patient died.
+\item \code{event}: Whether the patient died at the end of the interval.
+\item \code{timeOS}: The observed survival time.
+\item \code{died}: Whether the patient died during the study.
 \item \code{progressed}: Whether the patient had disease progression.
 \item \code{timePFSobs}: The observed time of disease progression at
 regular scheduled visits.
@@ -186,7 +166,7 @@ time-dependent covariates.
 sim1 <- tsegestsim(
   n = 500, allocation1 = 2, allocation2 = 1, pbprog = 0.5, 
   trtlghr = -0.5, bprogsl = 0.3, shape1 = 1.8, 
-  scale1 = 0.000025, shape2 = 1.7, scale2 = 0.000015, 
+  scale1 = 360, shape2 = 1.7, scale2 = 688, 
   pmix = 0.5, admin = 5000, pcatnotrtbprog = 0.5, 
   pcattrtbprog = 0.25, pcatnotrt = 0.2, pcattrt = 0.1, 
   catmult = 0.5, tdxo = 1, ppoor = 0.1, pgood = 0.04, 

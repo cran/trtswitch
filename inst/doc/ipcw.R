@@ -13,25 +13,21 @@ library(ggplot2)
 sim1 <- tsegestsim(
   n = 500, allocation1 = 2, allocation2 = 1, pbprog = 0.5, 
   trtlghr = -0.5, bprogsl = 0.3, shape1 = 1.8, 
-  scale1 = 0.000025, shape2 = 1.7, scale2 = 0.000015, 
+  scale1 = 360, shape2 = 1.7, scale2 = 688, 
   pmix = 0.5, admin = 5000, pcatnotrtbprog = 0.5, 
   pcattrtbprog = 0.25, pcatnotrt = 0.2, pcattrt = 0.1, 
   catmult = 0.5, tdxo = 1, ppoor = 0.1, pgood = 0.04, 
   ppoormet = 0.4, pgoodmet = 0.2, xomult = 1.4188308, 
-  milestone = 546, swtrt_control_only = TRUE,
-  outputRawDataset = 1, seed = 2000)
+  milestone = 546, outputRawDataset = 1, seed = 2000)
 
 ## ----analysis example 1-------------------------------------------------------
 fit1 <- ipcw(
   sim1$paneldata, id = "id", tstart = "tstart", 
   tstop = "tstop", event = "died", treat = "trtrand", 
-  swtrt = "xo", swtrt_time = "xotime", 
-  swtrt_time_lower = "timePFSobs",
-  swtrt_time_upper = "xotime_upper", base_cov = "bprog", 
+  swtrt = "xo", swtrt_time = "xotime", base_cov = "bprog", 
   numerator = "bprog", denominator = "bprog*catlag", 
   logistic_switching_model = TRUE, ns_df = 3,
-  relative_time = TRUE, swtrt_control_only = TRUE, 
-  boot = FALSE)
+  swtrt_control_only = TRUE, boot = FALSE)
 
 ## ----switching models example 1-----------------------------------------------
 # denominator switching model fit

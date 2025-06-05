@@ -413,7 +413,7 @@ changes, yields a borderline significant p-value of <span class="math inline">\(
 <p>Using the IPE method with a Weibull AFT model, we estimate <span class="math inline">\(\hat{\psi} = -0.183\)</span>, which is similar to
 the estimate obtained from the RPSFTM analysis.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>fit1<span class="sc">$</span>psi</span>
-<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt; [1] -0.1829312</span></span></code></pre></div>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt; [1] -0.182931</span></span></code></pre></div>
 <p>The Kaplan-Meier plot of counterfactual survival times supports the
 estimated <span class="math inline">\(\hat{\psi}\)</span>.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">ggplot</span>(fit1<span class="sc">$</span>kmstar, <span class="fu">aes</span>(<span class="at">x=</span>time, <span class="at">y=</span>survival, <span class="at">group=</span>treated,</span>
@@ -458,15 +458,15 @@ the coefficient for the treatment variable in the updated AFT model fit
 equals <span class="math inline">\(0.950\)</span>:</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>fit2<span class="sc">$</span>fit_aft<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co">#&gt;                    param         beta      sebeta          z</span></span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt; 1            (Intercept)  6.934726252 0.495626805 13.9918305</span></span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; 2                treated -0.949765905 0.150227465 -6.3221855</span></span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt; 3                agerand -0.003290493 0.006498532 -0.5063440</span></span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; 4            sex.fFemale  0.322266186 0.156016639  2.0655886</span></span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt; 5                tt_Lnum -0.014139564 0.028712689 -0.4924500</span></span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt; 6             rmh_alea.c -0.671748327 0.156970323 -4.2794607</span></span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt; 7            pathway.fHR -0.174054298 0.239966691 -0.7253269</span></span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="co">#&gt; 8 pathway.fPI3K.AKT.mTOR -0.149492615 0.241468209 -0.6190985</span></span>
-<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#&gt; 9             Log(scale) -0.209508089 0.076278867 -2.7466073</span></span></code></pre></div>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt; 1            (Intercept)  6.934726180 0.495626813 13.9918301</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; 2                treated -0.949765785 0.150227468 -6.3221846</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt; 3                agerand -0.003290492 0.006498532 -0.5063439</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; 4            sex.fFemale  0.322266209 0.156016643  2.0655887</span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt; 5                tt_Lnum -0.014139569 0.028712690 -0.4924502</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt; 6             rmh_alea.c -0.671748350 0.156970327 -4.2794607</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt; 7            pathway.fHR -0.174054294 0.239966697 -0.7253269</span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="co">#&gt; 8 pathway.fPI3K.AKT.mTOR -0.149492619 0.241468215 -0.6190985</span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#&gt; 9             Log(scale) -0.209508066 0.076278866 -2.7466070</span></span></code></pre></div>
 <p>This suggests that the <span class="math inline">\(\psi\)</span>
 value has not converged. The following code demonstrates the oscillation
 of <span class="math inline">\(\psi\)</span> values between 0.955,

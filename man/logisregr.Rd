@@ -16,7 +16,6 @@ logisregr(
   link = "logit",
   robust = FALSE,
   firth = FALSE,
-  bc = FALSE,
   flic = FALSE,
   plci = FALSE,
   alpha = 0.05,
@@ -66,11 +65,6 @@ variance estimate.}
 \item{firth}{Whether the firth's bias reducing penalized likelihood
 should be used. The default is \code{FALSE}.}
 
-\item{bc}{Whether to apply firth's bias correction for noncanonical
-parameterization and weighted logistic regression. The default is
-\code{FALSE}, in which case, the penalized likelihood with Jeffreys
-prior will be used.}
-
 \item{flic}{Whether to apply intercept correction to obtain more
 accurate predicted probabilities. The default is \code{FALSE}.}
 
@@ -99,8 +93,6 @@ and regression coefficients associated with the covariates.
 \item \code{robust}: Whether a robust sandwich variance estimate should
 be computed.
 \item \code{firth}: Whether the firth's penalized likelihood is used.
-\item \code{bc}: Whether to apply firth's bias correction for noncanonical
-parameterization and weighted logistic regression.
 \item \code{flic}: Whether to apply intercept correction.
 \item \code{loglik0_unpenalized}: The unpenalized log-likelihood under null.
 \item \code{loglik1_unpenalized}: The maximum unpenalized log-likelihood.
@@ -153,8 +145,6 @@ the link function.
 \item \code{id}: The name of the id variable.
 \item \code{robust}: Whether a robust sandwich variance estimate should be
 computed.
-\item \code{bc}: Whether to apply firth's bias correction for noncanonical
-parameterization and weighted logistic regression.
 \item \code{firth}: Whether to use the firth's bias reducing penalized
 likelihood.
 \item \code{flic}: Whether to apply intercept correction.

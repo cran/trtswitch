@@ -18,11 +18,10 @@ tsegest(
   pd_time = "pd_time",
   swtrt = "swtrt",
   swtrt_time = "swtrt_time",
-  swtrt_time_upper = "",
   base_cov = "",
   conf_cov = "",
-  low_psi = -1,
-  hi_psi = 1,
+  low_psi = -2,
+  hi_psi = 2,
   n_eval_z = 101,
   strata_main_effect_only = TRUE,
   firth = FALSE,
@@ -59,7 +58,6 @@ be provided for all subjects including those who had events.
 \item \code{pd_time}: The time from randomization to PD.
 \item \code{swtrt}: The treatment switch indicator, 1=switch, 0=no switch.
 \item \code{swtrt_time}: The time from randomization to treatment switch.
-\item \code{swtrt_time_upper}: The upper bound of treatment switching time.
 \item \code{base_cov}: The baseline covariates (excluding treat).
 \item \code{conf_cov}: The confounding variables for predicting
 treatment switching (excluding treat).
@@ -87,9 +85,6 @@ treatment switching (excluding treat).
 
 \item{swtrt_time}{The name of the swtrt_time variable in the input data.}
 
-\item{swtrt_time_upper}{The name of the swtrt_time_upper variable in the
-input data.}
-
 \item{base_cov}{The names of baseline covariates (excluding
 treat) in the input data for the Cox model.}
 
@@ -111,10 +106,10 @@ effects in the logistic regression switching model. Defaults to
 considered in the switching model.}
 
 \item{firth}{Whether the Firth's bias reducing penalized likelihood
-should be used. The default is \code{FALSE}.}
+should be used.}
 
 \item{flic}{Whether to apply intercept correction to obtain more
-accurate predicted probabilities. The default is \code{FALSE}.}
+accurate predicted probabilities.}
 
 \item{recensor}{Whether to apply recensoring to counterfactual
 survival times. Defaults to \code{TRUE}.}
@@ -197,8 +192,7 @@ regression models for treatment switching using g-estimation.
 The variables include \code{id}, \code{stratum},
 \code{"tstart"}, \code{"tstop"}, \code{"cross"},
 \code{"counterfactual"}, \code{conf_cov},
-\code{pd_time}, \code{swtrt},
-\code{swtrt_time}, and \code{swtrt_time_upper}.
+\code{pd_time}, \code{swtrt}, and \code{swtrt_time}.
 \item \code{fit_logis}: The list of fitted pooled logistic regression
 models for treatment switching using g-estimation.
 }
@@ -295,25 +289,22 @@ p-value for hazard ratio are calculated based on a t-distribution with
 }
 \examples{
 
-# Example 1: one-way treatment switching (control to active)
-
 sim1 <- tsegestsim(
   n = 500, allocation1 = 2, allocation2 = 1, pbprog = 0.5, 
   trtlghr = -0.5, bprogsl = 0.3, shape1 = 1.8, 
-  scale1 = 0.000025, shape2 = 1.7, scale2 = 0.000015, 
+  scale1 = 360, shape2 = 1.7, scale2 = 688, 
   pmix = 0.5, admin = 5000, pcatnotrtbprog = 0.5, 
   pcattrtbprog = 0.25, pcatnotrt = 0.2, pcattrt = 0.1, 
   catmult = 0.5, tdxo = 1, ppoor = 0.1, pgood = 0.04, 
   ppoormet = 0.4, pgoodmet = 0.2, xomult = 1.4188308, 
-  milestone = 546, swtrt_control_only = TRUE,
-  outputRawDataset = 1, seed = 2000)
+  milestone = 546, outputRawDataset = 1, seed = 2000)
   
 fit1 <- tsegest(
   data = sim1$paneldata, id = "id", 
-  tstart = "tstart", tstop = "tstop", event = "died", 
+  tstart = "tstart", tstop = "tstop", event = "event", 
   treat = "trtrand", censor_time = "censor_time", 
-  pd = "progressed", pd_time = "timePFSobs", swtrt = "xo", 
-  swtrt_time = "xotime", swtrt_time_upper = "xotime_upper",
+  pd = "progressed", pd_time = "timePFSobs", 
+  swtrt = "xo", swtrt_time = "xotime", 
   base_cov = "bprog", conf_cov = "bprog*catlag", 
   strata_main_effect_only = TRUE,
   recensor = TRUE, admin_recensor_only = TRUE, 
@@ -321,33 +312,6 @@ fit1 <- tsegest(
   tol = 1.0e-6, boot = FALSE)
   
 c(fit1$hr, fit1$hr_CI)
-
-# Example 2: two-way treatment switching
-
-sim2 <- tsegestsim(
-  n = 500, allocation1 = 2, allocation2 = 1, pbprog = 0.5, 
-  trtlghr = -0.5, bprogsl = 0.3, shape1 = 1.8, 
-  scale1 = 0.000025, shape2 = 1.7, scale2 = 0.000015, 
-  pmix = 0.5, admin = 5000, pcatnotrtbprog = 0.5, 
-  pcattrtbprog = 0.25, pcatnotrt = 0.2, pcattrt = 0.1, 
-  catmult = 0.5, tdxo = 1, ppoor = 0.1, pgood = 0.04, 
-  ppoormet = 0.4, pgoodmet = 0.2, xomult = 1.4188308, 
-  milestone = 546, swtrt_control_only = FALSE,
-  outputRawDataset = 1, seed = 2000)
-  
-fit2 <- tsegest(
-  data = sim2$paneldata, id = "id", 
-  tstart = "tstart", tstop = "tstop", event = "died", 
-  treat = "trtrand", censor_time = "censor_time", 
-  pd = "progressed", pd_time = "timePFSobs", swtrt = "xo", 
-  swtrt_time = "xotime", swtrt_time_upper = "xotime_upper",
-  base_cov = "bprog", conf_cov = "bprog*catlag", 
-  strata_main_effect_only = TRUE,
-  recensor = TRUE, admin_recensor_only = TRUE, 
-  swtrt_control_only = FALSE, alpha = 0.05, ties = "efron", 
-  tol = 1.0e-6, boot = FALSE)
-  
-c(fit2$hr, fit2$hr_CI)
 
 }
 \references{

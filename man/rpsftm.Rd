@@ -15,8 +15,11 @@ rpsftm(
   rx = "rx",
   censor_time = "censor_time",
   base_cov = "",
-  low_psi = -1,
-  hi_psi = 1,
+  psi_test = "logrank",
+  aft_dist = "weibull",
+  strata_main_effect_only = TRUE,
+  low_psi = -2,
+  hi_psi = 2,
   n_eval_z = 101,
   treat_modifier = 1,
   recensor = TRUE,
@@ -63,13 +66,23 @@ be provided for all subjects including those who had events.
 \item{base_cov}{The names of baseline covariates (excluding
 treat) in the input data for the outcome Cox model.}
 
+\item{psi_test}{The survival function to calculate the Z-statistic, e.g.,
+"logrank" (default), "phreg", or "lifereg".}
+
+\item{aft_dist}{The assumed distribution for time to event for the AFT
+model when \code{psi_test = "lifereg"}. Options include "exponential",
+"weibull" (default), "loglogistic", and "lognormal".}
+
+\item{strata_main_effect_only}{Whether to only include the strata main
+effects in the AFT model. Defaults to \code{TRUE}, otherwise all
+possible strata combinations will be considered in the AFT model.}
+
 \item{low_psi}{The lower limit of the causal parameter.}
 
 \item{hi_psi}{The upper limit of the causal parameter.}
 
 \item{n_eval_z}{The number of points between \code{low_psi} and
-\code{hi_psi} (inclusive) at which to evaluate the log-rank
-Z-statistics.}
+\code{hi_psi} (inclusive) at which to evaluate the Z-statistics.}
 
 \item{treat_modifier}{The optional sensitivity parameter for the
 constant treatment effect assumption.}
@@ -123,14 +136,15 @@ bootstrap p-value.
 \item \code{hr_CI}: The confidence interval for hazard ratio.
 \item \code{hr_CI_type}: The type of confidence interval for hazard ratio,
 either "log-rank p-value" or "bootstrap".
-\item \code{eval_z}: A data frame containing the log-rank test Z-statistics
-evaluated at a sequence of \code{psi} values. Used to plot and check
-if the range of \code{psi} values to search for the solution and
+\item \code{eval_z}: A data frame containing the Z-statistics for treatment
+effect evaluated at a sequence of \code{psi} values. Used to plot and
+check if the range of \code{psi} values to search for the solution and
 limits of confidence interval of \code{psi} need be modified.
 \item \code{Sstar}: A data frame containing the counterfactual untreated
 survival times and event indicators for each treatment group.
 The variables include \code{id}, \code{stratum},
-\code{"t_star"}, \code{"d_star"}, \code{"treated"}, and \code{treat}.
+\code{"t_star"}, \code{"d_star"}, \code{"treated"}, \code{base_cov},
+and \code{treat}.
 \item \code{kmstar}: A data frame containing the Kaplan-Meier estimates
 based on the counterfactual untreated survival times by treatment arm.
 \item \code{data_outcome}: The input data for the outcome Cox model of
@@ -141,11 +155,15 @@ and \code{treat}.
 \item \code{fit_outcome}: The fitted outcome Cox model.
 \item \code{settings}: A list with the following components:
 \itemize{
+\item \code{psi_test}: The survival function to calculate the Z-statistic.
+\item \code{aft_dist}: The distribution for time to event for the AFT
+model.
+\item \code{strata_main_effect_only}: Whether to only include the strata
+main effects in the AFT model.
 \item \code{low_psi}: The lower limit of the causal parameter.
 \item \code{hi_psi}: The upper limit of the causal parameter.
 \item \code{n_eval_z}: The number of points between \code{low_psi} and
-\code{hi_psi} (inclusive) at which to evaluate the log-rank
-Z-statistics.
+\code{hi_psi} (inclusive) at which to evaluate the Z-statistics.
 \item \code{treat_modifier}: The sensitivity parameter for the
 constant treatment effect assumption.
 \item \code{recensor}: Whether to apply recensoring to counterfactual
@@ -174,16 +192,19 @@ interval for hazard ratio.
 }
 \description{
 Obtains the causal parameter estimate from the
-log-rank test and the hazard ratio estimate from the Cox model
-to adjust for treatment switching.
+log-rank test, the Cox proportional hazards model, or a parametric
+survival regression model, and obtains the hazard ratio estimate
+from the Cox model to adjust for treatment switching.
 }
 \details{
 We use the following steps to obtain the hazard ratio estimate
 and confidence interval had there been no treatment switching:
 \itemize{
 \item Use RPSFTM to estimate the causal parameter \eqn{\psi} based on the
-log-rank test for counterfactual untreated survival times for
-both arms: \deqn{U_{i,\psi} = T_{C_i} +  e^{\psi}T_{E_i}}
+log-rank test (default), the Cox proportional hazards model,
+or a parametric survival regression model for counterfactual
+untreated survival times for both arms:
+\deqn{U_{i,\psi} = T_{C_i} +  e^{\psi}T_{E_i}}
 \item Fit the Cox proportional hazards model to the observed survival times
 for the experimental group and the counterfactual survival times
 for the control group to obtain the hazard ratio estimate.
