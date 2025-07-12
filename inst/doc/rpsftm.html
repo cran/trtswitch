@@ -382,9 +382,10 @@ and the time spent on the experimental treatment, <span class="math inline">\(T_
 the proportion of time spent on the experimental treatment, defined as
 the ratio <span class="math inline">\(T_{E_i}/T_i\)</span>. The
 structural model for counterfactual untreated survival times is
-expressed as <span class="math display">\[
-   U_{i,\psi} = T_{C_i} + e^{\psi} T_{E_i},
-\]</span> where there are three distinct cases:</p>
+expressed as <span class="math display">\[U_{i,\psi} = T_{C_i} +
+e^{\psi} T_{E_i},\]</span> where there are three distinct cases for
+one-way treatment switching from the control arm to the experimental
+arm:</p>
 <ul>
 <li><p><strong>Experimental Group Patients</strong>: <span class="math inline">\(T_{C_i} = 0\)</span>, and <span class="math inline">\(T_{E_i}\)</span> represents the time from
 randomization to either death or censoring.</p></li>
@@ -399,142 +400,46 @@ the time from the switch to either death or censoring.</p></li>
 <div id="recensoring" class="section level1">
 <h1>Recensoring</h1>
 <p>The censoring time <span class="math inline">\(C_i\)</span> must be
-defined for all patients including those who experienced an event. We
-assume that censoring is noninformative in the absence of treatment
-switching. However, since time to treatment switching may be influenced
-by prognostic factors, the counterfactual censoring time <span class="math display">\[
-  f(T_{C_i}) = T_{C_i} + e^{\psi}(C_i - T_{C_i})
-\]</span> could become informative. To address this and make the
-counterfactual censoring time noninformative, we take the minimum of the
-counterfactual censoring time across all possible values of the time to
-switching <span class="math inline">\(T_{C_i}\)</span>. Specifically, we
-define: <span class="math display">\[
-  D_{i,\psi}^* = \min_{T_{C_i} \in [0, C_i]} f(T_{C_i}).
-\]</span></p>
-<div id="behavior-of-the-function-ft_c_i" class="section level2">
-<h2>Behavior of the function <span class="math inline">\(f(T_{C_i})\)</span>:</h2>
-<ul>
-<li><strong>If <span class="math inline">\(\psi &lt;
-0\)</span></strong>, then <span class="math inline">\(f(T_{C_i})\)</span> is an increasing function of
-<span class="math inline">\(T_{C_i}\)</span>. The minimum occurs at
-<span class="math inline">\(T_{C_i} = 0\)</span>, yielding a value of
-<span class="math inline">\(e^{\psi} C_i\)</span>.</li>
-<li><strong>If <span class="math inline">\(\psi &gt;
-0\)</span></strong>, <span class="math inline">\(f(T_{C_i})\)</span>
-decreases with <span class="math inline">\(T_{C_i}\)</span>, and the
-minimum is attained when <span class="math inline">\(T_{C_i} =
-C_i\)</span>, yielding <span class="math inline">\(C_i\)</span>.</li>
-<li><strong>When <span class="math inline">\(\psi = 0\)</span></strong>,
-<span class="math inline">\(f(T_{C_i}) = C_i\)</span> for all <span class="math inline">\(T_{C_i}\)</span>.</li>
-</ul>
-<p>Thus, we can summarize the relationship:</p>
-<p><span class="math display">\[
-  D_{i,\psi}^* = \min(C_i, e^{\psi} C_i).
-\]</span></p>
-<p>To ensure that the counterfactual censoring time is independent of
-prognostic factors, we define <span class="math inline">\(D_i^*(\psi)\)</span> for all control group
-patients, irrespective of whether or not they were observed to switch
-treatment.</p>
-</div>
-<div id="case-by-case-breakdown" class="section level2">
-<h2>Case-by-case breakdown</h2>
-<div id="control-group-switchers-who-experienced-an-event" class="section level3">
-<h3>Control group switchers who experienced an event:</h3>
-<p>For these patients, we have <span class="math inline">\(T_i = T_{C_i}
-+ T_{E_i} \leq C_i\)</span>.</p>
-<ul>
-<li><strong>When <span class="math inline">\(\psi &lt;
-0\)</span></strong>:
-<ul>
-<li>Since <span class="math inline">\(e^{\psi} &lt; 1\)</span>, <span class="math inline">\(D_{i,\psi}^* = e^{\psi} C_i &lt; C_i\)</span>, and
-<span class="math inline">\(U_{i,\psi} &lt; T_{C_i} + T_{E_i} =
-T_i\)</span>.</li>
-<li>If <span class="math inline">\(e^{\psi} &lt; \frac{T_{C_i}}{C_i -
-T_{E_i}} \leq 1\)</span>, then <span class="math inline">\(D_{i,\psi}^*
-&lt; U_{i,\psi}\)</span>, meaning the event will be recensored and
-become a nonevent. The counterfactual survival time <span class="math inline">\(U_{i,\psi}\)</span> is replaced by <span class="math inline">\(D_{i,\psi}^* = e^{\psi} C_i\)</span>.</li>
-<li>If <span class="math inline">\(e^{\psi} \geq \frac{T_{C_i}}{C_i -
-T_{E_i}}\)</span>, then <span class="math inline">\(U_{i,\psi} \leq
-D_{i,\psi}^*\)</span>, and the event remains as such, with <span class="math inline">\(U_{i,\psi}\)</span> unchanged.</li>
-</ul></li>
-<li><strong>When <span class="math inline">\(\psi &gt;
-0\)</span></strong>:
-<ul>
-<li>Since <span class="math inline">\(e^{\psi} &gt; 1\)</span>, <span class="math inline">\(D_{i,\psi}^* = C_i\)</span>, and <span class="math inline">\(U_{i,\psi} &gt; T_{C_i} + T_{E_i} =
-T_i\)</span>.</li>
-<li>If <span class="math inline">\(e^{\psi} &gt; \frac{C_i -
-T_{C_i}}{T_{E_i}} \geq 1\)</span>, then <span class="math inline">\(D_{i,\psi}^* &lt; U_{i,\psi}\)</span>, and the
-event is recensored into a nonevent. The counterfactual survival time is
-replaced by <span class="math inline">\(D_{i,\psi}^* =
-C_i\)</span>.</li>
-<li>If <span class="math inline">\(e^{\psi} \leq \frac{C_i -
-T_{C_i}}{T_{E_i}}\)</span>, then <span class="math inline">\(U_{i,\psi}
-\leq D_{i,\psi}^*\)</span>, and the event remains unchanged.</li>
-</ul></li>
-<li><strong>When <span class="math inline">\(\psi = 0\)</span></strong>:
-<ul>
-<li>In this case, <span class="math inline">\(U_{i,\psi} = T_i \leq C_i
-= D_{i,\psi}^*\)</span>, so there is no change to either the event or
-censoring times. The event remains unchanged.</li>
-</ul></li>
-</ul>
-</div>
-<div id="control-group-switchers-who-were-censored" class="section level3">
-<h3>Control group switchers who were censored:</h3>
-<p>By definition, <span class="math inline">\(D_{i,\psi}^* \leq T_{C_i}
-+ e^{\psi}(C_i - T_{C_i}) = U_{i,\psi}\)</span>, so the counterfactual
-survival time <span class="math inline">\(U_{i,\psi}\)</span> is
-replaced with <span class="math inline">\(D_{i,\psi}^*\)</span>.</p>
-</div>
-<div id="control-group-nonswitchers-who-experienced-an-event" class="section level3">
-<h3>Control group nonswitchers who experienced an event:</h3>
-<p>For these patients, <span class="math inline">\(U_{i,\psi} = T_{C_i}
-= T_i \leq C_i\)</span>.</p>
-<ul>
-<li><strong>When <span class="math inline">\(\psi &lt;
-0\)</span></strong>:
-<ul>
-<li>Since <span class="math inline">\(e^{\psi} &lt; 1\)</span>, <span class="math inline">\(D_{i,\psi}^* = e^{\psi} C_i\)</span>.</li>
-<li>If <span class="math inline">\(e^{\psi} &lt; \frac{T_i}{C_i} \leq
-1\)</span>, then <span class="math inline">\(D_{i,\psi}^* &lt;
-U_{i,\psi}\)</span>, and the event becomes a nonevent, with <span class="math inline">\(U_{i,\psi}\)</span> replaced by <span class="math inline">\(D_{i,\psi}^*\)</span>.</li>
-<li>If <span class="math inline">\(e^{\psi} \geq
-\frac{T_i}{C_i}\)</span>, then <span class="math inline">\(U_{i,\psi}
-\leq D_{i,\psi}^*\)</span>, and the event remains unchanged.</li>
-</ul></li>
-<li><strong>When <span class="math inline">\(\psi \geq
-0\)</span></strong>:
-<ul>
-<li>Since <span class="math inline">\(e^{\psi} \geq 1\)</span>, <span class="math inline">\(D_{i,\psi}^* = C_i \geq T_i = U_{i,\psi}\)</span>,
-so the event remains as it is, with <span class="math inline">\(U_{i,\psi}\)</span> unchanged.</li>
-</ul></li>
-</ul>
-</div>
-<div id="control-group-nonswitchers-who-were-censored" class="section level3">
-<h3>Control group nonswitchers who were censored:</h3>
-<p>In this case, <span class="math inline">\(U_{i,\psi} = C_i\)</span>.
-By definition, <span class="math inline">\(D_{i,\psi}^* \leq
-U_{i,\psi}\)</span>, meaning <span class="math inline">\(U_{i,\psi}\)</span> is replaced by <span class="math inline">\(D_{i,\psi}^*\)</span>.</p>
-</div>
-</div>
-<div id="summary" class="section level2">
-<h2>Summary:</h2>
-<p>An observed event can become a nonevent due to recensoring under two
-conditions:</p>
-<ol style="list-style-type: decimal">
-<li>If <span class="math inline">\(\psi &lt; 0\)</span> and <span class="math inline">\(e^{\psi} C_i &lt; U_{i,\psi}\)</span>.</li>
-<li>If <span class="math inline">\(\psi &gt; 0\)</span> and <span class="math inline">\(C_i &lt; U_{i,\psi}\)</span>.</li>
-</ol>
-<p>The recensored counterfactual survival time is defined as <span class="math display">\[
-  U_{i,\psi}^* = \min(U_{i,\psi}, D_{i,\psi}^*),
-\]</span> while the counterfactual event indicator is give by <span class="math display">\[
-  \Delta_{i,\psi}^* = \Delta_i I(U_{i,\psi} \leq D_{i,\psi}^*),
-\]</span> where <span class="math inline">\(\Delta_i\)</span> represents
-the observed event indicator.</p>
-<p>Recensoring is intended to reduce the bias in the treatment effect
-estimate at the expense of a loss of information for long-term
-survival.</p>
-</div>
+defined for all patients including those who experience an event. We
+assume that censoring is non-informative in the absence of treatment
+switching, i.e., <span class="math inline">\(T_{L_i} \perp\!\!\!\perp
+C_i\)</span>, where <span class="math inline">\(T_{L_i}\)</span> denotes
+the latent time to event for subject <span class="math inline">\(i\)</span>.</p>
+<p>The observed time to event or censoring is given by <span class="math display">\[T_i = \min(T_{C_i} + e^{-\psi}(T_{L_i} -
+T_{C_i}), C_i)\]</span> with the event indicator <span class="math display">\[\Delta_{i} = I(T_{C_i} + e^{-\psi}(T_{L_i} -
+T_{C_i})\leq C_i)\]</span> For a patient who switches treatment, the
+counterfactual time to event or censoring is <span class="math display">\[U_{i,\psi} = \min(T_{L_i}, T_{C_i} + e^{\psi}(C_i
+- T_{C_i}))\]</span> and the event indicator can be rewritten as <span class="math display">\[\Delta_{i} = I(T_{L_i} \leq  T_{C_i} +
+e^{\psi}(C_i - T_{C_i}))\]</span> However, treatment switching is often
+associated with poor prognosis for survival, i.e., <span class="math inline">\(T_{L_i}\)</span> and <span class="math inline">\(T_{C_i}\)</span> are correlated. Consequently,
+<span class="math inline">\(T_{L_i}\)</span> and <span class="math inline">\(T_{C_i} + e^{\psi}(C_i - T_{C_i})\)</span> are
+also correlated. As a result, using the sample <span class="math inline">\(\{(U_{i,\psi},\Delta_i)\}\)</span> will generally
+produce a biased estimate of the survival distribution of <span class="math inline">\(T_{L_i}\)</span>.</p>
+<p>To address this issue, we define a recensoring time that accounts for
+all possible switching times, <span class="math display">\[
+  D_{i,\psi}^* = \min_{T_{C_i} \in [0, C_i]} \{T_{C_i} + e^{\psi}(C_i -
+T_{C_i})\} = \min(C_i, e^{\psi}C_i)
+\]</span> The recensored time to event or censoring is <span class="math display">\[U_{i,\psi}^* = \min(U_{i,\psi}, D_{i,\psi}^*) =
+\min(T_{L_i}, D_{i,\psi}^*)\]</span> with the corresponding event
+indicator <span class="math display">\[\Delta_{i,\psi}^* = I(U_{i,\psi}
+\leq D_{i,\psi}^*) = I(T_{L_i} \leq D_{i,\psi}^*)\]</span> By
+construction, <span class="math inline">\(T_{L_i} \perp\!\!\!\perp
+D_{i,\psi}^*\)</span>, thus the sample <span class="math inline">\(\{(U_{i,\psi}^*,\Delta_{i,\psi}^*)\}\)</span>
+provides an unbiased estimate of the survival distribution of <span class="math inline">\(T_{L_i}\)</span>.</p>
+<p>It is important to note that if recensoring is applied only to
+switchers, the sample becomes <span class="math display">\[U_{i,\psi}^{\dagger} = \min(T_{L_i}, D_{i,\psi}^*
+I(S_i=1) + C_i I(S_i=0))\]</span> <span class="math display">\[\Delta_{i,\psi}^{\dagger} = I(T_{L_i} \leq
+D_{i,\psi}^* I(S_i=1) + C_i I(S_i=0))\]</span> where <span class="math inline">\(S_i\)</span> is the indicator for treatment
+switching. Since <span class="math inline">\(S_i\)</span> is correlated
+with <span class="math inline">\(T_{L_i}\)</span>, the resulting
+censoring time <span class="math inline">\(D_{i,\psi}^* I(S_i=1) + C_i
+I(S_i=0)\)</span> is also correlated with <span class="math inline">\(T_{L_i}\)</span>. Therefore, using the sample
+<span class="math inline">\(\{(U_{i,\psi}^{\dagger},
+\Delta_{i,\psi}^{\dagger})\}\)</span> will lead to biased survival
+estimates.</p>
+<p>This illustrates that recensoring must be applied to all patients in
+treatment arms where treatment switching occurs to obtain unbiased
+estimates of the survival distribution.</p>
 </div>
 <div id="common-treatment-effect-assumption" class="section level1">
 <h1>Common Treatment Effect Assumption</h1>
@@ -552,20 +457,36 @@ function can be set to a value between 0 and 1, effectively diluting
 <div id="estimation-of-psi" class="section level1">
 <h1>Estimation of <span class="math inline">\(\psi\)</span></h1>
 <p>For a fixed value of <span class="math inline">\(\psi\)</span>, we
-can construct the counterfactual survival times <span class="math inline">\(U_{i,\psi}^*\)</span> and the corresponding event
-indicators <span class="math inline">\(\Delta_{i,\psi}^*\)</span>. A
-log-rank test (which may be stratified) can then be used to assess the
-difference in counterfactual survival times, accounting for potential
-censoring, between the two treatment groups. Let <span class="math inline">\(Z(\psi)\)</span> denote the Z-test statistic from
-the log-rank test.</p>
-<p>Under the assumption that potential outcomes are independent of the
-randomized treatment group, the estimate of <span class="math inline">\(\psi\)</span> is the value that makes <span class="math inline">\(Z(\psi)\)</span> closest to zero. The confidence
-limits for <span class="math inline">\(\psi\)</span> can be derived from
-the values of <span class="math inline">\(\psi\)</span> that yield <span class="math inline">\(Z(\psi)\)</span> closest to <span class="math inline">\(\Phi^{-1}(1 - \alpha/2)\)</span> and <span class="math inline">\(\Phi^{-1}(\alpha/2)\)</span>, where <span class="math inline">\(\Phi(x)\)</span> is the cumulative distribution
+can construct the counterfactual untreated survival times <span class="math inline">\(U_{i,\psi}^*\)</span> and the corresponding event
+indicators <span class="math inline">\(\Delta_{i,\psi}^*\)</span>. The
+<code>psi_test</code> parameter specifies the method used to estimate
+<span class="math inline">\(\psi\)</span>.</p>
+<ul>
+<li><p>When <code>psi_test = &quot;logrank&quot;</code>, a log-rank test (which
+may be stratified) is used to compare the counterfactual untreated
+survival times between the two treatment groups.</p></li>
+<li><p>When <code>psi_test = &quot;phreg&quot;</code>, a Cox proportional hazards
+model (which may also be stratified) is used to test for treatment
+differences while adjusting for baseline covariates.</p></li>
+<li><p>When <code>psi_test = &quot;lifereg&quot;</code>, an accelerated failure
+time (AFT) model is used to assess treatment differences, also adjusting
+for baseline covariates. If stratification factors are provided, they
+are converted into dummy variables and included as covariates in the AFT
+model for estimating <span class="math inline">\(\psi\)</span>.</p></li>
+</ul>
+<p>In all cases, let <span class="math inline">\(Z(\psi)\)</span> denote
+the Z-test statistic used to evaluate the treatment effect based on the
+counterfactual untreated survival times. Under the assumption that
+potential outcomes are independent of the randomized treatment group,
+the estimate of <span class="math inline">\(\psi\)</span> is the value
+that makes <span class="math inline">\(Z(\psi)\)</span> closest to zero.
+The confidence limits for <span class="math inline">\(\psi\)</span> can
+be derived from the values of <span class="math inline">\(\psi\)</span>
+that yield <span class="math inline">\(Z(\psi)\)</span> closest to <span class="math inline">\(\Phi^{-1}(1 - \alpha/2)\)</span> and <span class="math inline">\(\Phi^{-1}(\alpha/2)\)</span>, where <span class="math inline">\(\Phi(x)\)</span> is the cumulative distribution
 function of the standard normal distribution and <span class="math inline">\(\alpha\)</span> is the two-sided significance
 level.</p>
 <p>The <code>rpsftm</code> function provides two methods for estimating
-the causal treatment effect, <span class="math inline">\(\psi\)</span>:</p>
+<span class="math inline">\(\psi\)</span>:</p>
 <ol style="list-style-type: decimal">
 <li><strong>Grid search method</strong>: This divides the interval from
 <code>low_psi</code> to <code>hi_psi</code> into
@@ -575,10 +496,10 @@ the endpoints <code>low_psi</code> and <code>hi_psi</code>).</li>
 <li><strong>Root-finding method</strong>: This method uses numerical
 techniques, such as Brent’s method, to find the value of <span class="math inline">\(\psi\)</span> such that <span class="math inline">\(Z(\psi) = 0\)</span> for the point estimate, <span class="math inline">\(Z(\psi) = \Phi^{-1}(1 - \alpha/2)\)</span> for the
 lower confidence limit, and <span class="math inline">\(Z(\psi) =
-\Phi^{-1}(\alpha/2)\)</span> for the upper confidence limit. Owing to
-the discrete nature of the log-rank test, the solution for <span class="math inline">\(\psi\)</span> may not be unique and may depend on
-the search interval and convergence tolerance.</li>
+\Phi^{-1}(\alpha/2)\)</span> for the upper confidence limit.</li>
 </ol>
+<p>It is important to note that the solution for <span class="math inline">\(\psi\)</span> may not be unique and may depend on
+the search interval and convergence tolerance.</p>
 <p>Regardless of the method used for estimating <span class="math inline">\(\psi\)</span>, it is helpful to visualize the
 log-rank test statistic, <span class="math inline">\(Z(\psi)\)</span>,
 across a range of <span class="math inline">\(\psi\)</span> values.

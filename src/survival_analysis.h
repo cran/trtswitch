@@ -6,7 +6,7 @@ using namespace Rcpp;
 #ifndef __SURVIVAL_ANALYSIS__
 #define __SURVIVAL_ANALYSIS__
 
-NumericVector fsurvci(double surv, double sesurv, String ct, double z);
+NumericVector fsurvci(double surv, double sesurv, std::string ct, double z);
 
 DataFrame survQuantile(const NumericVector& time, 
                        const IntegerVector& event,
@@ -41,7 +41,6 @@ DataFrame lrtest(const DataFrame data,
                  const std::string event,
                  const double rho1,
                  const double rho2);
-
 
 DataFrame rmest(const DataFrame data,
                 const StringVector& rep,
@@ -82,7 +81,7 @@ NumericVector f_score_1(int p, NumericVector par, void *ex);
 
 NumericMatrix f_info_1(int p, NumericVector par, void *ex);
 
-List f_der_eta_1(NumericVector eta, NumericVector sig, void *ex);
+List f_der_eta_tau_1(NumericVector eta, NumericVector sig, void *ex);
 
 NumericMatrix f_ressco_1(int p, NumericVector par, void *ex);
 
@@ -107,6 +106,7 @@ List liferegcpp(const DataFrame data,
                 const std::string offset,
                 const std::string id,
                 const std::string dist,
+                const NumericVector& init,
                 const bool robust,
                 const bool plci,
                 const double alpha,
@@ -181,6 +181,7 @@ List phregcpp(const DataFrame data,
               const std::string offset,
               const std::string id,
               const std::string ties,
+              const NumericVector& init,
               const bool robust,
               const bool est_basehaz,
               const bool est_resid,

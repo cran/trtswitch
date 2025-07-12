@@ -127,6 +127,10 @@ RMST.
 Cox model adjusting for baseline prognosis.
 \item \code{simtrue_cox_hr}: The treatment hazard ratio from the Cox
 model without adjusting for baseline prognosis.
+\item \code{simtrue_aftwbprog_af}: The average acceleration factor from
+the Weibull AFT model adjusting for baseline prognosis.
+\item \code{simtrue_aft_af}: The average acceleration factor from
+the Weibull AFT model without adjusting for baseline prognosis.
 }
 \item \code{paneldata}: A counting process style subject-level data frame
 with the following variables:

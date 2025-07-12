@@ -140,6 +140,7 @@ counterfactual unswitched survival times.
 The variables include \code{id}, \code{stratum}, \code{"t_star"},
 \code{"d_star"}, \code{"treated"}, \code{base_cov}, and \code{treat}.
 \item \code{fit_outcome}: The fitted outcome Cox model.
+\item \code{fail}: Whether a model fails to converge.
 \item \code{settings}: A list with the following components:
 \itemize{
 \item \code{aft_dist}: The distribution for time to event for the AFT
@@ -166,6 +167,8 @@ interval for hazard ratio.
 \item \code{n_boot}: The number of bootstrap samples.
 \item \code{seed}: The seed to reproduce the bootstrap results.
 }
+\item \code{fail_boots}: The indicators for failed bootstrap samples
+if \code{boot} is \code{TRUE}.
 \item \code{hr_boots}: The bootstrap hazard ratio estimates if \code{boot} is
 \code{TRUE}.
 \item \code{psi_boots}: The bootstrap \code{psi} estimates if \code{boot} is

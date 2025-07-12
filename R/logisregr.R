@@ -32,6 +32,8 @@
 #' @param link The link function linking the response probabilities to the
 #'   linear predictors. Options include "logit" (default), "probit", and
 #'   "cloglog" (complementary log-log).
+#' @param init A vector of initial values for the model parameters. 
+#'   By default, initial values are derived from an intercept-only model. 
 #' @param robust Whether a robust sandwich variance estimate should be
 #'   computed. In the presence of the id variable, the score residuals
 #'   will be aggregated for each id when computing the robust sandwich
@@ -93,6 +95,8 @@
 #'     - \code{firth}: Whether the firth's penalized likelihood is used.
 #'
 #'     - \code{flic}: Whether to apply intercept correction.
+#'     
+#'     - \code{fail}: Whether the model fails to converge.
 #'
 #'     - \code{loglik0_unpenalized}: The unpenalized log-likelihood under null.
 #'
@@ -214,7 +218,8 @@
 #' @export
 logisregr <- function(data, rep = "", event = "event", covariates = "",
                       freq = "", weight = "", offset = "", id = "",
-                      link = "logit", robust = FALSE, firth = FALSE,
+                      link = "logit", init = NA_real_, 
+                      robust = FALSE, firth = FALSE,
                       flic = FALSE, plci = FALSE, alpha = 0.05, 
                       maxiter = 50, eps = 1.0e-9) {
   
@@ -222,8 +227,8 @@ logisregr <- function(data, rep = "", event = "event", covariates = "",
   
   elements = c(rep, event, covariates, freq, weight, offset)
   elements = unique(elements[elements != "" & elements != "none"])
-  mf = model.frame(formula(paste("~", paste(elements, collapse = "+"))),
-                   data = data)
+  fml = formula(paste("~", paste(elements, collapse = "+")))
+  mf = model.frame(fml, data = data, na.action = na.omit)
   
   rownum = as.integer(rownames(mf))
   df = data[rownum,]
@@ -231,19 +236,18 @@ logisregr <- function(data, rep = "", event = "event", covariates = "",
   nvar = length(covariates)
   if (missing(covariates) || is.null(covariates) || (nvar == 1 && (
     covariates[1] == "" || tolower(covariates[1]) == "none"))) {
-    t1 = terms(formula("~1"))
     p = 0
+    t1 = terms(formula("~1"))
   } else {
-    t1 = terms(formula(paste("~", paste(covariates, collapse = "+"))))
-    t2 = attr(t1, "factors")
-    t3 = rownames(t2)
-    p = length(t3)
+    fml1 = formula(paste("~", paste(covariates, collapse = "+")))
+    p = length(rownames(attr(terms(fml1), "factors")))
+    t1 = terms(fml1)
   }
   
   if (p >= 1) {
-    mf = model.frame(t1, df)
-    xlevels = mf$xlev
-    mm = model.matrix(t1, mf)
+    mf1 <- model.frame(fml1, data = df, na.action = na.pass)
+    mm <- model.matrix(fml1, mf1)
+    xlevels = mf1$xlev
     param = colnames(mm)
     colnames(mm) = make.names(colnames(mm))
     varnames = colnames(mm)[-1]
@@ -260,7 +264,8 @@ logisregr <- function(data, rep = "", event = "event", covariates = "",
   
   fit <- logisregcpp(data = df, rep = rep, event = event,
                      covariates = varnames, freq = freq, weight = weight,
-                     offset = offset, id = id, link = link, robust = robust,
+                     offset = offset, id = id, link = link, 
+                     init = init, robust = robust,
                      firth = firth, flic = flic, plci = plci,
                      alpha = alpha, maxiter = maxiter, eps = eps)
   

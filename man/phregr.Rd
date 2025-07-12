@@ -16,6 +16,7 @@ phregr(
   offset = "",
   id = "",
   ties = "efron",
+  init = NA_real_,
   robust = FALSE,
   est_basehaz = TRUE,
   est_resid = TRUE,
@@ -71,6 +72,9 @@ covariates in the input data.}
 \item{ties}{The method for handling ties, either "breslow" or
 "efron" (default).}
 
+\item{init}{The vector of initial values. Defaults to zero for all
+variables.}
+
 \item{robust}{Whether a robust sandwich variance estimate should be
 computed. In the presence of the id variable, the score residuals
 will be aggregated for each id when computing the robust sandwich
@@ -110,6 +114,7 @@ with the following variables:
 \item \code{p}: The number of columns of the Cox model design matrix.
 \item \code{robust}: Whether to use the robust variance estimate.
 \item \code{firth}: Whether to use Firth's penalized likelihood method.
+\item \code{fail}: Whether the model fails to converge.
 \item \code{loglik0_unpenalized}: The unpenalized log-likelihood under null.
 \item \code{loglik1_unpenalized}: The maximum unpenalized log-likelihood.
 \item \code{rep}: The replication.

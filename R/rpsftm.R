@@ -33,11 +33,15 @@
 #' @param rx The name of the rx variable in the input data.
 #' @param censor_time The name of the censor_time variable in the input data.
 #' @param base_cov The names of baseline covariates (excluding
-#'   treat) in the input data for the outcome Cox model.
+#'   treat) in the input data for the outcome Cox model. 
+#'   These covariates will also be used in the Cox model for estimating 
+#'   \code{psi} when \code{psi_test = "phreg"} and in the AFT model 
+#'   for estimating \code{psi} when \code{psi_test = "lifereg"}.   
 #' @param psi_test The survival function to calculate the Z-statistic, e.g., 
 #'   "logrank" (default), "phreg", or "lifereg".
-#' @param aft_dist The assumed distribution for time to event for the AFT
-#'   model when \code{psi_test = "lifereg"}. Options include "exponential", 
+#' @param aft_dist The assumed distribution for time to event for the 
+#'   accelerated failure time (AFT) model when 
+#'   \code{psi_test = "lifereg"}. Options include "exponential", 
 #'   "weibull" (default), "loglogistic", and "lognormal".
 #' @param strata_main_effect_only Whether to only include the strata main
 #'   effects in the AFT model. Defaults to \code{TRUE}, otherwise all
@@ -77,12 +81,11 @@
 #' * Use RPSFTM to estimate the causal parameter \eqn{\psi} based on the 
 #'   log-rank test (default), the Cox proportional hazards model, 
 #'   or a parametric survival regression model for counterfactual 
-#'   untreated survival times for both arms: 
+#'   \emph{untreated} survival times: 
 #'   \deqn{U_{i,\psi} = T_{C_i} +  e^{\psi}T_{E_i}}
 #'
-#' * Fit the Cox proportional hazards model to the observed survival times
-#'   for the experimental group and the counterfactual survival times
-#'   for the control group to obtain the hazard ratio estimate.
+#' * Fit the Cox proportional hazards model to the counterfactual 
+#'   \emph{unswitched} survival times to obtain the hazard ratio estimate.
 #'
 #' * Use either the log-rank test p-value for the intention-to-treat (ITT) 
 #'   analysis or bootstrap to construct the confidence interval for 
@@ -136,6 +139,8 @@
 #'
 #' * \code{fit_outcome}: The fitted outcome Cox model.
 #'
+#' * \code{fail}: Whether a model fails to converge.
+#'
 #' * \code{settings}: A list with the following components:
 #' 
 #'     - \code{psi_test}: The survival function to calculate the Z-statistic.
@@ -182,6 +187,9 @@
 #'     - \code{n_boot}: The number of bootstrap samples.
 #'
 #'     - \code{seed}: The seed to reproduce the bootstrap results.
+#'
+#' * \code{fail_boots}: The indicators for failed bootstrap samples
+#'   if \code{boot} is \code{TRUE}.
 #'
 #' * \code{hr_boots}: The bootstrap hazard ratio estimates if \code{boot} is
 #'   \code{TRUE}.
@@ -256,9 +264,9 @@ rpsftm <- function(data, id = "id", stratum = "",
 
   elements = c(stratum, time, event, treat, rx, censor_time)
   elements = unique(elements[elements != "" & elements != "none"])
-  mf = model.frame(formula(paste("~", paste(elements, collapse = "+"))),
-                   data = data)
-
+  fml = formula(paste("~", paste(elements, collapse = "+")))
+  mf = model.frame(fml, data = data, na.action = na.omit)
+  
   rownum = as.integer(rownames(mf))
   df = data[rownum,]
 
@@ -267,14 +275,13 @@ rpsftm <- function(data, id = "id", stratum = "",
     base_cov[1] == "" || tolower(base_cov[1]) == "none"))) {
     p = 0
   } else {
-    t1 = terms(formula(paste("~", paste(base_cov, collapse = "+"))))
-    t2 = attr(t1, "factors")
-    t3 = rownames(t2)
-    p = length(t3)
+    fml1 = formula(paste("~", paste(base_cov, collapse = "+")))
+    p = length(rownames(attr(terms(fml1), "factors")))
   }
 
   if (p >= 1) {
-    mm = model.matrix(t1, df)
+    mf1 <- model.frame(fml1, data = df, na.action = na.pass)
+    mm <- model.matrix(fml1, mf1)
     colnames(mm) = make.names(colnames(mm))
     varnames = colnames(mm)[-1]
     for (i in 1:length(varnames)) {

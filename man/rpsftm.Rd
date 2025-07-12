@@ -64,13 +64,17 @@ be provided for all subjects including those who had events.
 \item{censor_time}{The name of the censor_time variable in the input data.}
 
 \item{base_cov}{The names of baseline covariates (excluding
-treat) in the input data for the outcome Cox model.}
+treat) in the input data for the outcome Cox model.
+These covariates will also be used in the Cox model for estimating
+\code{psi} when \code{psi_test = "phreg"} and in the AFT model
+for estimating \code{psi} when \code{psi_test = "lifereg"}.}
 
 \item{psi_test}{The survival function to calculate the Z-statistic, e.g.,
 "logrank" (default), "phreg", or "lifereg".}
 
-\item{aft_dist}{The assumed distribution for time to event for the AFT
-model when \code{psi_test = "lifereg"}. Options include "exponential",
+\item{aft_dist}{The assumed distribution for time to event for the
+accelerated failure time (AFT) model when
+\code{psi_test = "lifereg"}. Options include "exponential",
 "weibull" (default), "loglogistic", and "lognormal".}
 
 \item{strata_main_effect_only}{Whether to only include the strata main
@@ -153,6 +157,7 @@ The variables include \code{id}, \code{stratum},
 \code{"t_star"}, \code{"d_star"}, \code{"treated"}, \code{base_cov},
 and \code{treat}.
 \item \code{fit_outcome}: The fitted outcome Cox model.
+\item \code{fail}: Whether a model fails to converge.
 \item \code{settings}: A list with the following components:
 \itemize{
 \item \code{psi_test}: The survival function to calculate the Z-statistic.
@@ -184,6 +189,8 @@ interval for hazard ratio.
 \item \code{n_boot}: The number of bootstrap samples.
 \item \code{seed}: The seed to reproduce the bootstrap results.
 }
+\item \code{fail_boots}: The indicators for failed bootstrap samples
+if \code{boot} is \code{TRUE}.
 \item \code{hr_boots}: The bootstrap hazard ratio estimates if \code{boot} is
 \code{TRUE}.
 \item \code{psi_boots}: The bootstrap \code{psi} estimates if \code{boot} is
@@ -203,11 +210,10 @@ and confidence interval had there been no treatment switching:
 \item Use RPSFTM to estimate the causal parameter \eqn{\psi} based on the
 log-rank test (default), the Cox proportional hazards model,
 or a parametric survival regression model for counterfactual
-untreated survival times for both arms:
+\emph{untreated} survival times:
 \deqn{U_{i,\psi} = T_{C_i} +  e^{\psi}T_{E_i}}
-\item Fit the Cox proportional hazards model to the observed survival times
-for the experimental group and the counterfactual survival times
-for the control group to obtain the hazard ratio estimate.
+\item Fit the Cox proportional hazards model to the counterfactual
+\emph{unswitched} survival times to obtain the hazard ratio estimate.
 \item Use either the log-rank test p-value for the intention-to-treat (ITT)
 analysis or bootstrap to construct the confidence interval for
 hazard ratio. If bootstrapping is used, the confidence interval

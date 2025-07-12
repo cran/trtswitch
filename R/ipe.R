@@ -128,6 +128,8 @@
 #'
 #' * \code{fit_outcome}: The fitted outcome Cox model.
 #'
+#' * \code{fail}: Whether a model fails to converge.
+#'
 #' * \code{settings}: A list with the following components:
 #'
 #'     - \code{aft_dist}: The distribution for time to event for the AFT
@@ -166,6 +168,9 @@
 #'     - \code{n_boot}: The number of bootstrap samples.
 #'
 #'     - \code{seed}: The seed to reproduce the bootstrap results.
+#'
+#' * \code{fail_boots}: The indicators for failed bootstrap samples
+#'   if \code{boot} is \code{TRUE}.
 #'
 #' * \code{hr_boots}: The bootstrap hazard ratio estimates if \code{boot} is 
 #'   \code{TRUE}.
@@ -239,9 +244,9 @@ ipe <- function(data, id = "id", stratum = "", time = "time",
 
   elements = c(stratum, time, event, treat, rx, censor_time)
   elements = unique(elements[elements != "" & elements != "none"])
-  mf = model.frame(formula(paste("~", paste(elements, collapse = "+"))),
-                   data = data)
-
+  fml = formula(paste("~", paste(elements, collapse = "+")))
+  mf = model.frame(fml, data = data, na.action = na.omit)
+  
   rownum = as.integer(rownames(mf))
   df = data[rownum,]
 
@@ -250,14 +255,13 @@ ipe <- function(data, id = "id", stratum = "", time = "time",
     base_cov[1] == "" || tolower(base_cov[1]) == "none"))) {
     p = 0
   } else {
-    t1 = terms(formula(paste("~", paste(base_cov, collapse = "+"))))
-    t2 = attr(t1, "factors")
-    t3 = rownames(t2)
-    p = length(t3)
+    fml1 = formula(paste("~", paste(base_cov, collapse = "+")))
+    p = length(rownames(attr(terms(fml1), "factors")))
   }
 
   if (p >= 1) {
-    mm = model.matrix(t1, df)
+    mf1 <- model.frame(fml1, data = df, na.action = na.pass)
+    mm <- model.matrix(fml1, mf1)
     colnames(mm) = make.names(colnames(mm))
     varnames = colnames(mm)[-1]
     for (i in 1:length(varnames)) {

@@ -16,6 +16,7 @@ liferegr(
   offset = "",
   id = "",
   dist = "weibull",
+  init = NA_real_,
   robust = FALSE,
   plci = FALSE,
   alpha = 0.05,
@@ -67,6 +68,12 @@ in the input data.}
 modeled on the log-scale, and "normal" and "logistic" to be modeled
 on the original scale.}
 
+\item{init}{A vector of initial values for the model parameters,
+including regression coefficients and the log scale parameter.
+By default, initial values are derived from an intercept-only model.
+If this approach fails, ordinary least squares (OLS) estimates,
+ignoring censoring, are used instead.}
+
 \item{robust}{Whether a robust sandwich variance estimate should be
 computed. In the presence of the id variable, the score residuals
 will be aggregated for each id when computing the robust sandwich
@@ -99,6 +106,7 @@ the log scale parameters for the strata.
 with the covariates (excluding the intercept).
 \item \code{robust}: Whether the robust sandwich variance estimate
 is requested.
+\item \code{fail}: Whether the model fails to converge.
 \item \code{rep}: The replication.
 }
 \item \code{parest}: The data frame of parameter estimates with the

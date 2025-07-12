@@ -9,8 +9,113 @@ ipecpp <- function(data, id = "id", stratum = "", time = "time", event = "event"
     .Call(`_trtswitch_ipecpp`, data, id, stratum, time, event, treat, rx, censor_time, base_cov, aft_dist, strata_main_effect_only, low_psi, hi_psi, treat_modifier, recensor, admin_recensor_only, autoswitch, alpha, ties, tol, boot, n_boot, seed)
 }
 
-logisregcpp <- function(data, rep = "", event = "event", covariates = "", freq = "", weight = "", offset = "", id = "", link = "logit", robust = 0L, firth = 0L, flic = 0L, plci = 0L, alpha = 0.05, maxiter = 50L, eps = 1.0e-9) {
-    .Call(`_trtswitch_logisregcpp`, data, rep, event, covariates, freq, weight, offset, id, link, robust, firth, flic, plci, alpha, maxiter, eps)
+logisregcpp <- function(data, rep = "", event = "event", covariates = "", freq = "", weight = "", offset = "", id = "", link = "logit", init = NA_real_, robust = 0L, firth = 0L, flic = 0L, plci = 0L, alpha = 0.05, maxiter = 50L, eps = 1.0e-9) {
+    .Call(`_trtswitch_logisregcpp`, data, rep, event, covariates, freq, weight, offset, id, link, init, robust, firth, flic, plci, alpha, maxiter, eps)
+}
+
+msmcpp <- function(data, id = "id", stratum = "", tstart = "tstart", tstop = "tstop", event = "event", treat = "treat", swtrt = "swtrt", swtrt_time = "swtrt_time", base_cov = "", numerator = "", denominator = "", strata_main_effect_only = 1L, firth = 0L, flic = 0L, ns_df = 3L, stabilized_weights = 1L, trunc = 0, trunc_upper_only = 1L, swtrt_control_only = 1L, treat_alt_interaction = 0L, alpha = 0.05, ties = "efron", boot = 1L, n_boot = 1000L, seed = NA_integer_) {
+    .Call(`_trtswitch_msmcpp`, data, id, stratum, tstart, tstop, event, treat, swtrt, swtrt_time, base_cov, numerator, denominator, strata_main_effect_only, firth, flic, ns_df, stabilized_weights, trunc, trunc_upper_only, swtrt_control_only, treat_alt_interaction, alpha, ties, boot, n_boot, seed)
+}
+
+#' @title Simulation Study to Evaluate Recensoring Rules in RPSFTM
+#' 
+#' @description 
+#' Simulates datasets to evaluate the performance of various recensoring 
+#' strategies under the Rank Preserving Structural Failure Time Model 
+#' (RPSFTM) for handling treatment switching in survival analysis.
+#'
+#' @param nsim Number of simulated datasets.
+#' @param n Number of subjects per simulation.
+#' @param shape Shape parameter of the Weibull distribution for time to 
+#'   death.
+#' @param scale Scale parameter of the Weibull distribution for time to 
+#'   death in the control group.
+#' @param gamma Rate parameter of the exponential distribution for random 
+#'   dropouts in the control group.
+#' @param tfmin Minimum planned follow-up time (in days).
+#' @param tfmax Maximum planned follow-up time (in days).
+#' @param psi Log time ratio of death time for control vs experimental 
+#'   treatment.
+#' @param omega Log time ratio of dropout time for control vs experimental 
+#'   treatment.
+#' @param pswitch Probability of treatment switching at disease progression.
+#' @param a Shape parameter 1 of the Beta distribution for time to disease 
+#'   progression as a fraction of time to death.
+#' @param b Shape parameter 2 of the Beta distribution for time to disease 
+#'   progression.
+#' @param low_psi Lower bound for the search interval of the causal 
+#'   parameter \eqn{\psi}.
+#' @param hi_psi Upper bound for the search interval of the causal 
+#'   parameter \eqn{\psi}.
+#' @param treat_modifier Sensitivity parameter modifying the constant 
+#'   treatment effect assumption.
+#' @param recensor_type Type of recensoring to apply:
+#'   \itemize{
+#'     \item 0: No recensoring
+#'     \item 1: Recensor all control-arm subjects
+#'     \item 2: Recensor only switchers in the control arm
+#'     \item 3: Recensor only control-arm switchers whose counterfactual 
+#'              survival exceeds the planned follow-up time
+#'   }
+#' @param admin_recensor_only Logical. If \code{TRUE}, recensoring is 
+#'   applied only to administrative censoring times. 
+#'   If \code{FALSE}, it is also applied to dropout times.
+#' @param autoswitch Logical. If \code{TRUE}, disables recensoring in arms 
+#'   without any treatment switching.
+#' @param alpha Significance level for confidence interval calculation 
+#'   (default is 0.05).
+#' @param ties Method for handling tied event times in the Cox model. 
+#'   Options are \code{"efron"} (default) or \code{"breslow"}.
+#' @param tol Convergence tolerance for root-finding in estimation of 
+#'   \eqn{\psi}.
+#' @param boot Logical. If \code{TRUE}, bootstrap is used to estimate 
+#'   the confidence interval for the hazard ratio. If \code{FALSE}, 
+#'   the confidence interval is matched to the log-rank p-value.
+#' @param n_boot Number of bootstrap samples, used only if 
+#'   \code{boot = TRUE}.
+#' @param seed Optional. Random seed for reproducibility. If not provided, 
+#'   the global seed is used.
+#'
+#' @return A data frame summarizing the simulation results, including:
+#' \itemize{
+#'   \item \code{recensor_type}, \code{admin_recensor_only}: Settings 
+#'         used in the simulation.
+#'   \item Event rates: \code{p_event_1}, \code{p_dropout_1}, 
+#'         \code{p_admin_censor_1}, \code{p_event_0}, 
+#'         \code{p_dropout_0}, \code{p_admin_censor_0}.
+#'   \item Progression and switching: \code{p_pd_0}, \code{p_swtrt_0},
+#'         \code{p_recensored_0}.
+#'   \item Causal parameter (\eqn{\psi}) estimates: \code{psi}, 
+#'         \code{psi_est}, \code{psi_bias}, 
+#'         \code{psi_se}, \code{psi_mse}.
+#'   \item Log hazard ratio estimates: \code{loghr}, \code{loghr_est}, 
+#'         \code{loghr_se}, \code{loghr_mse}.
+#'   \item Hazard ratio metrics: \code{hr}, \code{hr_est} (geometric mean), 
+#'         \code{hr_pctbias} (percent bias).
+#'   \item Standard errors of log hazard ratio: \code{loghr_se_cox}, 
+#'         \code{loghr_se_lr}, \code{loghr_se_boot}.
+#'   \item Coverage probabilities: \code{hr_ci_cover_cox}, 
+#'         \code{hr_ci_cover_lr}, \code{hr_ci_cover_boot}.
+#' }
+#'
+#' @author Kaifeng Lu, \email{kaifenglu@@gmail.com}
+#'
+#' @examples
+#' \donttest{
+#' result <- recensor_sim_rpsftm(
+#'   nsim = 10, n = 400, shape = 1.5, scale = exp(6.3169),
+#'   gamma = 0.001, tfmin = 407.5, tfmax = 407.5,
+#'   psi = log(0.5) / 1.5, omega = log(1), pswitch = 0.7,
+#'   a = 2, b = 4, low_psi = -5, hi_psi = 5,
+#'   treat_modifier = 1, recensor_type = 1,
+#'   admin_recensor_only = TRUE, autoswitch = TRUE,
+#'   alpha = 0.05, tol = 1e-6, boot = TRUE,
+#'   n_boot = 10, seed = 314159)
+#' }
+#'
+#' @export
+recensor_sim_rpsftm <- function(nsim = NA_integer_, n = NA_integer_, shape = NA_real_, scale = NA_real_, gamma = NA_real_, tfmin = NA_real_, tfmax = NA_real_, psi = NA_real_, omega = NA_real_, pswitch = NA_real_, a = NA_real_, b = NA_real_, low_psi = -1, hi_psi = 1, treat_modifier = 1, recensor_type = 1L, admin_recensor_only = 1L, autoswitch = 1L, alpha = 0.05, ties = "efron", tol = 1.0e-6, boot = 1L, n_boot = 1000L, seed = NA_integer_) {
+    .Call(`_trtswitch_recensor_sim_rpsftm`, nsim, n, shape, scale, gamma, tfmin, tfmax, psi, omega, pswitch, a, b, low_psi, hi_psi, treat_modifier, recensor_type, admin_recensor_only, autoswitch, alpha, ties, tol, boot, n_boot, seed)
 }
 
 rpsftmcpp <- function(data, id = "id", stratum = "", time = "time", event = "event", treat = "treat", rx = "rx", censor_time = "censor_time", base_cov = "", psi_test = "logrank", aft_dist = "weibull", strata_main_effect_only = 1L, low_psi = -2, hi_psi = 2, n_eval_z = 101L, treat_modifier = 1, recensor = 1L, admin_recensor_only = 1L, autoswitch = 1L, gridsearch = 0L, alpha = 0.05, ties = "efron", tol = 1.0e-6, boot = 0L, n_boot = 1000L, seed = NA_integer_) {
@@ -145,12 +250,12 @@ nscpp <- function(x = NA_real_, df = NA_integer_, knots = NA_real_, intercept = 
 #' @param event The vector of event indicators.
 #' @param cilevel The confidence interval level. Defaults to 0.95.
 #' @param transform The transformation of the survival function to use
-#'   to construct the confidence interval. Options include 
-#'   "linear" (alternatively "plain"), "log", 
-#'   "loglog" (alternatively "log-log" or "cloglog"), 
-#'   "asinsqrt" (alternatively "asin" or "arcsin"), and "logit". 
+#'   to construct the confidence interval. Options include
+#'   "linear" (alternatively "plain"), "log",
+#'   "loglog" (alternatively "log-log" or "cloglog"),
+#'   "asinsqrt" (alternatively "asin" or "arcsin"), and "logit".
 #'   Defaults to "loglog".
-#'   
+#'
 #' @param probs The vector of probabilities to calculate the quantiles.
 #'   Defaults to c(0.25, 0.5, 0.75).
 #'
@@ -528,16 +633,16 @@ rmdiff <- function(data, rep = "", stratum = "", treat = "treat", time = "time",
     .Call(`_trtswitch_rmdiff`, data, rep, stratum, treat, time, event, milestone, rmstDiffH0, conflev, biascorrection)
 }
 
-liferegcpp <- function(data, rep = "", stratum = "", time = "time", time2 = "", event = "event", covariates = "", weight = "", offset = "", id = "", dist = "weibull", robust = 0L, plci = 0L, alpha = 0.05, maxiter = 50L, eps = 1.0e-9) {
-    .Call(`_trtswitch_liferegcpp`, data, rep, stratum, time, time2, event, covariates, weight, offset, id, dist, robust, plci, alpha, maxiter, eps)
+liferegcpp <- function(data, rep = "", stratum = "", time = "time", time2 = "", event = "event", covariates = "", weight = "", offset = "", id = "", dist = "weibull", init = NA_real_, robust = 0L, plci = 0L, alpha = 0.05, maxiter = 50L, eps = 1.0e-9) {
+    .Call(`_trtswitch_liferegcpp`, data, rep, stratum, time, time2, event, covariates, weight, offset, id, dist, init, robust, plci, alpha, maxiter, eps)
 }
 
 residuals_liferegcpp <- function(beta, vbeta, data, stratum = "", time = "time", time2 = "", event = "event", covariates = "", weight = "", offset = "", id = "", dist = "weibull", type = "response", collapse = 0L, weighted = 0L) {
     .Call(`_trtswitch_residuals_liferegcpp`, beta, vbeta, data, stratum, time, time2, event, covariates, weight, offset, id, dist, type, collapse, weighted)
 }
 
-phregcpp <- function(data, rep = "", stratum = "", time = "time", time2 = "", event = "event", covariates = "", weight = "", offset = "", id = "", ties = "efron", robust = 0L, est_basehaz = 1L, est_resid = 1L, firth = 0L, plci = 0L, alpha = 0.05, maxiter = 50L, eps = 1.0e-9) {
-    .Call(`_trtswitch_phregcpp`, data, rep, stratum, time, time2, event, covariates, weight, offset, id, ties, robust, est_basehaz, est_resid, firth, plci, alpha, maxiter, eps)
+phregcpp <- function(data, rep = "", stratum = "", time = "time", time2 = "", event = "event", covariates = "", weight = "", offset = "", id = "", ties = "efron", init = NA_real_, robust = 0L, est_basehaz = 1L, est_resid = 1L, firth = 0L, plci = 0L, alpha = 0.05, maxiter = 50L, eps = 1.0e-9) {
+    .Call(`_trtswitch_phregcpp`, data, rep, stratum, time, time2, event, covariates, weight, offset, id, ties, init, robust, est_basehaz, est_resid, firth, plci, alpha, maxiter, eps)
 }
 
 survfit_phregcpp <- function(p, beta, vbeta, basehaz, newdata, covariates = "", stratum = "", offset = "", id = "", tstart = "", tstop = "", sefit = 1L, conftype = "log-log", conflev = 0.95) {
@@ -633,6 +738,12 @@ tsegestcpp <- function(data, id = "id", stratum = "", tstart = "tstart", tstop =
 #'     
 #'     - \code{simtrue_cox_hr}: The treatment hazard ratio from the Cox 
 #'       model without adjusting for baseline prognosis.
+#'
+#'     - \code{simtrue_aftwbprog_af}: The average acceleration factor from 
+#'       the Weibull AFT model adjusting for baseline prognosis.
+#'
+#'     - \code{simtrue_aft_af}: The average acceleration factor from 
+#'       the Weibull AFT model without adjusting for baseline prognosis.
 #'
 #' * \code{paneldata}: A counting process style subject-level data frame 
 #'   with the following variables:
@@ -758,6 +869,76 @@ tsesimpcpp <- function(data, id = "id", stratum = "", time = "time", event = "ev
 #' @param n Number of subjects per simulation.
 #' @param NSim Number of simulated datasets.
 #' @param seed Random seed for reproducibility.
+#'
+#' @details 
+#' The simulation algorithm is adapted from Xu et al. (2022), by 
+#' simulating disease progression status and by using the multiplicative 
+#' effects of baseline and time-dependent covariates on survival time. 
+#' The design options \code{tdxo} and \code{coxo} indicate 
+#' the timing of treatment switching and the study arm eligibility 
+#' for switching, respectively. Each subject undergoes \code{followup} 
+#' treatment cycles until administrative censoring. 
+#' \enumerate{
+#'   \item At randomization, each subject is assigned treatment based on:
+#'   \deqn{R_i \sim \mbox{Bernoulli}(p_R)} 
+#'   and a baseline covariate is generated:
+#'   \deqn{X_i \sim \mbox{Bernoulli}(p_{X_1} R_i + p_{X_0} (1-R_i))}
+#'         
+#'   \item The initial survival time is drawn
+#'   from an exponential distribution with hazard:
+#'   \deqn{rate_T \exp(\beta_1 R_i + \beta_2 X_i)}
+#'   We define the event indicator at cycle \eqn{j} as
+#'   \deqn{Y_{i,j} = I(T_i \leq j\times days)}
+#'         
+#'   \item The initial states are set to
+#'   \eqn{L_{i,0} = 0}, \eqn{Z_{i,0} = 0}, \eqn{Z_{i,0} = 0},
+#'   \eqn{Y_{i,0} = 0}. For each treatment cycle \eqn{j=1,\ldots,J},
+#'   we set \eqn{tstart = (j-1) \times days}.
+#'         
+#'   \item Generate time-dependent covariates:
+#'   \deqn{\mbox{logit} P(L_{i,j}=1|\mbox{history}) = 
+#'   \gamma_0 + \gamma_1 A_{i,j-1} + \gamma_2 L_{i,j-1} + 
+#'   \gamma_3 X_i + \gamma_4 R_i}
+#'      
+#'   \item If \eqn{T_i \leq j \times days}, set \eqn{tstop = T_i} and 
+#'   \eqn{Y_{i,j} = 1}, which completes data generation
+#'   for subject \eqn{i}.
+#'           
+#'   \item If \eqn{T_i > j \times days}, set \eqn{tstop = j\times days},  
+#'   \eqn{Y_{i,j} = 0}, and perform the following before proceeding to 
+#'   the next cycle for the subject.
+#'   
+#'   \item Generate disease progression status: 
+#'   If \eqn{Z_{i,j-1} = 0},  
+#'   \deqn{\mbox{logit} P(Z_{i,j}=1 | \mbox{history}) = \zeta_0 + 
+#'   \zeta_1 L_{i,j} + \zeta_2 X_i + \zeta_3 R_i}
+#'   Otherwise, set \eqn{Z_{i,j} = 1}.
+#'     
+#'   \item Generate alternative therapy status:     
+#'   If \eqn{A_{i,j-1} = 0}, determine switching eligibility 
+#'   based on design options.        
+#'   If switching is allowed:
+#'   \deqn{\mbox{logit} P(A_{i,j} = 1 | \mbox{history}) = \alpha_0 + 
+#'   \alpha_1 L_{i,j} + \alpha_2 X_i}       
+#'   If switching is now allowed, set \eqn{A_{i,j} = 0}.      
+#'   If \eqn{A_{i,j-1} = 1}, set \eqn{A_{i,j} = 1} (once switched to 
+#'   alternative therapy, remain on alternative therapy).
+#'          
+#'   \item Update survival time based on changes in alternative 
+#'   therapy status and time-dependent covariates:
+#'   \deqn{T_i = j\times days + (T_i - j\times days) \exp\{
+#'   -(\theta_{1,1}R_i + \theta_{1,0}(1-R_i))(A_{i,j} - A_{i,j-1}) 
+#'   -\theta_2 (L_{i,j} - L_{i,j-1})\}}   
+#' }
+#' 
+#' Additional random censoring times are generated from an exponential 
+#' distribution with hazard rate \eqn{rate_C}.
+#'   
+#' To estimate the true treatment effect in a Cox marginal 
+#' structural model, one can set \eqn{\alpha_0 = -\infty}, which 
+#' effectively forces \eqn{A_{i,j} = 0} (disabling treatment switching). 
+#' The coefficient for the randomized treatment can then be estimated 
+#' using a Cox proportional hazards model.
 #'
 #' @return
 #' A list of data frames, each containing simulated longitudinal and 

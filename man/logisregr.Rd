@@ -14,6 +14,7 @@ logisregr(
   offset = "",
   id = "",
   link = "logit",
+  init = NA_real_,
   robust = FALSE,
   firth = FALSE,
   flic = FALSE,
@@ -57,6 +58,9 @@ cluster as indicated by the id. Thus freq is the cluster frequency.}
 linear predictors. Options include "logit" (default), "probit", and
 "cloglog" (complementary log-log).}
 
+\item{init}{A vector of initial values for the model parameters.
+By default, initial values are derived from an intercept-only model.}
+
 \item{robust}{Whether a robust sandwich variance estimate should be
 computed. In the presence of the id variable, the score residuals
 will be aggregated for each id when computing the robust sandwich
@@ -94,6 +98,7 @@ and regression coefficients associated with the covariates.
 be computed.
 \item \code{firth}: Whether the firth's penalized likelihood is used.
 \item \code{flic}: Whether to apply intercept correction.
+\item \code{fail}: Whether the model fails to converge.
 \item \code{loglik0_unpenalized}: The unpenalized log-likelihood under null.
 \item \code{loglik1_unpenalized}: The maximum unpenalized log-likelihood.
 \item \code{rep}: The replication.

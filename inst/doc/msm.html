@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Marginal Structural Model</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Marginal Structural Model</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(trtswitch)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="fu">library</span>(dplyr, <span class="at">warn.conflicts =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span></code></pre></div>
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>The Marginal structural model (MSM), introduced by Robins et
+al. (2000) and Hernan et al. (2000), provides a principled approach to
+adjust for time-dependent confounding in treatment switching using
+inverse probability of treatment weighting (IPTW), which creates a
+pseudo-population where treatment switching is independent of measured
+covariates. Unlike the IPCW method, MSM does not censor data after
+treatment switching, and it can be used to estimate the effect of
+subsequent effect in addition to the effect of randomized treatment.
+Provided that prognostic covariates for treatment switching and survival
+are collected at baseline and at regular intervals, MSM can be more
+powerful than IPCW for estimating the effect of randomized
+treatment.</p>
+</div>
+<div id="estimation-of-weights" class="section level1">
+<h1>Estimation of weights</h1>
+<p>The switching model can be implemented using pooled logistic
+regression.</p>
+<ul>
+<li><p><strong>Visit-Specific Intercepts</strong>: These can be modeled
+using a natural cubic spline with specified degrees of freedom, denoted
+as <span class="math inline">\(\nu\)</span> (corresponding to the
+<code>ns_df</code> parameter of the <code>msm</code> function). The
+boundary and internal knots can be based on the range and percentiles of
+observed treatment switching times, respectively. Here, <span class="math inline">\(\nu\)</span> equals the number of internal knots
+plus one; a value of <span class="math inline">\(\nu=0\)</span>
+indicates a common intercept, while <span class="math inline">\(\nu=1\)</span> leads to a linear effect of visit.
+By default, <span class="math inline">\(\nu=3\)</span>, which implies
+two internal knots for the cubic spline.</p></li>
+<li><p><strong>Stratification Factors</strong>: If more than one
+stratification factor exists, they can be included in the logistic model
+either as main effects only
+(<code>strata_main_effect_only = TRUE</code>) or as all possible
+combinations of the levels of the stratification factors
+(<code>strata_main_effect_only = FALSE</code>).</p></li>
+<li><p><strong>Handling Nonconvergence</strong>: If the pooled logistic
+regression model encounters issues such as complete or quasi-complete
+separation, Firth’s bias-reducing penalized likelihood method
+(<code>firth = TRUE</code>) can be applied alongside intercept
+correction (<code>flic = TRUE</code>) to yield more accurate predicted
+probabilities.</p></li>
+<li><p><strong>Inverse Probability of Treatment Weighting</strong>: Let
+<span class="math inline">\(A_{i,j}\)</span> denote the indicator of
+alternative therapy for subject <span class="math inline">\(i\)</span>
+in treatment cycle <span class="math inline">\(j\)</span>. We assume
+that once a patient switched to an alternative therapy, he/she will stay
+on the alternative therapy. Let <span class="math inline">\(X_i\)</span>
+denote the baseline covariates for subject <span class="math inline">\(i\)</span> and <span class="math inline">\(L_{i,j}\)</span> denote the time-dependent
+covariates for subject <span class="math inline">\(i\)</span> at the
+start of cycle <span class="math inline">\(j\)</span>. For the pooled
+logistic regression model for treatment switching, the full data will be
+used for patients who didn’t switch treatment, while the partial data up
+to and including the treatment cycle when the patient switched treatment
+will be used for patients who switched treatment. The logistic
+regression model is used to estimate <span class="math display">\[P(A_j
+= a_{i,j} | A_{j-1} = 0, \bar{L}_{j} = \bar{l}_{i,j}, X = x_i)\]</span>
+where <span class="math inline">\(x_i\)</span>, <span class="math inline">\(l_{i,j}\)</span>, and <span class="math inline">\(a_{i,j}\)</span> denote the observed value of
+baseline covariates, time-dependent covariates for cycle <span class="math inline">\(j\)</span>, and alternative therapy status for
+cycle <span class="math inline">\(j\)</span> of subject <span class="math inline">\(i\)</span>, respectively. Natural cubic splines
+can be used to model visit-specific intercepts for the pooled logistic
+regression model. The unstabilized weights for subject <span class="math inline">\(i\)</span> for cycle <span class="math inline">\(t\)</span> are given by <span class="math display">\[w_i(t) = \prod_{j=1}^{t} \frac{1}{P(A_j = a_{i,j}
+| \bar{A}_{j-1} = \bar{a}_{i,j-1}, \bar{L}_{j} = \bar{l}_{i,j}, X =
+x_i)}\]</span> where, by assumption, <span class="math inline">\(P(A_j =
+1 | A_{j-1} = 1) = 1\)</span>, i.e., the weights do not vary after
+treatment switching.</p></li>
+</ul>
+<div id="stabilized-weights" class="section level2">
+<h2>Stabilized Weights</h2>
+<p>To address the high variability in “unstabilized” weights,
+researchers often opt for “stabilized” weights. The switching model for
+stabilized weights involves a model for the numerator of the weight in
+addition to the model for the denominator. Typically, the numerator
+model mirrors the denominator model but includes only prognostic
+baseline variables. Any prognostic baseline variables included in the
+numerator must also be part of the weighted outcome model.</p>
+</div>
+<div id="truncation-of-weights" class="section level2">
+<h2>Truncation of Weights</h2>
+<p>You can specify weight truncation using the <code>trunc</code> and
+<code>trunc_upper_only</code> parameters of the <code>ipcw</code>
+function. The <code>trunc</code> parameter is a number between 0 and 0.5
+that represents the fraction of the weight distribution to truncate. The
+<code>trunc_upper_only</code> parameter is a flag that indicates whether
+to truncate weights only from the upper end of the weight
+distribution.</p>
+</div>
+</div>
+<div id="estimation-of-hazard-ratio" class="section level1">
+<h1>Estimation of Hazard Ratio</h1>
+<p>Once weights have been obtained for each event time in the data set,
+we fit a (potentially stratified) Cox proportional hazards model to this
+weighted data set to obtain an estimate of the hazard ratio. The Cox
+model includes baseline covariates, randomized treatment, and
+time-dependent alternative therapy. An interaction between randomized
+and alternative treatment can be included when patients from both
+treatment arms can switch to alternative therapy. The confidence
+interval for the hazard ratio can be derived by bootstrapping the weight
+estimation and the subsequent model-fitting process.</p>
+</div>
+<div id="example-for-pooled-logistic-regression-switching-model" class="section level1">
+<h1>Example for Pooled Logistic Regression Switching Model</h1>
+<p>First we prepare the data.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>sim1 <span class="ot">&lt;-</span> <span class="fu">tssim</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="at">tdxo =</span> <span class="dv">0</span>, <span class="at">coxo =</span> <span class="dv">0</span>, <span class="at">p_R =</span> <span class="fl">0.5</span>, <span class="at">p_X_1 =</span> <span class="fl">0.3</span>, <span class="at">p_X_0 =</span> <span class="fl">0.3</span>, </span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">rate_T =</span> <span class="fl">0.002</span>, <span class="at">beta1 =</span> <span class="sc">-</span><span class="fl">0.5</span>, <span class="at">beta2 =</span> <span class="fl">0.3</span>, </span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">gamma0 =</span> <span class="fl">0.3</span>, <span class="at">gamma1 =</span> <span class="sc">-</span><span class="fl">0.9</span>, <span class="at">gamma2 =</span> <span class="fl">0.7</span>, <span class="at">gamma3 =</span> <span class="fl">1.1</span>, <span class="at">gamma4 =</span> <span class="sc">-</span><span class="fl">0.8</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">zeta0 =</span> <span class="sc">-</span><span class="fl">3.5</span>, <span class="at">zeta1 =</span> <span class="fl">0.5</span>, <span class="at">zeta2 =</span> <span class="fl">0.2</span>, <span class="at">zeta3 =</span> <span class="sc">-</span><span class="fl">0.4</span>, </span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">alpha0 =</span> <span class="fl">0.5</span>, <span class="at">alpha1 =</span> <span class="fl">0.5</span>, <span class="at">alpha2 =</span> <span class="fl">0.4</span>, </span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  <span class="at">theta1_1 =</span> <span class="sc">-</span><span class="fl">0.4</span>, <span class="at">theta1_0 =</span> <span class="sc">-</span><span class="fl">0.4</span>, <span class="at">theta2 =</span> <span class="fl">0.2</span>,</span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  <span class="at">rate_C =</span> <span class="fl">0.0000855</span>, <span class="at">followup =</span> <span class="dv">20</span>, <span class="at">days =</span> <span class="dv">30</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>  <span class="at">n =</span> <span class="dv">500</span>, <span class="at">NSim =</span> <span class="dv">100</span>, <span class="at">seed =</span> <span class="dv">314159</span>)</span></code></pre></div>
+<p>Given that the observations are collected at regular intervals, we
+can use a pooled logistic regression switching model. In this model, the
+prognostic baseline variable is represented by <code>bprog</code>, while
+<code>L</code> serves as time-dependent covariates. Additionally,
+<code>ns1</code>, <code>ns2</code>, and <code>ns3</code> are the three
+terms for the natural cubic spline with <span class="math inline">\(\nu=3\)</span> degrees of freedom for
+visit-specific intercepts.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>fit1 <span class="ot">&lt;-</span> <span class="fu">msm</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  sim1[[<span class="dv">1</span>]], <span class="at">id =</span> <span class="st">&quot;id&quot;</span>, <span class="at">tstart =</span> <span class="st">&quot;tstart&quot;</span>, </span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">tstop =</span> <span class="st">&quot;tstop&quot;</span>, <span class="at">event =</span> <span class="st">&quot;Y&quot;</span>, <span class="at">treat =</span> <span class="st">&quot;trtrand&quot;</span>, </span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">swtrt =</span> <span class="st">&quot;xo&quot;</span>, <span class="at">swtrt_time =</span> <span class="st">&quot;xotime&quot;</span>, <span class="at">base_cov =</span> <span class="st">&quot;bprog&quot;</span>, </span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="at">numerator =</span> <span class="st">&quot;bprog&quot;</span>, <span class="at">denominator =</span> <span class="fu">c</span>(<span class="st">&quot;bprog&quot;</span>, <span class="st">&quot;L&quot;</span>), </span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  <span class="at">ns_df =</span> <span class="dv">3</span>, <span class="at">swtrt_control_only =</span> <span class="cn">TRUE</span>, <span class="at">boot =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<p>The fits for the denominator and numerator switching models are as
+follows.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># denominator switching model fit</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>fit1<span class="sc">$</span>fit_switch[[<span class="dv">1</span>]]<span class="sc">$</span>fit_den<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt;         param        beta    sebeta          z</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; 1 (Intercept) -4.58906421 0.5539967 -8.2835581</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; 2       bprog  0.60139329 0.2703681  2.2243498</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; 3           L  1.59547085 0.5253828  3.0367776</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; 4         ns1  0.04454811 0.6632449  0.0671669</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; 5         ns2 -1.44772063 0.7399064 -1.9566268</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; 6         ns3 -1.37103666 0.7794941 -1.7588801</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co"># numerator switching model fit</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>fit1<span class="sc">$</span>fit_switch[[<span class="dv">1</span>]]<span class="sc">$</span>fit_num<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt;         param       beta    sebeta           z</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt; 1 (Intercept) -3.3752627 0.3019737 -11.1773386</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt; 2       bprog  0.8026209 0.2671525   3.0043551</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt; 3         ns1  0.1628824 0.6645797   0.2450909</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt; 4         ns2 -1.2821252 0.7300037  -1.7563271</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; 5         ns3 -1.3249197 0.7733622  -1.7131944</span></span></code></pre></div>
+<p>Since treatment switching is not allowed in the experimental arm, the
+weights are identical to 1 for subjects in the experimental group. The
+unstabilized and stablized weights for the control group are plotted
+below.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># unstabilized weights</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">ggplot</span>(fit1<span class="sc">$</span>data_outcome <span class="sc">%&gt;%</span> <span class="fu">filter</span>(trtrand <span class="sc">==</span> <span class="dv">0</span>), </span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x =</span> unstabilized_weight)) <span class="sc">+</span> </span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">fill=</span><span class="st">&quot;#77bd89&quot;</span>, <span class="at">color=</span><span class="st">&quot;#1f6e34&quot;</span>, <span class="at">alpha=</span><span class="fl">0.8</span>) <span class="sc">+</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="st">&quot;unstabilized weights&quot;</span>)</span></code></pre></div>
+<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co"># stabilized weights</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="fu">ggplot</span>(fit1<span class="sc">$</span>data_outcome <span class="sc">%&gt;%</span> <span class="fu">filter</span>(trtrand <span class="sc">==</span> <span class="dv">0</span>), </span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x =</span> stabilized_weight)) <span class="sc">+</span> </span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">fill=</span><span class="st">&quot;#77bd89&quot;</span>, <span class="at">color=</span><span class="st">&quot;#1f6e34&quot;</span>, <span class="at">alpha=</span><span class="fl">0.8</span>) <span class="sc">+</span></span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="st">&quot;stabilized weights&quot;</span>)</span></code></pre></div>
+<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
+<p>Now we fit a weighted outcome Cox model and compare the treatment
+hazard ratio estimate with the reported.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>fit1<span class="sc">$</span>fit_outcome<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co">#&gt;     param       beta    sebeta         z</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co">#&gt; 1 treated -0.7842312 0.1155526 -6.786789</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt; 2   bprog  0.2528728 0.1235804  2.046222</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co">#&gt; 3 crossed -0.7063899 0.1853693 -3.810716</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>    </span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="fu">exp</span>(fit1<span class="sc">$</span>fit_outcome<span class="sc">$</span>parest[<span class="dv">1</span>, <span class="fu">c</span>(<span class="st">&quot;beta&quot;</span>, <span class="st">&quot;lower&quot;</span>, <span class="st">&quot;upper&quot;</span>)])</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt;        beta     lower     upper</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; 1 0.4564705 0.3639604 0.5724944</span></span></code></pre></div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

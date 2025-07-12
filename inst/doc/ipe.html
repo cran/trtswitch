@@ -368,7 +368,7 @@ method iterates between the following two steps until convergence:</p>
 \]</span> <span class="math display">\[
   U_{i,\psi}^* = \min(U_{i,\psi}, D_{i,\psi}^*),
 \]</span> <span class="math display">\[
-  \Delta_{i,\psi}^* = \Delta_i I(U_{i,\psi} \leq D_{i,\psi}^*).
+  \Delta_{i,\psi}^* = I(U_{i,\psi} \leq D_{i,\psi}^*).
 \]</span></p></li>
 <li><p>Fit an AFT model to the adjusted data set consisting of</p>
 <ul>
@@ -458,7 +458,7 @@ the coefficient for the treatment variable in the updated AFT model fit
 equals <span class="math inline">\(0.950\)</span>:</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>fit2<span class="sc">$</span>fit_aft<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co">#&gt;                    param         beta      sebeta          z</span></span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt; 1            (Intercept)  6.934726180 0.495626813 13.9918301</span></span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt; 1            (Intercept)  6.934726180 0.495626813 13.9918302</span></span>
 <span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; 2                treated -0.949765785 0.150227468 -6.3221846</span></span>
 <span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt; 3                agerand -0.003290492 0.006498532 -0.5063439</span></span>
 <span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; 4            sex.fFemale  0.322266209 0.156016643  2.0655887</span></span>

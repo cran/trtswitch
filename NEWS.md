@@ -1,3 +1,12 @@
+# trtswitch 0.1.8
+
+- eliminated redundant code for the logistic regression switching model for ipcw
+- added the marginal structural model (msm) method
+- added na.action = na.pass for model frame construction involving covariates for all methods
+- added the init parameter and the fail flag to the output to logisregr, liferegr, and phregr
+- replaced the survreg initial value method with the OLS initial value method for liferegr
+- added the fail flag to output of rpsftm, ipe, tsesimp, tsegest, ipcw, and msm
+
 # trtswitch 0.1.7
 
 - updated survival_analysis to ignore intervals not at risk within each stratum without creating non overlapping times across strata
@@ -42,8 +51,7 @@
 - updated liferegr to use better starting values for model parameters
 - updated documentations for rpsftm, ipe, tsesimp, tsegest, and ipcw to clarify the variables in output data frames
 - added gridsearch parameter to tsegest
-- updated unit tes
-ts and vignettes to use functions from the survival package
+- updated unit tests and vignettes to use functions from the survival package
 - added maxiter and eps to logisregr, liferegr, and phregr
 - added the special case for psilower and psiupper when no root exists when using uniroot finding in rpsftm and tsegest
 - updated to shortening survival if patients switched from active treatment to control in tsegestsim
