@@ -611,14 +611,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // tssim
-List tssim(const bool tdxo, const bool coxo, const double p_R, const double p_X_1, const double p_X_0, const double rate_T, const double beta1, const double beta2, const double gamma0, const double gamma1, const double gamma2, const double gamma3, const double gamma4, const double zeta0, const double zeta1, const double zeta2, const double zeta3, const double alpha0, const double alpha1, const double alpha2, const double theta1_1, const double theta1_0, const double theta2, const double rate_C, const int followup, const double days, const int n, const int NSim, const int seed);
-RcppExport SEXP _trtswitch_tssim(SEXP tdxoSEXP, SEXP coxoSEXP, SEXP p_RSEXP, SEXP p_X_1SEXP, SEXP p_X_0SEXP, SEXP rate_TSEXP, SEXP beta1SEXP, SEXP beta2SEXP, SEXP gamma0SEXP, SEXP gamma1SEXP, SEXP gamma2SEXP, SEXP gamma3SEXP, SEXP gamma4SEXP, SEXP zeta0SEXP, SEXP zeta1SEXP, SEXP zeta2SEXP, SEXP zeta3SEXP, SEXP alpha0SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP theta1_1SEXP, SEXP theta1_0SEXP, SEXP theta2SEXP, SEXP rate_CSEXP, SEXP followupSEXP, SEXP daysSEXP, SEXP nSEXP, SEXP NSimSEXP, SEXP seedSEXP) {
+List tssim(const bool tdxo, const bool coxo, const int allocation1, const int allocation2, const double p_X_1, const double p_X_0, const double rate_T, const double beta1, const double beta2, const double gamma0, const double gamma1, const double gamma2, const double gamma3, const double gamma4, const double zeta0, const double zeta1, const double zeta2, const double zeta3, const double alpha0, const double alpha1, const double alpha2, const double theta1_1, const double theta1_0, const double theta2, const double rate_C, const NumericVector& accrualTime, const NumericVector& accrualIntensity, const double followupTime, const bool fixedFollowup, const double days, const int n, const int NSim, const int seed);
+RcppExport SEXP _trtswitch_tssim(SEXP tdxoSEXP, SEXP coxoSEXP, SEXP allocation1SEXP, SEXP allocation2SEXP, SEXP p_X_1SEXP, SEXP p_X_0SEXP, SEXP rate_TSEXP, SEXP beta1SEXP, SEXP beta2SEXP, SEXP gamma0SEXP, SEXP gamma1SEXP, SEXP gamma2SEXP, SEXP gamma3SEXP, SEXP gamma4SEXP, SEXP zeta0SEXP, SEXP zeta1SEXP, SEXP zeta2SEXP, SEXP zeta3SEXP, SEXP alpha0SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP theta1_1SEXP, SEXP theta1_0SEXP, SEXP theta2SEXP, SEXP rate_CSEXP, SEXP accrualTimeSEXP, SEXP accrualIntensitySEXP, SEXP followupTimeSEXP, SEXP fixedFollowupSEXP, SEXP daysSEXP, SEXP nSEXP, SEXP NSimSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const bool >::type tdxo(tdxoSEXP);
     Rcpp::traits::input_parameter< const bool >::type coxo(coxoSEXP);
-    Rcpp::traits::input_parameter< const double >::type p_R(p_RSEXP);
+    Rcpp::traits::input_parameter< const int >::type allocation1(allocation1SEXP);
+    Rcpp::traits::input_parameter< const int >::type allocation2(allocation2SEXP);
     Rcpp::traits::input_parameter< const double >::type p_X_1(p_X_1SEXP);
     Rcpp::traits::input_parameter< const double >::type p_X_0(p_X_0SEXP);
     Rcpp::traits::input_parameter< const double >::type rate_T(rate_TSEXP);
@@ -640,12 +641,15 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const double >::type theta1_0(theta1_0SEXP);
     Rcpp::traits::input_parameter< const double >::type theta2(theta2SEXP);
     Rcpp::traits::input_parameter< const double >::type rate_C(rate_CSEXP);
-    Rcpp::traits::input_parameter< const int >::type followup(followupSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type accrualTime(accrualTimeSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type accrualIntensity(accrualIntensitySEXP);
+    Rcpp::traits::input_parameter< const double >::type followupTime(followupTimeSEXP);
+    Rcpp::traits::input_parameter< const bool >::type fixedFollowup(fixedFollowupSEXP);
     Rcpp::traits::input_parameter< const double >::type days(daysSEXP);
     Rcpp::traits::input_parameter< const int >::type n(nSEXP);
     Rcpp::traits::input_parameter< const int >::type NSim(NSimSEXP);
     Rcpp::traits::input_parameter< const int >::type seed(seedSEXP);
-    rcpp_result_gen = Rcpp::wrap(tssim(tdxo, coxo, p_R, p_X_1, p_X_0, rate_T, beta1, beta2, gamma0, gamma1, gamma2, gamma3, gamma4, zeta0, zeta1, zeta2, zeta3, alpha0, alpha1, alpha2, theta1_1, theta1_0, theta2, rate_C, followup, days, n, NSim, seed));
+    rcpp_result_gen = Rcpp::wrap(tssim(tdxo, coxo, allocation1, allocation2, p_X_1, p_X_0, rate_T, beta1, beta2, gamma0, gamma1, gamma2, gamma3, gamma4, zeta0, zeta1, zeta2, zeta3, alpha0, alpha1, alpha2, theta1_1, theta1_0, theta2, rate_C, accrualTime, accrualIntensity, followupTime, fixedFollowup, days, n, NSim, seed));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -712,6 +716,48 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// qtpwexpcpp1
+double qtpwexpcpp1(const double p, const NumericVector& piecewiseSurvivalTime, const NumericVector& lambda, const double lowerBound, const bool lowertail, const bool logp);
+RcppExport SEXP _trtswitch_qtpwexpcpp1(SEXP pSEXP, SEXP piecewiseSurvivalTimeSEXP, SEXP lambdaSEXP, SEXP lowerBoundSEXP, SEXP lowertailSEXP, SEXP logpSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const double >::type p(pSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type piecewiseSurvivalTime(piecewiseSurvivalTimeSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type lambda(lambdaSEXP);
+    Rcpp::traits::input_parameter< const double >::type lowerBound(lowerBoundSEXP);
+    Rcpp::traits::input_parameter< const bool >::type lowertail(lowertailSEXP);
+    Rcpp::traits::input_parameter< const bool >::type logp(logpSEXP);
+    rcpp_result_gen = Rcpp::wrap(qtpwexpcpp1(p, piecewiseSurvivalTime, lambda, lowerBound, lowertail, logp));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getAccrualDurationFromN
+NumericVector getAccrualDurationFromN(const NumericVector& nsubjects, const NumericVector& accrualTime, const NumericVector& accrualIntensity);
+RcppExport SEXP _trtswitch_getAccrualDurationFromN(SEXP nsubjectsSEXP, SEXP accrualTimeSEXP, SEXP accrualIntensitySEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericVector& >::type nsubjects(nsubjectsSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type accrualTime(accrualTimeSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type accrualIntensity(accrualIntensitySEXP);
+    rcpp_result_gen = Rcpp::wrap(getAccrualDurationFromN(nsubjects, accrualTime, accrualIntensity));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getpsiest
+double getpsiest(const double target, const NumericVector& psi, const NumericVector& Z);
+RcppExport SEXP _trtswitch_getpsiest(SEXP targetSEXP, SEXP psiSEXP, SEXP ZSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const double >::type target(targetSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type psi(psiSEXP);
+    Rcpp::traits::input_parameter< const NumericVector& >::type Z(ZSEXP);
+    rcpp_result_gen = Rcpp::wrap(getpsiest(target, psi, Z));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_trtswitch_ipcwcpp", (DL_FUNC) &_trtswitch_ipcwcpp, 26},
@@ -737,12 +783,15 @@ static const R_CallMethodDef CallEntries[] = {
     {"_trtswitch_tsegestcpp", (DL_FUNC) &_trtswitch_tsegestcpp, 31},
     {"_trtswitch_tsegestsim", (DL_FUNC) &_trtswitch_tsegestsim, 26},
     {"_trtswitch_tsesimpcpp", (DL_FUNC) &_trtswitch_tsesimpcpp, 24},
-    {"_trtswitch_tssim", (DL_FUNC) &_trtswitch_tssim, 29},
+    {"_trtswitch_tssim", (DL_FUNC) &_trtswitch_tssim, 33},
     {"_trtswitch_findInterval3", (DL_FUNC) &_trtswitch_findInterval3, 2},
     {"_trtswitch_hasVariable", (DL_FUNC) &_trtswitch_hasVariable, 2},
     {"_trtswitch_survsplit", (DL_FUNC) &_trtswitch_survsplit, 3},
     {"_trtswitch_qrcpp", (DL_FUNC) &_trtswitch_qrcpp, 2},
     {"_trtswitch_match3", (DL_FUNC) &_trtswitch_match3, 4},
+    {"_trtswitch_qtpwexpcpp1", (DL_FUNC) &_trtswitch_qtpwexpcpp1, 6},
+    {"_trtswitch_getAccrualDurationFromN", (DL_FUNC) &_trtswitch_getAccrualDurationFromN, 3},
+    {"_trtswitch_getpsiest", (DL_FUNC) &_trtswitch_getpsiest, 3},
     {NULL, NULL, 0}
 };
 

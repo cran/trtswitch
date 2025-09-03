@@ -64,6 +64,7 @@ fit1 <- phregr(data = rawdata \%>\% filter(iterationNumber == 1) \%>\%
                covariates = "treat")
 
 ressco <- residuals_phregr(fit1, type = "score")
+head(ressco)
 
 # Example 2 with counting process data
 fit2 <- phregr(data = heart \%>\% mutate(rx = as.numeric(transplant) - 1),
@@ -71,6 +72,7 @@ fit2 <- phregr(data = heart \%>\% mutate(rx = as.numeric(transplant) - 1),
                covariates = c("rx", "age"), id = "id", robust = TRUE)
 
 resssch <- residuals_phregr(fit2, type = "scaledsch")
+head(resssch)
 
 }
 \references{

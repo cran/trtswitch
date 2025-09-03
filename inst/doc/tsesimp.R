@@ -30,7 +30,7 @@ shilong3 <- shilong1 %>%
 
 ## ----analysis-----------------------------------------------------------------
 fit1 <- tsesimp(
-  data = shilong3, time = "tstop", event = "event",
+  data = shilong3, id = "id", time = "tstop", event = "event",
   treat = "bras.f", censor_time = "dcut", pd = "pd",
   pd_time = "dpd", swtrt = "co", swtrt_time = "dco",
   base_cov = c("agerand", "sex.f", "tt_Lnum", "rmh_alea.c",

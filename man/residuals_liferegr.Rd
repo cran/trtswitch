@@ -6,8 +6,8 @@
 \usage{
 residuals_liferegr(
   object,
-  type = c("response", "deviance", "dfbeta", "dfbetas", "working", "ldcase", "ldresp",
-    "ldshape", "matrix"),
+  type = c("response", "martingale", "deviance", "dfbeta", "dfbetas", "working",
+    "ldcase", "ldresp", "ldshape", "matrix"),
   collapse = FALSE,
   weighted = (type \%in\% c("dfbeta", "dfbetas"))
 )
@@ -16,8 +16,8 @@ residuals_liferegr(
 \item{object}{The output from the \code{phregr} call.}
 
 \item{type}{The type of residuals desired, with options including
-\code{"response"}, \code{"deviance"}, \code{"dfbeta"},
-\code{"dfbetas"}, \code{"working"}, \code{"ldcase"},
+\code{"response"}, \code{"martingale"}, \code{"deviance"},
+\code{"dfbeta"}, \code{"dfbetas"}, \code{"working"}, \code{"ldcase"},
 \code{"ldresp"}, \code{"ldshape"}, and \code{"matrix"}.}
 
 \item{collapse}{Whether to collapse the residuals by \code{id}.}
@@ -28,6 +28,8 @@ residuals_liferegr(
 Either a vector or a matrix of residuals, depending on the specified type:
 \itemize{
 \item \code{response} residuals are on the scale of the original data.
+\item \code{martingale} residuals are event indicators minus the cumulative
+hazards for event or right-censored data.
 \item \code{working} residuals are on the scale of the linear predictor.
 \item \code{deviance} residuals are on the log-likelihood scale.
 \item \code{dfbeta} residuals are returned as a matrix, where the
@@ -52,13 +54,15 @@ shape parameter.
 }
 }
 \description{
-Obtains the response, deviance, dfbeta, and likelihood
-displacement residuals for a parametric regression model for failure
-time data.
+Obtains the response, martingale, deviance, dfbeta, and
+likelihood displacement residuals for a parametric regression model
+for failure time data.
 }
 \details{
 The algorithms follow the \code{residuals.survreg} function in the
-\code{survival} package.
+\code{survival} package, except for martingale residuals, which
+are defined only for event or right-censored data for exponential,
+weibull, lognormal, and loglogistic distributions.
 }
 \examples{
 
@@ -69,7 +73,8 @@ fit1 <- liferegr(
   time = "time", time2 = "durable",
   covariates = c("age", "quant"), dist = "normal")
 
- resid <- residuals_liferegr(fit1, type = "response")
+resid <- residuals_liferegr(fit1, type = "response")
+head(resid)
 
 }
 \references{

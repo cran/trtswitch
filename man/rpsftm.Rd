@@ -158,6 +158,7 @@ The variables include \code{id}, \code{stratum},
 and \code{treat}.
 \item \code{fit_outcome}: The fitted outcome Cox model.
 \item \code{fail}: Whether a model fails to converge.
+\item \code{psimissing}: Whether the psi parameter cannot be estimated.
 \item \code{settings}: A list with the following components:
 \itemize{
 \item \code{psi_test}: The survival function to calculate the Z-statistic.
@@ -190,6 +191,8 @@ interval for hazard ratio.
 \item \code{seed}: The seed to reproduce the bootstrap results.
 }
 \item \code{fail_boots}: The indicators for failed bootstrap samples
+if \code{boot} is \code{TRUE}.
+\item \code{fail_boots_data}: The data for failed bootstrap samples
 if \code{boot} is \code{TRUE}.
 \item \code{hr_boots}: The bootstrap hazard ratio estimates if \code{boot} is
 \code{TRUE}.

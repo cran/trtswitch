@@ -202,6 +202,7 @@ The variables include \code{id}, \code{stratum}, \code{"t_star"},
 \code{"d_star"}, \code{"treated"}, \code{base_cov} and \code{treat}.
 \item \code{fit_outcome}: The fitted outcome Cox model.
 \item \code{fail}: Whether a model fails to converge.
+\item \code{psimissing}: Whether the psi parameter cannot be estimated.
 \item \code{settings}: A list with the following components:
 \itemize{
 \item \code{low_psi}: The lower limit of the causal parameter.
@@ -239,6 +240,8 @@ group if \code{swtrt_control_only} is \code{FALSE}.
 \item \code{psi_trt_CI}: The confidence interval for \code{psi_trt} if
 \code{swtrt_control_only} is \code{FALSE}.
 \item \code{fail_boots}: The indicators for failed bootstrap samples
+if \code{boot} is \code{TRUE}.
+\item \code{fail_boots_data}: The data for failed bootstrap samples
 if \code{boot} is \code{TRUE}.
 \item \code{hr_boots}: The bootstrap hazard ratio estimates if \code{boot} is
 \code{TRUE}.
@@ -292,6 +295,8 @@ p-value for hazard ratio are calculated based on a t-distribution with
 }
 \examples{
 
+library(dplyr)
+
 sim1 <- tsegestsim(
   n = 500, allocation1 = 2, allocation2 = 1, pbprog = 0.5, 
   trtlghr = -0.5, bprogsl = 0.3, shape1 = 1.8, 
@@ -302,17 +307,20 @@ sim1 <- tsegestsim(
   ppoormet = 0.4, pgoodmet = 0.2, xomult = 1.4188308, 
   milestone = 546, outputRawDataset = 1, seed = 2000)
   
+data1 <- sim1$paneldata \%>\%
+  mutate(visit7on = ifelse(progressed, tstop > timePFSobs + 105, 0))
+
 fit1 <- tsegest(
-  data = sim1$paneldata, id = "id", 
+  data = data1, id = "id", 
   tstart = "tstart", tstop = "tstop", event = "event", 
   treat = "trtrand", censor_time = "censor_time", 
   pd = "progressed", pd_time = "timePFSobs", 
   swtrt = "xo", swtrt_time = "xotime", 
-  base_cov = "bprog", conf_cov = "bprog*catlag", 
-  strata_main_effect_only = TRUE,
+  base_cov = "bprog", 
+  conf_cov = c("bprog*cattdc", "timePFSobs", "visit7on"), 
   recensor = TRUE, admin_recensor_only = TRUE, 
   swtrt_control_only = TRUE, alpha = 0.05, ties = "efron", 
-  tol = 1.0e-6, boot = FALSE)
+  tol = 1.0e-6, offset = 0, boot = FALSE)
   
 c(fit1$hr, fit1$hr_CI)
 

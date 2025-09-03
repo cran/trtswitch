@@ -14,7 +14,7 @@ library(survival)
 data <- immdef %>% mutate(rx = 1-xoyrs/progyrs)
 
 fit1 <- ipe(
-  data, time = "progyrs", event = "prog", treat = "imm", 
+  data, id = "id", time = "progyrs", event = "prog", treat = "imm", 
   rx = "rx", censor_time = "censyrs", aft_dist = "weibull",
   boot = FALSE)
 
@@ -49,7 +49,7 @@ shilong2 <- shilong1 %>%
 
 ## ----SHIVA analysis-----------------------------------------------------------
 fit2 <- ipe(
-  shilong2, time = "tstop", event = "event",
+  shilong2, id = "id", time = "tstop", event = "event",
   treat = "bras.f", rx = "rx", censor_time = "dcut",
   base_cov = c("agerand", "sex.f", "tt_Lnum", "rmh_alea.c",
                "pathway.f"),
@@ -66,14 +66,14 @@ f <- function(psi) {
     mutate(u_star = tstop*(1 - rx + rx*exp(psi)),
            c_star = pmin(dcut, dcut*exp(psi)),
            t_star = pmin(u_star, c_star),
-           d_star = event*(u_star <= c_star)) %>%
+           d_star = ifelse(c_star < u_star, 0, event)) %>%
     select(-c("u_star", "c_star")) %>%
     bind_rows(shilong2 %>%
                 filter(treated == 1) %>%
                 mutate(u_star = tstop*(rx + (1-rx)*exp(-psi)),
                        c_star = pmin(dcut, dcut*exp(-psi)),
                        t_star = pmin(u_star, c_star),
-                       d_star = event*(u_star <= c_star)))
+                       d_star = ifelse(c_star < u_star, 0, event)))
   
   fit_aft <- survreg(Surv(t_star, d_star) ~ treated + agerand + sex.f +  
                        tt_Lnum + rmh_alea.c + pathway.f, data = data1)  

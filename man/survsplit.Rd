@@ -24,7 +24,7 @@ A data frame with the following variables:
 \item \code{end}: The ending time of the resulting subrecord.
 \item \code{censor}: Whether the subrecord lies strictly within a record
 in the input data (1 for all but the last interval and 0 for the
-last interval with cutpoint set equal to tstop).
+last interval).
 \item \code{interval}: The interval number derived from cut (starting
 from 0 if the interval lies to the left of the first cutpoint).
 }

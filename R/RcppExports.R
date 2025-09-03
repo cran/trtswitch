@@ -777,8 +777,6 @@ tsegestcpp <- function(data, id = "id", stratum = "", tstart = "tstart", tstop =
 #'     
 #'     - \code{cattdc}: The time-dependent covariate for cat event.
 #'     
-#'     - \code{catlag}: The lagged value of \code{cattdc}.
-#'     
 #'     - \code{xo}: Whether the patient switched treatment. 
 #'     
 #'     - \code{xotime}: When the patient switched treatment.
@@ -786,8 +784,6 @@ tsegestcpp <- function(data, id = "id", stratum = "", tstart = "tstart", tstop =
 #'     - \code{xotdc}: The time-dependent covariate for treatment 
 #'       switching.
 #'       
-#'     - \code{xotime_upper}: The upper bound of treatment switching time.
-#'     
 #'     - \code{censor_time}: The administrative censoring time.
 #'     
 #' @author Kaifeng Lu, \email{kaifenglu@@gmail.com}
@@ -835,7 +831,10 @@ tsesimpcpp <- function(data, id = "id", stratum = "", time = "time", event = "ev
 #'     \item 1: Treatment switching occurs only in the control arm.
 #'     \item 0: Treatment switching is allowed in both arms.
 #'   }
-#' @param p_R Probability of randomization to the experimental arm.
+#' @param allocation1 Number of subjects in the active treatment group in
+#'   a randomization block. Defaults to 1 for equal randomization.
+#' @param allocation2 Number of subjects in the control group in
+#'   a randomization block. Defaults to 1 for equal randomization.
 #' @param p_X_1 Probability of poor baseline prognosis in the experimental 
 #'   arm.
 #' @param p_X_0 Probability of poor baseline prognosis in the control arm.
@@ -864,24 +863,39 @@ tsesimpcpp <- function(data, id = "id", stratum = "", time = "time", event = "ev
 #' @param theta1_0 Negative log time ratio for \code{A} (control arm).
 #' @param theta2 Negative log time ratio for \code{L}.
 #' @param rate_C Hazard rate for random (dropout) censoring.
-#' @param followup Number of treatment cycles per subject.
+#' @param accrualTime A vector that specifies the starting time of 
+#'   piecewise Poisson enrollment time intervals. Must start with 0, 
+#'   e.g., \code{c(0, 3)} breaks the time axis into 2 accrual intervals: 
+#'   [0, 3) and [3, Inf).
+#' @param accrualIntensity A vector of accrual intensities. One for 
+#'   each accrual time interval.
+#' @param followupTime	Follow-up time for the last enrolled subject.
+#' @param fixedFollowup Whether a fixed follow-up design is used. 
+#'   Defaults to 0 for variable follow-up.
 #' @param days Number of days in each treatment cycle.
 #' @param n Number of subjects per simulation.
 #' @param NSim Number of simulated datasets.
 #' @param seed Random seed for reproducibility.
 #'
 #' @details 
-#' The simulation algorithm is adapted from Xu et al. (2022), by 
-#' simulating disease progression status and by using the multiplicative 
-#' effects of baseline and time-dependent covariates on survival time. 
-#' The design options \code{tdxo} and \code{coxo} indicate 
+#' The simulation algorithm is adapted from Xu et al. (2022) and simulates
+#' disease progression status while incorporating the multiplicative 
+#' effects of both baseline and time-dependent covariates on survival time. 
+#' The design options \code{tdxo} and \code{coxo} specify
 #' the timing of treatment switching and the study arm eligibility 
-#' for switching, respectively. Each subject undergoes \code{followup} 
-#' treatment cycles until administrative censoring. 
+#' for switching, respectively. Time is measured in days. 
+#' 
+#' In a fixed follow-up design, all subjects share the same follow-up
+#' duration. In contrast, under a variable follow-up design, follow-up
+#' time also depends on each subject's enrollment date.  
+#' The number of treatment cycles for a subject is determined by
+#' dividing the follow-up time by the number of days in each cycle. 
 #' \enumerate{
-#'   \item At randomization, each subject is assigned treatment based on:
-#'   \deqn{R_i \sim \mbox{Bernoulli}(p_R)} 
-#'   and a baseline covariate is generated:
+#'   \item At randomization, subjects are assigned to treatment arms 
+#'   using block randomization, with \code{allocation1} patients 
+#'   assigned to active treatment and \code{allocation2} to control
+#'   within each randomized block. A baseline covariate is 
+#'   also generated for each subject:
 #'   \deqn{X_i \sim \mbox{Bernoulli}(p_{X_1} R_i + p_{X_0} (1-R_i))}
 #'         
 #'   \item The initial survival time is drawn
@@ -891,7 +905,7 @@ tsesimpcpp <- function(data, id = "id", stratum = "", time = "time", event = "ev
 #'   \deqn{Y_{i,j} = I(T_i \leq j\times days)}
 #'         
 #'   \item The initial states are set to
-#'   \eqn{L_{i,0} = 0}, \eqn{Z_{i,0} = 0}, \eqn{Z_{i,0} = 0},
+#'   \eqn{L_{i,0} = 0}, \eqn{Z_{i,0} = 0}, \eqn{A_{i,0} = 0},
 #'   \eqn{Y_{i,0} = 0}. For each treatment cycle \eqn{j=1,\ldots,J},
 #'   we set \eqn{tstart = (j-1) \times days}.
 #'         
@@ -946,6 +960,8 @@ tsesimpcpp <- function(data, id = "id", stratum = "", time = "time", event = "ev
 #'
 #'  * \code{id}: Subject identifier.
 #'  
+#'  * \code{arrivalTime}: The enrollment time for the subject.
+#'  
 #'  * \code{trtrand}: Randomized treatment assignment (0 = control, 
 #'    1 = experimental)
 #'
@@ -957,14 +973,14 @@ tsesimpcpp <- function(data, id = "id", stratum = "", time = "time", event = "ev
 #'
 #'  * \code{tstop}: End day of the treatment cycle.
 #'
-#'  * \code{L}: Time-dependent covariate predicting survival and switching; 
-#'    affected by treatment switching.
+#'  * \code{L}: Time-dependent covariate at \code{tstart} predicting 
+#'    survival and switching; affected by treatment switching.
 #'
 #'  * \code{Llag}: Lagged value of \code{L}.
 #'
-#'  * \code{Z}: Disease progression status at \code{tstop}.
+#'  * \code{Z}: Disease progression status at \code{tstart}.
 #'
-#'  * \code{A}: Treatment switching status at \code{tstop}.
+#'  * \code{A}: Treatment switching status at \code{tstart}.
 #'
 #'  * \code{Alag}: Lagged value of \code{A}.
 #'
@@ -1007,18 +1023,20 @@ tsesimpcpp <- function(data, id = "id", stratum = "", time = "time", event = "ev
 #' @examples
 #'
 #' simulated.data <- tssim(
-#'   tdxo = 0, coxo = 0, p_R = 0.5, p_X_1 = 0.3, p_X_0 = 0.3, 
+#'   tdxo = 1, coxo = 1, allocation1 = 1, allocation2 = 1,
+#'   p_X_1 = 0.3, p_X_0 = 0.3, 
 #'   rate_T = 0.002, beta1 = -0.5, beta2 = 0.3, 
 #'   gamma0 = 0.3, gamma1 = -0.9, gamma2 = 0.7, gamma3 = 1.1, gamma4 = -0.8,
 #'   zeta0 = -3.5, zeta1 = 0.5, zeta2 = 0.2, zeta3 = -0.4, 
 #'   alpha0 = 0.5, alpha1 = 0.5, alpha2 = 0.4, 
 #'   theta1_1 = -0.4, theta1_0 = -0.4, theta2 = 0.2,
-#'   rate_C = 0.0000855, followup = 20, days = 30,
+#'   rate_C = 0.0000855, accrualIntensity = 20/30, 
+#'   followupTime = 600, fixedFollowup = 0, days = 30,
 #'   n = 500, NSim = 100, seed = 314159)
 #'
 #' @export
-tssim <- function(tdxo = 0L, coxo = 1L, p_R = 0.5, p_X_1 = NA_real_, p_X_0 = NA_real_, rate_T = NA_real_, beta1 = NA_real_, beta2 = NA_real_, gamma0 = NA_real_, gamma1 = NA_real_, gamma2 = NA_real_, gamma3 = NA_real_, gamma4 = NA_real_, zeta0 = NA_real_, zeta1 = NA_real_, zeta2 = NA_real_, zeta3 = NA_real_, alpha0 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, theta1_1 = NA_real_, theta1_0 = NA_real_, theta2 = NA_real_, rate_C = NA_real_, followup = NA_integer_, days = NA_integer_, n = NA_integer_, NSim = 1000L, seed = NA_integer_) {
-    .Call(`_trtswitch_tssim`, tdxo, coxo, p_R, p_X_1, p_X_0, rate_T, beta1, beta2, gamma0, gamma1, gamma2, gamma3, gamma4, zeta0, zeta1, zeta2, zeta3, alpha0, alpha1, alpha2, theta1_1, theta1_0, theta2, rate_C, followup, days, n, NSim, seed)
+tssim <- function(tdxo = 0L, coxo = 1L, allocation1 = 1L, allocation2 = 1L, p_X_1 = NA_real_, p_X_0 = NA_real_, rate_T = NA_real_, beta1 = NA_real_, beta2 = NA_real_, gamma0 = NA_real_, gamma1 = NA_real_, gamma2 = NA_real_, gamma3 = NA_real_, gamma4 = NA_real_, zeta0 = NA_real_, zeta1 = NA_real_, zeta2 = NA_real_, zeta3 = NA_real_, alpha0 = NA_real_, alpha1 = NA_real_, alpha2 = NA_real_, theta1_1 = NA_real_, theta1_0 = NA_real_, theta2 = NA_real_, rate_C = NA_real_, accrualTime = 0L, accrualIntensity = NA_real_, followupTime = NA_real_, fixedFollowup = 0L, days = NA_integer_, n = NA_integer_, NSim = 1000L, seed = NA_integer_) {
+    .Call(`_trtswitch_tssim`, tdxo, coxo, allocation1, allocation2, p_X_1, p_X_0, rate_T, beta1, beta2, gamma0, gamma1, gamma2, gamma3, gamma4, zeta0, zeta1, zeta2, zeta3, alpha0, alpha1, alpha2, theta1_1, theta1_0, theta2, rate_C, accrualTime, accrualIntensity, followupTime, fixedFollowup, days, n, NSim, seed)
 }
 
 #' @title Find Interval Numbers of Indices
@@ -1076,7 +1094,7 @@ hasVariable <- function(df, varName) {
 #'
 #' * \code{censor}: Whether the subrecord lies strictly within a record
 #'   in the input data (1 for all but the last interval and 0 for the 
-#'   last interval with cutpoint set equal to tstop).
+#'   last interval).
 #'
 #' * \code{interval}: The interval number derived from cut (starting 
 #'   from 0 if the interval lies to the left of the first cutpoint).
@@ -1154,5 +1172,17 @@ qrcpp <- function(X, tol = 1e-12) {
 
 match3 <- function(id1, v1, id2, v2) {
     .Call(`_trtswitch_match3`, id1, v1, id2, v2)
+}
+
+qtpwexpcpp1 <- function(p, piecewiseSurvivalTime, lambda, lowerBound, lowertail, logp) {
+    .Call(`_trtswitch_qtpwexpcpp1`, p, piecewiseSurvivalTime, lambda, lowerBound, lowertail, logp)
+}
+
+getAccrualDurationFromN <- function(nsubjects = NA_real_, accrualTime = 0L, accrualIntensity = NA_real_) {
+    .Call(`_trtswitch_getAccrualDurationFromN`, nsubjects, accrualTime, accrualIntensity)
+}
+
+getpsiest <- function(target, psi, Z) {
+    .Call(`_trtswitch_getpsiest`, target, psi, Z)
 }
 

@@ -21,18 +21,21 @@ sim1 <- tsegestsim(
   milestone = 546, outputRawDataset = 1, seed = 2000)
 
 ## ----analysis-----------------------------------------------------------------
+data1 <- sim1$paneldata %>%
+  mutate(visit7on = ifelse(progressed == 1, tstop > timePFSobs + 105, 0))
+  
 fit1 <- tsegest(
-  data = sim1$paneldata, id = "id", 
+  data = data1, id = "id", 
   tstart = "tstart", tstop = "tstop", event = "event", 
   treat = "trtrand", censor_time = "censor_time", 
   pd = "progressed", pd_time = "timePFSobs", 
   swtrt = "xo", swtrt_time = "xotime", 
-  base_cov = "bprog", conf_cov = "bprog*catlag", 
-  low_psi = -2, hi_psi = 2, n_eval_z = 101, 
+  base_cov = "bprog", 
+  conf_cov = c("bprog*cattdc", "timePFSobs", "visit7on"), 
   strata_main_effect_only = TRUE,
   recensor = TRUE, admin_recensor_only = TRUE, 
   swtrt_control_only = TRUE, alpha = 0.05, ties = "efron", 
-  tol = 1.0e-6, offset = 1, boot = FALSE)
+  tol = 1.0e-6, offset = 0, boot = FALSE)
 
 ## ----switch time points-------------------------------------------------------
 switched <- fit1$analysis_switch$data_switch[[1]]$data %>% 

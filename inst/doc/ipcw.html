@@ -371,6 +371,37 @@ regression or proportional hazards regression with time-dependent
 covariates.</p>
 <div id="pooled-logistic-regression-model" class="section level2">
 <h2>Pooled Logistic Regression Model</h2>
+<p>Let <span class="math inline">\(A_{i,j}\)</span> denote the indicator
+of alternative therapy for subject <span class="math inline">\(i\)</span> in treatment cycle <span class="math inline">\(j\)</span>. We assume that once a patient switched
+to an alternative therapy, he/she will stay on the alternative therapy.
+Let <span class="math inline">\(X_i\)</span> denote the baseline
+covariates for subject <span class="math inline">\(i\)</span> and <span class="math inline">\(L_{i,j}\)</span> denote the time-dependent
+covariates for subject <span class="math inline">\(i\)</span> at the
+start of cycle <span class="math inline">\(j\)</span>. For the pooled
+logistic regression model for treatment switching, the full data will be
+used for patients who didn’t switch treatment, while the partial data up
+to and including the treatment cycle when the patient switched treatment
+will be used for patients who switched treatment. The logistic
+regression model is used to estimate <span class="math display">\[P(A_j
+= a_{i,j} | A_{j-1} = 0, \bar{L}_{j} = \bar{l}_{i,j}, X = x_i)\]</span>
+where <span class="math inline">\(x_i\)</span>, <span class="math inline">\(l_{i,j}\)</span>, and <span class="math inline">\(a_{i,j}\)</span> denote the observed value of
+baseline covariates, time-dependent covariates at the start of cycle
+<span class="math inline">\(j\)</span>, and alternative therapy status
+for cycle <span class="math inline">\(j\)</span> of subject <span class="math inline">\(i\)</span>, respectively. A subject is on
+alternative therapy in cycle <span class="math inline">\(j\)</span> if
+and only if treatment switching has occurred at the start of that cycle,
+which is equivalent to switching having occurred by the end of cycle
+<span class="math inline">\(j−1\)</span>. Consequently, lagged values of
+time-dependent covariates are often used in the logistic regression
+model. Natural cubic splines can be used to model visit-specific
+intercepts for the pooled logistic regression model. The unstabilized
+weights for subject <span class="math inline">\(i\)</span> for cycle
+<span class="math inline">\(t\)</span> are given by <span class="math display">\[w_i(t) = \prod_{j=1}^{t} \frac{1}{P(A_j = a_{i,j}
+| \bar{A}_{j-1} = \bar{a}_{i,j-1}, \bar{L}_{j} = \bar{l}_{i,j}, X =
+x_i)}\]</span> In the IPCW method, all visits that occur after treatment
+switching are excluded from the weighted outcome model. Accordingly, the
+weights are defined as the inverse probability of not having switched at
+the start of each cycle.</p>
 <p>When using pooled logistic regression for the switching model, the
 following specifications can be made:</p>
 <ul>
@@ -408,6 +439,12 @@ observations across subjects will not be aligned at regular intervals.
 In this case, unique event times across treatment arms should be
 replicated within each subject, enabling the availability of weights at
 each event time.</p>
+<p>In the time-dependent Cox switching model, survival times are
+artificially censored at the point of treatment switching. The IPCW
+weight is then defined as the probability of not having switched
+treatment by the end of the time interval. This is to account for the
+irregular visit structure for the time-dependent Cox switching
+model.</p>
 </div>
 <div id="stabilized-weights" class="section level2">
 <h2>Stabilized Weights</h2>
@@ -416,8 +453,10 @@ researchers often opt for “stabilized” weights. The switching model for
 stabilized weights involves a model for the numerator of the weight in
 addition to the model for the denominator. Typically, the numerator
 model mirrors the denominator model but includes only prognostic
-baseline variables. Any prognostic baseline variables included in the
-numerator must also be part of the weighted outcome model.</p>
+baseline variables. Any baseline variables included in the numerator
+must be part of the weighted outcome model. Any baseline variables
+included in the weighted outcome model must also be part of the
+denominator.</p>
 </div>
 <div id="truncation-of-weights" class="section level2">
 <h2>Truncation of Weights</h2>
@@ -440,51 +479,54 @@ the weight estimation and the subsequent model-fitting process.</p>
 <div id="example-for-pooled-logistic-regression-switching-model" class="section level2">
 <h2>Example for Pooled Logistic Regression Switching Model</h2>
 <p>First we prepare the data.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>sim1 <span class="ot">&lt;-</span> <span class="fu">tsegestsim</span>(</span>
-<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="at">n =</span> <span class="dv">500</span>, <span class="at">allocation1 =</span> <span class="dv">2</span>, <span class="at">allocation2 =</span> <span class="dv">1</span>, <span class="at">pbprog =</span> <span class="fl">0.5</span>, </span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">trtlghr =</span> <span class="sc">-</span><span class="fl">0.5</span>, <span class="at">bprogsl =</span> <span class="fl">0.3</span>, <span class="at">shape1 =</span> <span class="fl">1.8</span>, </span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">scale1 =</span> <span class="dv">360</span>, <span class="at">shape2 =</span> <span class="fl">1.7</span>, <span class="at">scale2 =</span> <span class="dv">688</span>, </span>
-<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">pmix =</span> <span class="fl">0.5</span>, <span class="at">admin =</span> <span class="dv">5000</span>, <span class="at">pcatnotrtbprog =</span> <span class="fl">0.5</span>, </span>
-<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">pcattrtbprog =</span> <span class="fl">0.25</span>, <span class="at">pcatnotrt =</span> <span class="fl">0.2</span>, <span class="at">pcattrt =</span> <span class="fl">0.1</span>, </span>
-<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  <span class="at">catmult =</span> <span class="fl">0.5</span>, <span class="at">tdxo =</span> <span class="dv">1</span>, <span class="at">ppoor =</span> <span class="fl">0.1</span>, <span class="at">pgood =</span> <span class="fl">0.04</span>, </span>
-<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  <span class="at">ppoormet =</span> <span class="fl">0.4</span>, <span class="at">pgoodmet =</span> <span class="fl">0.2</span>, <span class="at">xomult =</span> <span class="fl">1.4188308</span>, </span>
-<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>  <span class="at">milestone =</span> <span class="dv">546</span>, <span class="at">outputRawDataset =</span> <span class="dv">1</span>, <span class="at">seed =</span> <span class="dv">2000</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>sim1 <span class="ot">&lt;-</span> <span class="fu">tssim</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="at">tdxo =</span> <span class="dv">1</span>, <span class="at">coxo =</span> <span class="dv">1</span>, <span class="at">allocation1 =</span> <span class="dv">1</span>, <span class="at">allocation2 =</span> <span class="dv">1</span>,</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">p_X_1 =</span> <span class="fl">0.3</span>, <span class="at">p_X_0 =</span> <span class="fl">0.3</span>, </span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">rate_T =</span> <span class="fl">0.002</span>, <span class="at">beta1 =</span> <span class="sc">-</span><span class="fl">0.5</span>, <span class="at">beta2 =</span> <span class="fl">0.3</span>, </span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">gamma0 =</span> <span class="fl">0.3</span>, <span class="at">gamma1 =</span> <span class="sc">-</span><span class="fl">0.9</span>, <span class="at">gamma2 =</span> <span class="fl">0.7</span>, <span class="at">gamma3 =</span> <span class="fl">1.1</span>, <span class="at">gamma4 =</span> <span class="sc">-</span><span class="fl">0.8</span>,</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">zeta0 =</span> <span class="sc">-</span><span class="fl">3.5</span>, <span class="at">zeta1 =</span> <span class="fl">0.5</span>, <span class="at">zeta2 =</span> <span class="fl">0.2</span>, <span class="at">zeta3 =</span> <span class="sc">-</span><span class="fl">0.4</span>, </span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>  <span class="at">alpha0 =</span> <span class="fl">0.5</span>, <span class="at">alpha1 =</span> <span class="fl">0.5</span>, <span class="at">alpha2 =</span> <span class="fl">0.4</span>, </span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a>  <span class="at">theta1_1 =</span> <span class="sc">-</span><span class="fl">0.4</span>, <span class="at">theta1_0 =</span> <span class="sc">-</span><span class="fl">0.4</span>, <span class="at">theta2 =</span> <span class="fl">0.2</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a>  <span class="at">rate_C =</span> <span class="fl">0.0000855</span>, <span class="at">accrualIntensity =</span> <span class="dv">20</span><span class="sc">/</span><span class="dv">30</span>, </span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>  <span class="at">followupTime =</span> <span class="dv">600</span>, <span class="at">fixedFollowup =</span> <span class="dv">0</span>, <span class="at">days =</span> <span class="dv">30</span>,</span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>  <span class="at">n =</span> <span class="dv">500</span>, <span class="at">NSim =</span> <span class="dv">100</span>, <span class="at">seed =</span> <span class="dv">314159</span>)</span></code></pre></div>
 <p>Given that the observations are collected at regular intervals, we
 can use a pooled logistic regression switching model. In this model, the
 prognostic baseline variable is represented by <code>bprog</code>, while
-<code>catlag</code> and the interaction between <code>bprog</code> and
-<code>catlag</code> serve as time-dependent covariates. Additionally,
+<code>L</code> serves as a time-dependent covariate. Additionally,
 <code>ns1</code>, <code>ns2</code>, and <code>ns3</code> are the three
 terms for the natural cubic spline with <span class="math inline">\(\nu=3\)</span> degrees of freedom for
 visit-specific intercepts.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>fit1 <span class="ot">&lt;-</span> <span class="fu">ipcw</span>(</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  sim1<span class="sc">$</span>paneldata, <span class="at">id =</span> <span class="st">&quot;id&quot;</span>, <span class="at">tstart =</span> <span class="st">&quot;tstart&quot;</span>, </span>
-<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">tstop =</span> <span class="st">&quot;tstop&quot;</span>, <span class="at">event =</span> <span class="st">&quot;died&quot;</span>, <span class="at">treat =</span> <span class="st">&quot;trtrand&quot;</span>, </span>
-<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">swtrt =</span> <span class="st">&quot;xo&quot;</span>, <span class="at">swtrt_time =</span> <span class="st">&quot;xotime&quot;</span>, <span class="at">base_cov =</span> <span class="st">&quot;bprog&quot;</span>, </span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="at">numerator =</span> <span class="st">&quot;bprog&quot;</span>, <span class="at">denominator =</span> <span class="st">&quot;bprog*catlag&quot;</span>, </span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  <span class="at">logistic_switching_model =</span> <span class="cn">TRUE</span>, <span class="at">ns_df =</span> <span class="dv">3</span>,</span>
-<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  <span class="at">swtrt_control_only =</span> <span class="cn">TRUE</span>, <span class="at">boot =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
-<p>The fits for the denominator and numerator switching models are as
-follows.</p>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  sim1[[<span class="dv">1</span>]], <span class="at">id =</span> <span class="st">&quot;id&quot;</span>, <span class="at">tstart =</span> <span class="st">&quot;tstart&quot;</span>, </span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">tstop =</span> <span class="st">&quot;tstop&quot;</span>, <span class="at">event =</span> <span class="st">&quot;Y&quot;</span>, <span class="at">treat =</span> <span class="st">&quot;trtrand&quot;</span>, </span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">swtrt =</span> <span class="st">&quot;xo&quot;</span>, <span class="at">swtrt_time =</span> <span class="st">&quot;xotime&quot;</span>, </span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="at">base_cov =</span> <span class="st">&quot;bprog&quot;</span>, <span class="at">numerator =</span> <span class="st">&quot;bprog&quot;</span>, </span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  <span class="at">denominator =</span> <span class="fu">c</span>(<span class="st">&quot;bprog&quot;</span>, <span class="st">&quot;L&quot;</span>),</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  <span class="at">logistic_switching_model =</span> <span class="cn">TRUE</span>, <span class="at">ns_df =</span> <span class="dv">3</span>,</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>  <span class="at">swtrt_control_only =</span> <span class="cn">TRUE</span>, <span class="at">boot =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<p>The fits for the denominator and numerator switching models for the
+control arm are as follows, utilizing robust sandwich variance estimates
+to account for correlations among observations within the same
+subject.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># denominator switching model fit</span></span>
 <span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>fit1<span class="sc">$</span>fit_switch[[<span class="dv">1</span>]]<span class="sc">$</span>fit_den<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
-<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt;          param        beta    sebeta            z</span></span>
-<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; 1  (Intercept) -6.37314396 0.5980953 -10.65573240</span></span>
-<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; 2        bprog  1.73154601 0.3131088   5.53017307</span></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; 3       catlag  1.02546588 0.5368841   1.91003221</span></span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; 4 bprog.catlag -0.02214233 0.6159246  -0.03594975</span></span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; 5          ns1  0.48314846 0.5906830   0.81794876</span></span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; 6          ns2  3.80068738 1.1802393   3.22026836</span></span>
-<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt; 7          ns3 -0.50255252 0.7789188  -0.64519242</span></span></code></pre></div>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt;         param        beta    sebeta            z</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; 1 (Intercept) -3.68101349 0.3623806 -10.15786448</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; 2       bprog  0.02169405 0.2398362   0.09045364</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; 3           L  0.35036304 0.2728040   1.28430313</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; 4         ns1 -0.25774949 0.5444454  -0.47341658</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; 5         ns2  0.65961680 0.7229768   0.91236232</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; 6         ns3  0.05395416 0.6817778   0.07913746</span></span></code></pre></div>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a></span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co"># numerator switching model fit</span></span>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>fit1<span class="sc">$</span>fit_switch[[<span class="dv">1</span>]]<span class="sc">$</span>fit_num<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt;         param        beta    sebeta            z</span></span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt; 1 (Intercept) -6.43591583 0.5776690 -11.14118224</span></span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt; 2       bprog  1.82417620 0.2723647   6.69755047</span></span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt; 3         ns1  1.06152507 0.5469071   1.94096064</span></span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt; 4         ns2  4.33810022 1.1474070   3.78078589</span></span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; 5         ns3 -0.04371903 0.7460213  -0.05860293</span></span></code></pre></div>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt;         param        beta    sebeta           z</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt; 1 (Intercept) -3.44467907 0.3054745 -11.2764849</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt; 2       bprog  0.07952921 0.2362668   0.3366077</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt; 3         ns1 -0.25793955 0.5435290  -0.4745645</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt; 4         ns2  0.70028647 0.7197425   0.9729680</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; 5         ns3  0.07212922 0.6776669   0.1064376</span></span></code></pre></div>
 <p>Since treatment switching is not allowed in the experimental arm, the
 weights are identical to 1 for subjects in the experimental group. The
 unstabilized and stablized weights for the control group are plotted
@@ -494,24 +536,24 @@ below.</p>
 <span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x =</span> unstabilized_weight)) <span class="sc">+</span> </span>
 <span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">fill=</span><span class="st">&quot;#77bd89&quot;</span>, <span class="at">color=</span><span class="st">&quot;#1f6e34&quot;</span>, <span class="at">alpha=</span><span class="fl">0.8</span>) <span class="sc">+</span></span>
 <span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="st">&quot;unstabilized weights&quot;</span>)</span></code></pre></div>
-<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
+<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a></span>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co"># stabilized weights</span></span>
 <span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="fu">ggplot</span>(fit1<span class="sc">$</span>data_outcome <span class="sc">%&gt;%</span> <span class="fu">filter</span>(trtrand <span class="sc">==</span> <span class="dv">0</span>), </span>
 <span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x =</span> stabilized_weight)) <span class="sc">+</span> </span>
 <span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">fill=</span><span class="st">&quot;#77bd89&quot;</span>, <span class="at">color=</span><span class="st">&quot;#1f6e34&quot;</span>, <span class="at">alpha=</span><span class="fl">0.8</span>) <span class="sc">+</span></span>
 <span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="st">&quot;stabilized weights&quot;</span>)</span></code></pre></div>
-<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
+<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
 <p>Now we fit a weighted outcome Cox model and compare the treatment
 hazard ratio estimate with the reported.</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>fit1<span class="sc">$</span>fit_outcome<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co">#&gt;     param        beta      sebeta         z</span></span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co">#&gt; 1 treated  0.13954433 0.015115183  9.232063</span></span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt; 2   bprog -0.03834935 0.007769929 -4.935612</span></span></code></pre></div>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="co">#&gt;     param       beta    sebeta         z</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co">#&gt; 1 treated -0.4198107 0.1133337 -3.704200</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt; 2   bprog  0.3779653 0.1164952  3.244472</span></span></code></pre></div>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>    </span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="fu">exp</span>(fit1<span class="sc">$</span>fit_outcome<span class="sc">$</span>parest[<span class="dv">1</span>, <span class="fu">c</span>(<span class="st">&quot;beta&quot;</span>, <span class="st">&quot;lower&quot;</span>, <span class="st">&quot;upper&quot;</span>)])</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt;      beta    lower    upper</span></span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; 1 1.14975 1.116188 1.184321</span></span></code></pre></div>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt;        beta     lower     upper</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; 1 0.6571712 0.5262701 0.8206318</span></span></code></pre></div>
 </div>
 <div id="example-for-time-dependent-cox-switching-model" class="section level2">
 <h2>Example for Time-Dependent Cox Switching Model</h2>
@@ -534,50 +576,50 @@ to account for correlations among observations within the same
 subject.</p>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># denominator switching model for the control group</span></span>
 <span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>fit2<span class="sc">$</span>fit_switch[[<span class="dv">1</span>]]<span class="sc">$</span>fit_den<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="co">#&gt;                    param         beta     sebeta          z</span></span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co">#&gt; 1                agerand  0.007642073 0.01009207  0.7572351</span></span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt; 2            sex.fFemale -0.364211003 0.26324814 -1.3835273</span></span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt; 3                tt_Lnum  0.042406215 0.04639827  0.9139611</span></span>
-<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt; 4             rmh_alea.c -0.351616244 0.27378303 -1.2842880</span></span>
-<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co">#&gt; 5            pathway.fHR -0.041768569 0.39817164 -0.1049009</span></span>
-<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co">#&gt; 6 pathway.fPI3K.AKT.mTOR  0.267055320 0.43180962  0.6184562</span></span>
-<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="co">#&gt; 7                     ps  0.103478553 0.17788020  0.5817317</span></span>
-<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="co">#&gt; 8                    ttc -0.480378314 0.32124349 -1.4953713</span></span>
-<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a><span class="co">#&gt; 9                   tran  0.295828936 0.36809457  0.8036765</span></span></code></pre></div>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a><span class="co">#&gt;                    param         beta     sebeta           z</span></span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a><span class="co">#&gt; 1                agerand  0.007642073 0.01023088  0.74696131</span></span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt; 2            sex.fFemale -0.364211003 0.28631111 -1.27208128</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt; 3                tt_Lnum  0.042406215 0.05314773  0.79789331</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt; 4             rmh_alea.c -0.351616244 0.27416745 -1.28248719</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co">#&gt; 5            pathway.fHR -0.041768569 0.43444787 -0.09614173</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co">#&gt; 6 pathway.fPI3K.AKT.mTOR  0.267055320 0.43736340  0.61060281</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="co">#&gt; 7                     ps  0.103478553 0.18544824  0.55799156</span></span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="co">#&gt; 8                    ttc -0.480378314 0.33557237 -1.43151926</span></span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a><span class="co">#&gt; 9                   tran  0.295828936 0.45806296  0.64582592</span></span></code></pre></div>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a></span>
 <span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="co"># numerator switching model for the control group</span></span>
 <span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>fit2<span class="sc">$</span>fit_switch[[<span class="dv">1</span>]]<span class="sc">$</span>fit_num<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
-<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="co">#&gt;                    param        beta     sebeta           z</span></span>
-<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt; 1                agerand  0.01059477 0.00957653  1.10632644</span></span>
-<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt; 2            sex.fFemale -0.32452112 0.25680716 -1.26367627</span></span>
-<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt; 3                tt_Lnum  0.05956492 0.04488927  1.32693011</span></span>
-<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt; 4             rmh_alea.c -0.29758402 0.25884651 -1.14965436</span></span>
-<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt; 5            pathway.fHR  0.02467202 0.39869959  0.06188123</span></span>
-<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="co">#&gt; 6 pathway.fPI3K.AKT.mTOR  0.28245603 0.42341002  0.66709812</span></span></code></pre></div>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="co">#&gt;                    param        beta      sebeta           z</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt; 1                agerand  0.01059477 0.009501694  1.11503993</span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt; 2            sex.fFemale -0.32452112 0.283829120 -1.14336794</span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt; 3                tt_Lnum  0.05956492 0.051120376  1.16518947</span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt; 4             rmh_alea.c -0.29758402 0.266335628 -1.11732711</span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt; 5            pathway.fHR  0.02467202 0.429102680  0.05749678</span></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="co">#&gt; 6 pathway.fPI3K.AKT.mTOR  0.28245603 0.434306994  0.65036030</span></span></code></pre></div>
 <p>The fits for the denominator and numerator switching models for the
 experimental arm are as follows:</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># denominator switching model for the experimental group</span></span>
 <span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>fit2<span class="sc">$</span>fit_switch[[<span class="dv">2</span>]]<span class="sc">$</span>fit_den<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
 <span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a><span class="co">#&gt;                    param         beta     sebeta          z</span></span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co">#&gt; 1                agerand -0.002639441 0.01482504 -0.1780394</span></span>
-<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co">#&gt; 2            sex.fFemale  0.428028469 0.49814996  0.8592362</span></span>
-<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co">#&gt; 3                tt_Lnum -0.152758042 0.09460056 -1.6147689</span></span>
-<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co">#&gt; 4             rmh_alea.c  0.210365664 0.53818671  0.3908786</span></span>
-<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co">#&gt; 5            pathway.fHR  1.774466817 1.07337446  1.6531666</span></span>
-<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="co">#&gt; 6 pathway.fPI3K.AKT.mTOR  0.859950234 1.06150371  0.8101246</span></span>
-<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#&gt; 7                     ps  0.261142698 0.28658566  0.9112204</span></span>
-<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="co">#&gt; 8                    ttc -0.408175689 0.57303595 -0.7123038</span></span>
-<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="co">#&gt; 9                   tran  1.053347294 0.50568571  2.0830078</span></span></code></pre></div>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a><span class="co">#&gt; 1                agerand -0.002639441 0.01796294 -0.1469381</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a><span class="co">#&gt; 2            sex.fFemale  0.428028469 0.47154276  0.9077193</span></span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a><span class="co">#&gt; 3                tt_Lnum -0.152758042 0.10774494 -1.4177746</span></span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co">#&gt; 4             rmh_alea.c  0.210365664 0.50502449  0.4165455</span></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co">#&gt; 5            pathway.fHR  1.774466817 1.04918789  1.6912765</span></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="co">#&gt; 6 pathway.fPI3K.AKT.mTOR  0.859950234 1.08995673  0.7889765</span></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#&gt; 7                     ps  0.261142698 0.27003546  0.9670682</span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="co">#&gt; 8                    ttc -0.408175689 0.53635218 -0.7610218</span></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="co">#&gt; 9                   tran  1.053347294 0.69246856  1.5211482</span></span></code></pre></div>
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a></span>
 <span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="co"># numerator switching model for the experimental group</span></span>
 <span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>fit2<span class="sc">$</span>fit_switch[[<span class="dv">2</span>]]<span class="sc">$</span>fit_num<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
-<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a><span class="co">#&gt;                    param         beta     sebeta          z</span></span>
-<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="co">#&gt; 1                agerand  0.001625622 0.01543679  0.1053083</span></span>
-<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a><span class="co">#&gt; 2            sex.fFemale  0.476979559 0.47723504  0.9994647</span></span>
-<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a><span class="co">#&gt; 3                tt_Lnum -0.160020273 0.09602402 -1.6664609</span></span>
-<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a><span class="co">#&gt; 4             rmh_alea.c  0.154833260 0.49850922  0.3105926</span></span>
-<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a><span class="co">#&gt; 5            pathway.fHR  1.841535014 1.06349774  1.7315834</span></span>
-<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a><span class="co">#&gt; 6 pathway.fPI3K.AKT.mTOR  1.064637540 1.05309041  1.0109650</span></span></code></pre></div>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a><span class="co">#&gt;                    param         beta     sebeta           z</span></span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a><span class="co">#&gt; 1                agerand  0.001625622 0.01812956  0.08966694</span></span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a><span class="co">#&gt; 2            sex.fFemale  0.476979559 0.45994387  1.03703863</span></span>
+<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a><span class="co">#&gt; 3                tt_Lnum -0.160020273 0.10615092 -1.50747886</span></span>
+<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a><span class="co">#&gt; 4             rmh_alea.c  0.154833260 0.48178554  0.32137382</span></span>
+<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a><span class="co">#&gt; 5            pathway.fHR  1.841535014 1.03960949  1.77137188</span></span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a><span class="co">#&gt; 6 pathway.fPI3K.AKT.mTOR  1.064637540 1.06675981  0.99801055</span></span></code></pre></div>
 <p>Below, the unstabilized and stabilized weights are plotted by
 treatment group: the left panel displays data for the control group,
 while the right panel shows data for the experimental group.</p>

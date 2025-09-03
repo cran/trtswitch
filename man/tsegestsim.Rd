@@ -150,12 +150,10 @@ regular scheduled visits.
 \item \code{catevent}: Whether the patient developed metastatic disease.
 \item \code{cattime}: When the patient developed metastatic disease.
 \item \code{cattdc}: The time-dependent covariate for cat event.
-\item \code{catlag}: The lagged value of \code{cattdc}.
 \item \code{xo}: Whether the patient switched treatment.
 \item \code{xotime}: When the patient switched treatment.
 \item \code{xotdc}: The time-dependent covariate for treatment
 switching.
-\item \code{xotime_upper}: The upper bound of treatment switching time.
 \item \code{censor_time}: The administrative censoring time.
 }
 }

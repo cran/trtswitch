@@ -7,7 +7,8 @@
 tssim(
   tdxo = 0L,
   coxo = 1L,
-  p_R = 0.5,
+  allocation1 = 1L,
+  allocation2 = 1L,
   p_X_1 = NA_real_,
   p_X_0 = NA_real_,
   rate_T = NA_real_,
@@ -29,7 +30,10 @@ tssim(
   theta1_0 = NA_real_,
   theta2 = NA_real_,
   rate_C = NA_real_,
-  followup = NA_integer_,
+  accrualTime = 0L,
+  accrualIntensity = NA_real_,
+  followupTime = NA_real_,
+  fixedFollowup = 0L,
   days = NA_integer_,
   n = NA_integer_,
   NSim = 1000L,
@@ -50,7 +54,11 @@ progression.
 \item 0: Treatment switching is allowed in both arms.
 }}
 
-\item{p_R}{Probability of randomization to the experimental arm.}
+\item{allocation1}{Number of subjects in the active treatment group in
+a randomization block. Defaults to 1 for equal randomization.}
+
+\item{allocation2}{Number of subjects in the control group in
+a randomization block. Defaults to 1 for equal randomization.}
 
 \item{p_X_1}{Probability of poor baseline prognosis in the experimental
 arm.}
@@ -101,7 +109,18 @@ in the \code{L} model.}
 
 \item{rate_C}{Hazard rate for random (dropout) censoring.}
 
-\item{followup}{Number of treatment cycles per subject.}
+\item{accrualTime}{A vector that specifies the starting time of
+piecewise Poisson enrollment time intervals. Must start with 0,
+e.g., \code{c(0, 3)} breaks the time axis into 2 accrual intervals:
+[0, 3) and [3, Inf).}
+
+\item{accrualIntensity}{A vector of accrual intensities. One for
+each accrual time interval.}
+
+\item{followupTime}{Follow-up time for the last enrolled subject.}
+
+\item{fixedFollowup}{Whether a fixed follow-up design is used.
+Defaults to 0 for variable follow-up.}
 
 \item{days}{Number of days in each treatment cycle.}
 
@@ -116,17 +135,18 @@ A list of data frames, each containing simulated longitudinal and
 event history data with the following variables:
 \itemize{
 \item \code{id}: Subject identifier.
+\item \code{arrivalTime}: The enrollment time for the subject.
 \item \code{trtrand}: Randomized treatment assignment (0 = control,
 1 = experimental)
 \item \code{bprog}: Baseline prognosis (0 = good, 1 = poor).
 \item \code{tpoint}: Treatment cycle index.
 \item \code{tstart}: Start day of the treatment cycle.
 \item \code{tstop}: End day of the treatment cycle.
-\item \code{L}: Time-dependent covariate predicting survival and switching;
-affected by treatment switching.
+\item \code{L}: Time-dependent covariate at \code{tstart} predicting
+survival and switching; affected by treatment switching.
 \item \code{Llag}: Lagged value of \code{L}.
-\item \code{Z}: Disease progression status at \code{tstop}.
-\item \code{A}: Treatment switching status at \code{tstop}.
+\item \code{Z}: Disease progression status at \code{tstart}.
+\item \code{A}: Treatment switching status at \code{tstart}.
 \item \code{Alag}: Lagged value of \code{A}.
 \item \code{Y}: Death indicator at \code{tstop}.
 \item \code{timeOS}: Observed time to death or censoring.
@@ -144,17 +164,24 @@ incorporating time-dependent confounding. The generated data can be used
 to evaluate methods for handling treatment switching in survival analysis.
 }
 \details{
-The simulation algorithm is adapted from Xu et al. (2022), by
-simulating disease progression status and by using the multiplicative
-effects of baseline and time-dependent covariates on survival time.
-The design options \code{tdxo} and \code{coxo} indicate
+The simulation algorithm is adapted from Xu et al. (2022) and simulates
+disease progression status while incorporating the multiplicative
+effects of both baseline and time-dependent covariates on survival time.
+The design options \code{tdxo} and \code{coxo} specify
 the timing of treatment switching and the study arm eligibility
-for switching, respectively. Each subject undergoes \code{followup}
-treatment cycles until administrative censoring.
+for switching, respectively. Time is measured in days.
+
+In a fixed follow-up design, all subjects share the same follow-up
+duration. In contrast, under a variable follow-up design, follow-up
+time also depends on each subject's enrollment date.
+The number of treatment cycles for a subject is determined by
+dividing the follow-up time by the number of days in each cycle.
 \enumerate{
-\item At randomization, each subject is assigned treatment based on:
-\deqn{R_i \sim \mbox{Bernoulli}(p_R)}
-and a baseline covariate is generated:
+\item At randomization, subjects are assigned to treatment arms
+using block randomization, with \code{allocation1} patients
+assigned to active treatment and \code{allocation2} to control
+within each randomized block. A baseline covariate is
+also generated for each subject:
 \deqn{X_i \sim \mbox{Bernoulli}(p_{X_1} R_i + p_{X_0} (1-R_i))}
 
 \item The initial survival time is drawn
@@ -164,7 +191,7 @@ We define the event indicator at cycle \eqn{j} as
 \deqn{Y_{i,j} = I(T_i \leq j\times days)}
 
 \item The initial states are set to
-\eqn{L_{i,0} = 0}, \eqn{Z_{i,0} = 0}, \eqn{Z_{i,0} = 0},
+\eqn{L_{i,0} = 0}, \eqn{Z_{i,0} = 0}, \eqn{A_{i,0} = 0},
 \eqn{Y_{i,0} = 0}. For each treatment cycle \eqn{j=1,\ldots,J},
 we set \eqn{tstart = (j-1) \times days}.
 
@@ -216,13 +243,15 @@ using a Cox proportional hazards model.
 \examples{
 
 simulated.data <- tssim(
-  tdxo = 0, coxo = 0, p_R = 0.5, p_X_1 = 0.3, p_X_0 = 0.3, 
+  tdxo = 1, coxo = 1, allocation1 = 1, allocation2 = 1,
+  p_X_1 = 0.3, p_X_0 = 0.3, 
   rate_T = 0.002, beta1 = -0.5, beta2 = 0.3, 
   gamma0 = 0.3, gamma1 = -0.9, gamma2 = 0.7, gamma3 = 1.1, gamma4 = -0.8,
   zeta0 = -3.5, zeta1 = 0.5, zeta2 = 0.2, zeta3 = -0.4, 
   alpha0 = 0.5, alpha1 = 0.5, alpha2 = 0.4, 
   theta1_1 = -0.4, theta1_0 = -0.4, theta2 = 0.2,
-  rate_C = 0.0000855, followup = 20, days = 30,
+  rate_C = 0.0000855, accrualIntensity = 20/30, 
+  followupTime = 600, fixedFollowup = 0, days = 30,
   n = 500, NSim = 100, seed = 314159)
 
 }

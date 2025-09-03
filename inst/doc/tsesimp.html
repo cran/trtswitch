@@ -366,11 +366,6 @@ Prognostic variables measured at the secondary baseline are included to
 account for differences between the groups. The treatment effect of
 switching is estimated as a time ratio and used to adjust the survival
 times of switchers.</p>
-<p>Although <span class="math inline">\(\psi\)</span> is estimated
-solely from control group patients who experienced disease progression,
-it will also be applied to adjust the survival times of patients who
-switched treatments before disease progression, under the assumption
-that there are only a limited number of such cases.</p>
 </div>
 <div id="estimation-of-hazard-ratio" class="section level1">
 <h1>Estimation of Hazard Ratio</h1>
@@ -404,7 +399,7 @@ subsequent model-fitting process.</p>
 <span id="cb2-18"><a href="#cb2-18" tabindex="-1"></a>  <span class="fu">left_join</span>(shilong2, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;bras.f&quot;</span>, <span class="st">&quot;id&quot;</span>))</span></code></pre></div>
 <p>Next we apply the simple TSE method.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>fit1 <span class="ot">&lt;-</span> <span class="fu">tsesimp</span>(</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="at">data =</span> shilong3, <span class="at">time =</span> <span class="st">&quot;tstop&quot;</span>, <span class="at">event =</span> <span class="st">&quot;event&quot;</span>,</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="at">data =</span> shilong3, <span class="at">id =</span> <span class="st">&quot;id&quot;</span>, <span class="at">time =</span> <span class="st">&quot;tstop&quot;</span>, <span class="at">event =</span> <span class="st">&quot;event&quot;</span>,</span>
 <span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">treat =</span> <span class="st">&quot;bras.f&quot;</span>, <span class="at">censor_time =</span> <span class="st">&quot;dcut&quot;</span>, <span class="at">pd =</span> <span class="st">&quot;pd&quot;</span>,</span>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">pd_time =</span> <span class="st">&quot;dpd&quot;</span>, <span class="at">swtrt =</span> <span class="st">&quot;co&quot;</span>, <span class="at">swtrt_time =</span> <span class="st">&quot;dco&quot;</span>,</span>
 <span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="at">base_cov =</span> <span class="fu">c</span>(<span class="st">&quot;agerand&quot;</span>, <span class="st">&quot;sex.f&quot;</span>, <span class="st">&quot;tt_Lnum&quot;</span>, <span class="st">&quot;rmh_alea.c&quot;</span>,</span>
@@ -473,7 +468,7 @@ bootstrapped.</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a></span>
 <span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>```{r boot}</span>
 <span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>fit2 &lt;- tsesimp(</span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  data = shilong3, time = &quot;tstop&quot;, event = &quot;event&quot;,</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  data = shilong3, id = &quot;id&quot;, time = &quot;tstop&quot;, event = &quot;event&quot;,</span>
 <span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  treat = &quot;bras.f&quot;, censor_time = &quot;dcut&quot;, pd = &quot;pd&quot;,</span>
 <span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>  pd_time = &quot;dpd&quot;, swtrt = &quot;co&quot;, swtrt_time = &quot;dco&quot;,</span>
 <span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>  base_cov = c(&quot;agerand&quot;, &quot;sex.f&quot;, &quot;tt_Lnum&quot;, &quot;rmh_alea.c&quot;,</span>

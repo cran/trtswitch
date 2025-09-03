@@ -347,7 +347,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <div id="introduction" class="section level1">
 <h1>Introduction</h1>
 <p>The iterative parameter estimation (IPE) method is an alternative to
-the rank preserving structural failure time model (RPSDTM) method to
+the rank preserving structural failure time model (RPSFTM) method to
 adjust for treatment switching within a counterfactual framework. Both
 methods assume a common treatment effect. However, instead of using
 g-estimation to find the optimal value of <span class="math inline">\(\psi\)</span>, the IPE method iteratively fits a
@@ -368,7 +368,7 @@ method iterates between the following two steps until convergence:</p>
 \]</span> <span class="math display">\[
   U_{i,\psi}^* = \min(U_{i,\psi}, D_{i,\psi}^*),
 \]</span> <span class="math display">\[
-  \Delta_{i,\psi}^* = I(U_{i,\psi} \leq D_{i,\psi}^*).
+  \Delta_{i,\psi}^* = \Delta_i I(U_{i,\psi} \leq D_{i,\psi}^*).
 \]</span></p></li>
 <li><p>Fit an AFT model to the adjusted data set consisting of</p>
 <ul>
@@ -403,7 +403,7 @@ simulated data based on the randomized Concorde trial.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>data <span class="ot">&lt;-</span> immdef <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">rx =</span> <span class="dv">1</span><span class="sc">-</span>xoyrs<span class="sc">/</span>progyrs)</span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>fit1 <span class="ot">&lt;-</span> <span class="fu">ipe</span>(</span>
-<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  data, <span class="at">time =</span> <span class="st">&quot;progyrs&quot;</span>, <span class="at">event =</span> <span class="st">&quot;prog&quot;</span>, <span class="at">treat =</span> <span class="st">&quot;imm&quot;</span>, </span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  data, <span class="at">id =</span> <span class="st">&quot;id&quot;</span>, <span class="at">time =</span> <span class="st">&quot;progyrs&quot;</span>, <span class="at">event =</span> <span class="st">&quot;prog&quot;</span>, <span class="at">treat =</span> <span class="st">&quot;imm&quot;</span>, </span>
 <span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>  <span class="at">rx =</span> <span class="st">&quot;rx&quot;</span>, <span class="at">censor_time =</span> <span class="st">&quot;censyrs&quot;</span>, <span class="at">aft_dist =</span> <span class="st">&quot;weibull&quot;</span>,</span>
 <span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">boot =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
 <p>The log-rank test for an ITT analysis, which ignores treatment
@@ -448,7 +448,7 @@ SHIVA data for illustration purposes only.</p>
 <p>Now let us apply the IPE method using the Brent’s method for root
 finding:</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>fit2 <span class="ot">&lt;-</span> <span class="fu">ipe</span>(</span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  shilong2, <span class="at">time =</span> <span class="st">&quot;tstop&quot;</span>, <span class="at">event =</span> <span class="st">&quot;event&quot;</span>,</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  shilong2, <span class="at">id =</span> <span class="st">&quot;id&quot;</span>, <span class="at">time =</span> <span class="st">&quot;tstop&quot;</span>, <span class="at">event =</span> <span class="st">&quot;event&quot;</span>,</span>
 <span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="at">treat =</span> <span class="st">&quot;bras.f&quot;</span>, <span class="at">rx =</span> <span class="st">&quot;rx&quot;</span>, <span class="at">censor_time =</span> <span class="st">&quot;dcut&quot;</span>,</span>
 <span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="at">base_cov =</span> <span class="fu">c</span>(<span class="st">&quot;agerand&quot;</span>, <span class="st">&quot;sex.f&quot;</span>, <span class="st">&quot;tt_Lnum&quot;</span>, <span class="st">&quot;rmh_alea.c&quot;</span>,</span>
 <span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>               <span class="st">&quot;pathway.f&quot;</span>),</span>
@@ -478,14 +478,14 @@ of <span class="math inline">\(\psi\)</span> values between 0.955,
 <span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">u_star =</span> tstop<span class="sc">*</span>(<span class="dv">1</span> <span class="sc">-</span> rx <span class="sc">+</span> rx<span class="sc">*</span><span class="fu">exp</span>(psi)),</span>
 <span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>           <span class="at">c_star =</span> <span class="fu">pmin</span>(dcut, dcut<span class="sc">*</span><span class="fu">exp</span>(psi)),</span>
 <span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>           <span class="at">t_star =</span> <span class="fu">pmin</span>(u_star, c_star),</span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>           <span class="at">d_star =</span> event<span class="sc">*</span>(u_star <span class="sc">&lt;=</span> c_star)) <span class="sc">%&gt;%</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>           <span class="at">d_star =</span> <span class="fu">ifelse</span>(c_star <span class="sc">&lt;</span> u_star, <span class="dv">0</span>, event)) <span class="sc">%&gt;%</span></span>
 <span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>    <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(<span class="st">&quot;u_star&quot;</span>, <span class="st">&quot;c_star&quot;</span>)) <span class="sc">%&gt;%</span></span>
 <span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>    <span class="fu">bind_rows</span>(shilong2 <span class="sc">%&gt;%</span></span>
 <span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>                <span class="fu">filter</span>(treated <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>                <span class="fu">mutate</span>(<span class="at">u_star =</span> tstop<span class="sc">*</span>(rx <span class="sc">+</span> (<span class="dv">1</span><span class="sc">-</span>rx)<span class="sc">*</span><span class="fu">exp</span>(<span class="sc">-</span>psi)),</span>
 <span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>                       <span class="at">c_star =</span> <span class="fu">pmin</span>(dcut, dcut<span class="sc">*</span><span class="fu">exp</span>(<span class="sc">-</span>psi)),</span>
 <span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>                       <span class="at">t_star =</span> <span class="fu">pmin</span>(u_star, c_star),</span>
-<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>                       <span class="at">d_star =</span> event<span class="sc">*</span>(u_star <span class="sc">&lt;=</span> c_star)))</span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>                       <span class="at">d_star =</span> <span class="fu">ifelse</span>(c_star <span class="sc">&lt;</span> u_star, <span class="dv">0</span>, event)))</span>
 <span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>  </span>
 <span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>  fit_aft <span class="ot">&lt;-</span> <span class="fu">survreg</span>(<span class="fu">Surv</span>(t_star, d_star) <span class="sc">~</span> treated <span class="sc">+</span> agerand <span class="sc">+</span> sex.f <span class="sc">+</span>  </span>
 <span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a>                       tt_Lnum <span class="sc">+</span> rmh_alea.c <span class="sc">+</span> pathway.f, <span class="at">data =</span> data1)  </span>
