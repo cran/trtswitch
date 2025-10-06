@@ -26,10 +26,12 @@ tsegest(
   strata_main_effect_only = TRUE,
   firth = FALSE,
   flic = FALSE,
+  ns_df = 3,
   recensor = TRUE,
   admin_recensor_only = TRUE,
   swtrt_control_only = TRUE,
   gridsearch = FALSE,
+  root_finding = "brent",
   alpha = 0.05,
   ties = "efron",
   tol = 1e-06,
@@ -111,6 +113,11 @@ should be used.}
 \item{flic}{Whether to apply intercept correction to obtain more
 accurate predicted probabilities.}
 
+\item{ns_df}{Degrees of freedom for the natural cubic spline for
+visit-specific intercepts of the pooled logistic regression model.
+Defaults to 3 for two internal knots at the 33 and 67 percentiles
+of the treatment switching times.}
+
 \item{recensor}{Whether to apply recensoring to counterfactual
 survival times. Defaults to \code{TRUE}.}
 
@@ -124,6 +131,10 @@ the control group. The default is \code{TRUE}.}
 \item{gridsearch}{Whether to use grid search to estimate the causal
 parameter \code{psi}. Defaults to \code{FALSE}, in which case, a root
 finding algorithm will be used.}
+
+\item{root_finding}{Character string specifying the univariate
+root-finding algorithm to use. Options are \code{"brent"} (default)
+for Brent's method, or \code{"bisection"} for the bisection method.}
 
 \item{alpha}{The significance level to calculate confidence intervals.
 The default value is 0.05.}
@@ -215,6 +226,7 @@ regression switching model.
 main effects in the logistic regression switching model.
 \item \code{firth}: Whether the Firth's penalized likelihood is used.
 \item \code{flic}: Whether to apply intercept correction.
+\item \code{ns_df}: Degrees of freedom for the natural cubic spline.
 \item \code{recensor}: Whether to apply recensoring to counterfactual
 survival times.
 \item \code{admin_recensor_only}: Whether to apply recensoring to
@@ -223,6 +235,7 @@ administrative censoring times only.
 only in the control group.
 \item \code{gridsearch}: Whether to use grid search to estimate the
 causal parameter \code{psi}.
+\item \code{root_finding}: The univariate root-finding algorithm to use.
 \item \code{alpha}: The significance level to calculate confidence
 intervals.
 \item \code{ties}: The method for handling ties in the Cox model.
@@ -318,7 +331,7 @@ fit1 <- tsegest(
   swtrt = "xo", swtrt_time = "xotime", 
   base_cov = "bprog", 
   conf_cov = c("bprog*cattdc", "timePFSobs", "visit7on"), 
-  recensor = TRUE, admin_recensor_only = TRUE, 
+  ns_df = 3, recensor = TRUE, admin_recensor_only = TRUE, 
   swtrt_control_only = TRUE, alpha = 0.05, ties = "efron", 
   tol = 1.0e-6, offset = 0, boot = FALSE)
   

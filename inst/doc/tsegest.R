@@ -32,7 +32,7 @@ fit1 <- tsegest(
   swtrt = "xo", swtrt_time = "xotime", 
   base_cov = "bprog", 
   conf_cov = c("bprog*cattdc", "timePFSobs", "visit7on"), 
-  strata_main_effect_only = TRUE,
+  ns_df = 3, strata_main_effect_only = TRUE,
   recensor = TRUE, admin_recensor_only = TRUE, 
   swtrt_control_only = TRUE, alpha = 0.05, ties = "efron", 
   tol = 1.0e-6, offset = 0, boot = FALSE)

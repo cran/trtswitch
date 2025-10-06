@@ -12,15 +12,15 @@ testthat::test_that("ipcw: pooled logistic regression switching model", {
     alpha0 = 0.5, alpha1 = 0.5, alpha2 = 0.4, 
     theta1_1 = -0.4, theta1_0 = -0.4, theta2 = 0.2,
     rate_C = 0.0000855,  accrualIntensity = 20/30, 
-    followupTime = 600, fixedFollowup = 0, days = 30,
+    fixedFollowup = FALSE, plannedTime = 1350, days = 30,
     n = 500, NSim = 100, seed = 314159)
   
   data1 <- sim1[[1]] %>% 
-    mutate(ostime = timeOS, event = Y)
+    mutate(ostime = timeOS)
   
   fit1 <- ipcw(
     data1, id = "id", tstart = "tstart", 
-    tstop = "tstop", event = "Y", treat = "trtrand", 
+    tstop = "tstop", event = "event", treat = "trtrand", 
     swtrt = "xo", swtrt_time = "xotime", 
     base_cov = "bprog", numerator = "bprog", 
     denominator = c("bprog", "L"),
@@ -114,8 +114,8 @@ testthat::test_that("ipcw: time-dependent covariates Cox switching model", {
   data2 <- data1[a1$row+1,]
   data2$tstart = a1$start
   data2$tstop = a1$end
-  data2$event[a1$censor] = 0;
-  data2$cross[a1$censor] = 0;
+  data2$event[a1$censor] = 0
+  data2$cross[a1$censor] = 0
   
   tablist <- lapply(0:1, function(h) {
     df1 <- data2 %>% 

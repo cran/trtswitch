@@ -34,6 +34,7 @@ tssim(
   accrualIntensity = NA_real_,
   followupTime = NA_real_,
   fixedFollowup = 0L,
+  plannedTime = NA_real_,
   days = NA_integer_,
   n = NA_integer_,
   NSim = 1000L,
@@ -43,7 +44,8 @@ tssim(
 \arguments{
 \item{tdxo}{Logical indicator for timing of treatment switching:
 \itemize{
-\item 1: Treatment switching can occur at or after disease progression.
+\item 1: Treatment switching can occur at or after disease
+progression.
 \item 0: Treatment switching is restricted to the time of disease
 progression.
 }}
@@ -71,12 +73,14 @@ arm.}
 
 \item{beta2}{Log hazard ratio for baseline covariate (\code{X}).}
 
-\item{gamma0}{Intercept for the time-dependent covariate model (\code{L}).}
+\item{gamma0}{Intercept for the time-dependent covariate model
+(\code{L}).}
 
 \item{gamma1}{Coefficient for lagged treatment switching (\code{Alag})
 in the \code{L} model.}
 
-\item{gamma2}{Coefficient for lagged \code{L} in the \code{L} model.}
+\item{gamma2}{Coefficient for lagged \code{L} (\code{Llag}) in the
+\code{L} model.}
 
 \item{gamma3}{Coefficient for baseline covariate (\code{X}) in the
 \code{L} model.}
@@ -101,9 +105,10 @@ in the \code{L} model.}
 \item{alpha2}{Coefficient for baseline covariate (\code{X}) in the
 \code{A} model.}
 
-\item{theta1_1}{Negative log time ratio for \code{A} (experimental arm).}
+\item{theta1_1}{Negative log time ratio for \code{A} for the
+experimental arm.}
 
-\item{theta1_0}{Negative log time ratio for \code{A} (control arm).}
+\item{theta1_0}{Negative log time ratio for \code{A} for the control arm.}
 
 \item{theta2}{Negative log time ratio for \code{L}.}
 
@@ -117,10 +122,12 @@ e.g., \code{c(0, 3)} breaks the time axis into 2 accrual intervals:
 \item{accrualIntensity}{A vector of accrual intensities. One for
 each accrual time interval.}
 
-\item{followupTime}{Follow-up time for the last enrolled subject.}
+\item{followupTime}{Follow-up time for a fixed follow-up design.}
 
 \item{fixedFollowup}{Whether a fixed follow-up design is used.
 Defaults to 0 for variable follow-up.}
+
+\item{plannedTime}{The calendar time for the analysis.}
 
 \item{days}{Number of days in each treatment cycle.}
 
@@ -131,8 +138,9 @@ Defaults to 0 for variable follow-up.}
 \item{seed}{Random seed for reproducibility.}
 }
 \value{
-A list of data frames, each containing simulated longitudinal and
-event history data with the following variables:
+A list of data frames, each containing simulated longitudinal covariate,
+pd status, alternative therapy status, and event history data with the
+following variables:
 \itemize{
 \item \code{id}: Subject identifier.
 \item \code{arrivalTime}: The enrollment time for the subject.
@@ -148,10 +156,11 @@ survival and switching; affected by treatment switching.
 \item \code{Z}: Disease progression status at \code{tstart}.
 \item \code{A}: Treatment switching status at \code{tstart}.
 \item \code{Alag}: Lagged value of \code{A}.
-\item \code{Y}: Death indicator at \code{tstop}.
+\item \code{event}: Death indicator at \code{tstop}.
 \item \code{timeOS}: Observed time to death or censoring.
 \item \code{died}: Indicator of death by end of follow-up.
-\item \code{progressed}: Indicator of disease progression by end of follow-up.
+\item \code{progressed}: Indicator of disease progression by end of
+follow-up.
 \item \code{timePD}: Observed time to progression or censoring.
 \item \code{xo}: Indicator for whether treatment switching occurred.
 \item \code{xotime}: Time of treatment switching (if applicable).
@@ -161,7 +170,8 @@ survival and switching; affected by treatment switching.
 \description{
 Simulates data for studies involving treatment switching,
 incorporating time-dependent confounding. The generated data can be used
-to evaluate methods for handling treatment switching in survival analysis.
+to evaluate methods for handling treatment switching in survival
+analysis.
 }
 \details{
 The simulation algorithm is adapted from Xu et al. (2022) and simulates
@@ -234,6 +244,16 @@ therapy status and time-dependent covariates:
 Additional random censoring times are generated from an exponential
 distribution with hazard rate \eqn{rate_C}.
 
+An extra record is generated when the minimum of the latent survival
+time, the random censoring time, and the administrative censoring time
+is greater than the number of regular treatment cycles times
+days per cycle.
+
+Finally we apply the lag function so that \eqn{Z_{i,j}} and
+\eqn{A_{i,j}} represent the PD status and alternative therapy status
+at the start of cycle \eqn{j} (and thus remain appplicable for the
+entire cycle \eqn{j}) for subject \eqn{i}.
+
 To estimate the true treatment effect in a Cox marginal
 structural model, one can set \eqn{\alpha_0 = -\infty}, which
 effectively forces \eqn{A_{i,j} = 0} (disabling treatment switching).
@@ -241,6 +261,8 @@ The coefficient for the randomized treatment can then be estimated
 using a Cox proportional hazards model.
 }
 \examples{
+
+library(dplyr)
 
 simulated.data <- tssim(
   tdxo = 1, coxo = 1, allocation1 = 1, allocation2 = 1,
@@ -251,8 +273,10 @@ simulated.data <- tssim(
   alpha0 = 0.5, alpha1 = 0.5, alpha2 = 0.4, 
   theta1_1 = -0.4, theta1_0 = -0.4, theta2 = 0.2,
   rate_C = 0.0000855, accrualIntensity = 20/30, 
-  followupTime = 600, fixedFollowup = 0, days = 30,
+  fixedFollowup = FALSE, plannedTime = 1350, days = 30,
   n = 500, NSim = 100, seed = 314159)
+  
+simulated.data[[1]] \%>\% filter(id == 1)
 
 }
 \references{

@@ -48,8 +48,9 @@ overflow: visible;
 }
 </style>
 <style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -60,7 +61,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
 { counter-reset: source-line 0; }
@@ -360,7 +361,8 @@ measured variables.</p>
 <p>To derive the g-estimate of <span class="math inline">\(\psi\)</span>, we utilize a logistic regression
 model for switching <span class="math display">\[
   \textrm{logit}(p(E_{ik})) = \alpha U_{i,\psi} + \sum_{j} \beta_j
-x_{ijk}
+x_{ijk} +
+  \sum_{j&#39;} \gamma_{j&#39;} s_{ij&#39;k}
 \]</span> alongside a structural model for counterfactual post
 progression survival times <span class="math display">\[
   U_{i,\psi} =  T_{C_i} + e^{\psi}T_{E_i}
@@ -386,6 +388,17 @@ records, with <span class="math inline">\(E_{ik} = 0\)</span> for <span class="m
 </ul></li>
 <li><p><strong>Confounders <span class="math inline">\(x_{ijk}\)</span></strong>: These are the
 confounding variables measured for subject <span class="math inline">\(i\)</span> at observation <span class="math inline">\(k\)</span>.</p></li>
+<li><p><strong>Visit-Specific Intercepts <span class="math inline">\(s_{ij&#39;k}\)</span></strong>: These can be
+modeled using a natural cubic spline with specified degrees of freedom,
+denoted as <span class="math inline">\(\nu\)</span> (corresponding to
+the <code>ns_df</code> parameter of the <code>tsegest</code> function).
+The boundary and internal knots can be based on the range and
+percentiles of observed treatment switching times, respectively. Here,
+<span class="math inline">\(\nu\)</span> equals the number of internal
+knots plus one; a value of <span class="math inline">\(\nu=0\)</span>
+indicates a common intercept, while <span class="math inline">\(\nu=1\)</span> leads to a linear effect of visit.
+By default, <span class="math inline">\(\nu=3\)</span>, which implies
+two internal knots for the cubic spline.</p></li>
 <li><p><strong>Counteractual Survival Time <span class="math inline">\(U_{i,\psi}\)</span></strong>: This represents the
 counterfactual post progression survival time for subject <span class="math inline">\(i\)</span> based on a specific value of <span class="math inline">\(\psi\)</span>. In case of recensoring, we define
 <span class="math inline">\(D_{i,\psi}^* = \min(C_i,
@@ -435,7 +448,7 @@ subsequent model-fitting process.</p>
 <span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>  <span class="at">swtrt =</span> <span class="st">&quot;xo&quot;</span>, <span class="at">swtrt_time =</span> <span class="st">&quot;xotime&quot;</span>, </span>
 <span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>  <span class="at">base_cov =</span> <span class="st">&quot;bprog&quot;</span>, </span>
 <span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>  <span class="at">conf_cov =</span> <span class="fu">c</span>(<span class="st">&quot;bprog*cattdc&quot;</span>, <span class="st">&quot;timePFSobs&quot;</span>, <span class="st">&quot;visit7on&quot;</span>), </span>
-<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>  <span class="at">strata_main_effect_only =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>  <span class="at">ns_df =</span> <span class="dv">3</span>, <span class="at">strata_main_effect_only =</span> <span class="cn">TRUE</span>,</span>
 <span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>  <span class="at">recensor =</span> <span class="cn">TRUE</span>, <span class="at">admin_recensor_only =</span> <span class="cn">TRUE</span>, </span>
 <span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>  <span class="at">swtrt_control_only =</span> <span class="cn">TRUE</span>, <span class="at">alpha =</span> <span class="fl">0.05</span>, <span class="at">ties =</span> <span class="st">&quot;efron&quot;</span>, </span>
 <span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>  <span class="at">tol =</span> <span class="fl">1.0e-6</span>, <span class="at">offset =</span> <span class="dv">0</span>, <span class="at">boot =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
@@ -467,18 +480,21 @@ a subject, a robust sandwich variance estimator is employed, clustering
 on the subject level for the logistic regression model.</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>parest <span class="ot">&lt;-</span> fit1<span class="sc">$</span>analysis_switch<span class="sc">$</span>fit_logis[[<span class="dv">1</span>]]<span class="sc">$</span>fit<span class="sc">$</span>parest</span>
 <span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt;            param          beta      sebeta            z</span></span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt; 1    (Intercept) -3.610902e+00 0.406575724 -8.881252466</span></span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt; 2 counterfactual -1.334449e-03 0.240746638 -0.005542959</span></span>
-<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt; 3          bprog  1.279993e+00 0.485165056  2.638262036</span></span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt; 4         cattdc  1.416410e+00 0.525559979  2.695048571</span></span>
-<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt; 5     timePFSobs  5.508924e-05 0.001220238  0.045146303</span></span>
-<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt; 6       visit7on -1.647006e+01 0.000000000         -Inf</span></span>
-<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co">#&gt; 7   bprog.cattdc  7.310630e-01 0.630925676  1.158714946</span></span></code></pre></div>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt;             param          beta      sebeta            z</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt; 1     (Intercept) -4.460862e+00 0.679415700 -6.565732541</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt; 2  counterfactual -1.717448e-03 0.242143959 -0.007092672</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt; 3           bprog  1.327518e+00 0.478509871  2.774275104</span></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt; 4          cattdc  1.443391e+00 0.558808532  2.582979967</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt; 5      timePFSobs  2.412728e-04 0.005818025  0.041469884</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt; 6        visit7on -1.658807e+01 0.000000000         -Inf</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co">#&gt; 7    bprog.cattdc  5.728973e-01 0.629831212  0.909604569</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt; 8             ns1 -7.127828e-01 1.698744723 -0.419593803</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt; 9             ns2  1.950923e+00 3.766153496  0.518014860</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt; 10            ns3  7.875187e-01 4.187464746  0.188065754</span></span></code></pre></div>
 <p>The plot of <span class="math inline">\(Z(\psi)\)</span> versus <span class="math inline">\(\psi\)</span> shows that the estimation process
 worked well.</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">c</span>(fit1<span class="sc">$</span>psi, fit1<span class="sc">$</span>psi_CI)</span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co">#&gt; [1] -0.5596153 -0.8452553 -0.3293834</span></span></code></pre></div>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a><span class="co">#&gt; [1] -0.5588669 -0.8395761 -0.3248214</span></span></code></pre></div>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>psi_CI_width <span class="ot">&lt;-</span> fit1<span class="sc">$</span>psi_CI[<span class="dv">2</span>] <span class="sc">-</span> fit1<span class="sc">$</span>psi_CI[<span class="dv">1</span>]</span>
 <span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a></span>
 <span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="fu">ggplot</span>(fit1<span class="sc">$</span>analysis_switch<span class="sc">$</span>eval_z[[<span class="dv">1</span>]]<span class="sc">$</span>data <span class="sc">%&gt;%</span> </span>
@@ -492,15 +508,15 @@ worked well.</p>
 <span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="fu">round</span>(<span class="fu">c</span>(fit1<span class="sc">$</span>psi, fit1<span class="sc">$</span>psi_CI), <span class="dv">3</span>)) <span class="sc">+</span> </span>
 <span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&quot;Wald Z for counterfactual&quot;</span>) <span class="sc">+</span> </span>
 <span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>())</span></code></pre></div>
-<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
+<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
 <p>Now we fit the outcome Cox model and compare the treatment hazard
 ratio estimate with the reported.</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>fit1<span class="sc">$</span>fit_outcome<span class="sc">$</span>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
 <span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="co">#&gt;     param       beta     sebeta         z</span></span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt; 1 treated -0.5495750 0.09800229 -5.607777</span></span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; 2   bprog  0.3783736 0.09156965  4.132086</span></span></code></pre></div>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt; 1 treated -0.5494977 0.09800177 -5.607018</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; 2   bprog  0.3783132 0.09156941  4.131437</span></span></code></pre></div>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">c</span>(fit1<span class="sc">$</span>hr, fit1<span class="sc">$</span>hr_CI)</span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="co">#&gt; [1] 0.5771951 0.4763245 0.6994269</span></span></code></pre></div>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="co">#&gt; [1] 0.5772397 0.4763618 0.6994803</span></span></code></pre></div>
 <p>Finally, to ensure the uncertainty is accurately represented, the
 entire adjustment process and subsequent survival modeling can be
 bootstrapped.</p>
@@ -514,7 +530,7 @@ bootstrapped.</p>
 <span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>  base_cov = &quot;bprog&quot;, </span>
 <span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>  conf_cov = c(&quot;bprog*cattdc&quot;, &quot;timePFSobs&quot;, &quot;visit7on&quot;),</span>
 <span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>  low_psi = -2, hi_psi = 2, n_eval_z = 101, </span>
-<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>  strata_main_effect_only = TRUE,</span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>  ns_df = 3, strata_main_effect_only = TRUE,</span>
 <span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a>  recensor = TRUE, admin_recensor_only = TRUE, </span>
 <span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a>  swtrt_control_only = TRUE, alpha = 0.05, ties = &quot;efron&quot;, </span>
 <span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a>  tol = 1.0e-6, offset = 0, boot = TRUE, </span>

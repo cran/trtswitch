@@ -4,12 +4,24 @@
 \alias{findInterval3}
 \title{Find Interval Numbers of Indices}
 \usage{
-findInterval3(x, v)
+findInterval3(x, v, rightmost_closed = 0L, all_inside = 0L, left_open = 0L)
 }
 \arguments{
 \item{x}{The numeric vector of interest.}
 
 \item{v}{The vector of break points.}
+
+\item{rightmost_closed}{Logical; if true, the rightmost interval,
+\verb{vec[N-1] .. vec[N]} is treated as closed if \code{left_open} is false,
+and the leftmost interval, \verb{vec[1] .. vec[2]} is treated as
+closed if left_open is true.}
+
+\item{all_inside}{Logical; if true, the returned indices are coerced
+into \verb{1, ..., N-1}, i.e., \code{0} is mapped to \code{1} and
+\code{N} is mapped to \code{N-1}.}
+
+\item{left_open}{Logical; if true, all intervals are open at left and
+closedat right. This may be useful, .e.g., in survival analysis.}
 }
 \value{
 A vector of \code{length(x)} with values in \code{0:N} where

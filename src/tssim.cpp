@@ -4,13 +4,15 @@ using namespace Rcpp;
 //' @title Simulate Data for Treatment Switching
 //' @description Simulates data for studies involving treatment switching, 
 //' incorporating time-dependent confounding. The generated data can be used 
-//' to evaluate methods for handling treatment switching in survival analysis.
+//' to evaluate methods for handling treatment switching in survival 
+//' analysis.
 //'
 //' @param tdxo Logical indicator for timing of treatment switching:
 //'   \itemize{
-//'     \item 1: Treatment switching can occur at or after disease progression.
+//'     \item 1: Treatment switching can occur at or after disease 
+//'              progression.
 //'     \item 0: Treatment switching is restricted to the time of disease 
-//'     progression.
+//'              progression.
 //'   }
 //' @param coxo Logical indicator for arm-specific treatment switching:
 //'   \itemize{
@@ -27,10 +29,12 @@ using namespace Rcpp;
 //' @param rate_T Baseline hazard rate for time to death.
 //' @param beta1 Log hazard ratio for randomized treatment (\code{R}).
 //' @param beta2 Log hazard ratio for baseline covariate (\code{X}).
-//' @param gamma0 Intercept for the time-dependent covariate model (\code{L}).
+//' @param gamma0 Intercept for the time-dependent covariate model 
+//'   (\code{L}).
 //' @param gamma1 Coefficient for lagged treatment switching (\code{Alag}) 
 //'   in the \code{L} model.
-//' @param gamma2 Coefficient for lagged \code{L} in the \code{L} model.
+//' @param gamma2 Coefficient for lagged \code{L} (\code{Llag}) in the 
+//'   \code{L} model.
 //' @param gamma3 Coefficient for baseline covariate (\code{X}) in the 
 //'   \code{L} model.
 //' @param gamma4 Coefficient for randomized treatment (\code{R}) in the 
@@ -45,8 +49,9 @@ using namespace Rcpp;
 //' @param alpha1 Coefficient for \code{L} in the \code{A} model.
 //' @param alpha2 Coefficient for baseline covariate (\code{X}) in the 
 //'   \code{A} model.
-//' @param theta1_1 Negative log time ratio for \code{A} (experimental arm).
-//' @param theta1_0 Negative log time ratio for \code{A} (control arm).
+//' @param theta1_1 Negative log time ratio for \code{A} for the 
+//'   experimental arm.
+//' @param theta1_0 Negative log time ratio for \code{A} for the control arm.
 //' @param theta2 Negative log time ratio for \code{L}.
 //' @param rate_C Hazard rate for random (dropout) censoring.
 //' @param accrualTime A vector that specifies the starting time of 
@@ -55,9 +60,10 @@ using namespace Rcpp;
 //'   [0, 3) and [3, Inf).
 //' @param accrualIntensity A vector of accrual intensities. One for 
 //'   each accrual time interval.
-//' @param followupTime	Follow-up time for the last enrolled subject.
+//' @param followupTime	Follow-up time for a fixed follow-up design.
 //' @param fixedFollowup Whether a fixed follow-up design is used. 
 //'   Defaults to 0 for variable follow-up.
+//' @param plannedTime The calendar time for the analysis.
 //' @param days Number of days in each treatment cycle.
 //' @param n Number of subjects per simulation.
 //' @param NSim Number of simulated datasets.
@@ -133,7 +139,17 @@ using namespace Rcpp;
 //' 
 //' Additional random censoring times are generated from an exponential 
 //' distribution with hazard rate \eqn{rate_C}.
-//'   
+//' 
+//' An extra record is generated when the minimum of the latent survival 
+//' time, the random censoring time, and the administrative censoring time 
+//' is greater than the number of regular treatment cycles times 
+//' days per cycle.
+//' 
+//' Finally we apply the lag function so that \eqn{Z_{i,j}} and 
+//' \eqn{A_{i,j}} represent the PD status and alternative therapy status 
+//' at the start of cycle \eqn{j} (and thus remain appplicable for the 
+//' entire cycle \eqn{j}) for subject \eqn{i}.
+//' 
 //' To estimate the true treatment effect in a Cox marginal 
 //' structural model, one can set \eqn{\alpha_0 = -\infty}, which 
 //' effectively forces \eqn{A_{i,j} = 0} (disabling treatment switching). 
@@ -141,8 +157,9 @@ using namespace Rcpp;
 //' using a Cox proportional hazards model.
 //'
 //' @return
-//' A list of data frames, each containing simulated longitudinal and 
-//' event history data with the following variables:
+//' A list of data frames, each containing simulated longitudinal covariate, 
+//' pd status, alternative therapy status, and event history data with the 
+//' following variables:
 //'
 //'  * \code{id}: Subject identifier.
 //'  
@@ -170,13 +187,14 @@ using namespace Rcpp;
 //'
 //'  * \code{Alag}: Lagged value of \code{A}.
 //'
-//'  * \code{Y}: Death indicator at \code{tstop}.
+//'  * \code{event}: Death indicator at \code{tstop}.
 //'
 //'  * \code{timeOS}: Observed time to death or censoring.
 //'     
 //'  * \code{died}: Indicator of death by end of follow-up.
 //'     
-//'  * \code{progressed}: Indicator of disease progression by end of follow-up.
+//'  * \code{progressed}: Indicator of disease progression by end of 
+//'    follow-up.
 //'       
 //'  * \code{timePD}: Observed time to progression or censoring.
 //'       
@@ -208,6 +226,8 @@ using namespace Rcpp;
 //'
 //' @examples
 //'
+//' library(dplyr)
+//' 
 //' simulated.data <- tssim(
 //'   tdxo = 1, coxo = 1, allocation1 = 1, allocation2 = 1,
 //'   p_X_1 = 0.3, p_X_0 = 0.3, 
@@ -217,8 +237,10 @@ using namespace Rcpp;
 //'   alpha0 = 0.5, alpha1 = 0.5, alpha2 = 0.4, 
 //'   theta1_1 = -0.4, theta1_0 = -0.4, theta2 = 0.2,
 //'   rate_C = 0.0000855, accrualIntensity = 20/30, 
-//'   followupTime = 600, fixedFollowup = 0, days = 30,
+//'   fixedFollowup = FALSE, plannedTime = 1350, days = 30,
 //'   n = 500, NSim = 100, seed = 314159)
+//'   
+//' simulated.data[[1]] %>% filter(id == 1)
 //'
 //' @export
 // [[Rcpp::export]]
@@ -251,6 +273,7 @@ List tssim(const bool tdxo = 0,
            const NumericVector& accrualIntensity = NA_REAL,
            const double followupTime = NA_REAL,
            const bool fixedFollowup = 0,
+           const double plannedTime = NA_REAL,
            const double days = NA_INTEGER,
            const int n = NA_INTEGER, 
            const int NSim = 1000, 
@@ -300,16 +323,22 @@ List tssim(const bool tdxo = 0,
     stop("accrualIntensity must be non-negative");
   }
   
-  if (R_isnancpp(followupTime)) {
-    stop("followupTime must be provided");
-  }
-  
   if (fixedFollowup) {
+    if (R_isnancpp(followupTime)) {
+      stop("followupTime must be provided for fixed follow-up");
+    }
+    
     if (followupTime <= 0) {
       stop("followupTime must be positive for fixed follow-up");
     }
-  } else if (followupTime < 0) {
-    stop("followupTime must be nonnegative for variable follow-up");
+  }
+  
+  if (R_isnancpp(plannedTime)) {
+    stop("plannedTime must be provided");
+  }
+  
+  if (plannedTime <= 0) {
+    stop("plannedTime must be positive");
   }
   
   if (days <= 0) {
@@ -324,44 +353,36 @@ List tssim(const bool tdxo = 0,
     stop("NSim must be positive");
   }
   
-  // set up random seed
   if (seed != NA_INTEGER) set_seed(seed);
-  
-  
-  double accrualDuration = getAccrualDurationFromN(
-    NumericVector::create(n), accrualTime, accrualIntensity)[0];
-  int maxFollowup = 
-    static_cast<int>(std::floor((2*accrualDuration + followupTime)/days));
-  
-  int iter, i, j, J, K = n*maxFollowup;
-  int id, trtrand, bprog, tpoint, L, Llag, Z, Zlag, A, Alag, Alag2, Y;
-  double tstart, tstop, T, C, theta1, time;
+  int maxFollowup = static_cast<int>(std::ceil(plannedTime/days));
+  int K = n*maxFollowup;
   List result(NSim);
-  int b1, b2, followup;
-  double enrollt, u;
   
-  for (iter=0; iter<NSim; iter++) {
+  for (int iter=0; iter<NSim; iter++) {
     IntegerVector idx(K), trtrandx(K), bprogx(K), tpointx(K);
     IntegerVector Lx(K), Llagx(K), Zx(K), Zlagx(K);
-    IntegerVector Ax(K), Alagx(K), Alag2x(K), Yx(K);
+    IntegerVector Ax(K), Alagx(K), Alag2x(K), eventx(K);
     IntegerVector diedx(K), progressedx(K), xox(K);
     NumericVector tstartx(K), tstopx(K), timeOSx(K), timePDx(K);
-    NumericVector xotimex(K), censor_timex(K);
+    NumericVector xotimex(K, NA_REAL), censor_timex(K);
     NumericVector arrivalTimex(K);
     
-    b1 = allocation1; b2 = allocation2;
-    enrollt = 0;
+    int id, trtrand, bprog, tpoint, L, Llag, Z, Zlag, A, Alag, Alag2, event;
+    double arrivalTime, tstart, tstop;
+    double b1 = allocation1, b2 = allocation2;
+    double enrollt = 0;
     int k = 0;
-    for (i=1; i<=n; i++) { // i = subject index
+    for (int i=1; i<=n; i++) { // i = subject index
       id = i;
       
       // generate accrual time
-      u = R::runif(0,1);
+      double u = R::runif(0,1);
       enrollt = qtpwexpcpp1(u, accrualTime, accrualIntensity, enrollt, 1, 0);
+      arrivalTime = std::ceil(enrollt);
       
       // stratified block randomization
       u = R::runif(0,1);
-      if (u <= b1/(b1+b2+0.0)) {
+      if (u <= b1/(b1+b2)) {
         trtrand = 1;
         b1--;
       } else {
@@ -372,19 +393,17 @@ List tssim(const bool tdxo = 0,
         b1 = allocation1; b2 = allocation2;
       }
       
-      bprog = static_cast<int>(R::rbinom(1, p_X_1*trtrand + 
-        p_X_0*(1-trtrand)));
-      T = R::rexp(1.0/(rate_T*exp(beta1*trtrand + beta2*bprog)));
+      bprog = (R::runif(0,1) <= p_X_1*trtrand + p_X_0*(1-trtrand));
+      double T = R::rexp(1.0/(rate_T*exp(beta1*trtrand + beta2*bprog)));
       T = std::round(T);
       if (T == 0) T = 1;
       
-      if (fixedFollowup) {
-        followup = static_cast<int>(std::floor(followupTime/days));
-      } else {
-        followup = static_cast<int>(std::floor((enrollt+followupTime)/days));
-      }
+      double fu = std::max(plannedTime - arrivalTime, 0.0);
+      if (fixedFollowup) fu = std::min(followupTime, fu);
+      int followup = static_cast<int>(std::floor(fu/days));
       
-      for (j=1; j<=followup; j++) { // j = cycle index
+      tpoint = followup; L = 0; Llag = 0; Z = 0; A = 0; Alag = 0;
+      for (int j=1; j<=followup; j++) { // j = cycle index
         tpoint = j; tstart = days*(j-1);
         if (j == 1) {
           Llag = 0; Zlag = 0; Alag2 = 0; Alag = 0;
@@ -393,21 +412,19 @@ List tssim(const bool tdxo = 0,
         }
         
         // generate time-dependent covariate
-        L = static_cast<int>(R::rbinom(1, R::plogis(gamma0 + gamma1*Alag + 
-          gamma2*Llag + gamma3*bprog + gamma4*trtrand, 0, 1, 1, 0)));
+        L = (R::runif(0,1) <= R::plogis(gamma0 + gamma1*Alag + gamma2*Llag + 
+          gamma3*bprog + gamma4*trtrand, 0, 1, 1, 0));
         
         if (T <= days*j) { // died in cycle j, complete data for the subject
-          tstop = T; Y = 1;
-          if (j == 1) {
-            Z = 0; A = 0;
-          }
+          tstop = T; event = 1;
+          Z = NA_INTEGER; A = NA_INTEGER;
         } else { // alive at the end of cycle j, continue to the next cycle
-          tstop = days*j; Y = 0;
+          tstop = days*j; event = 0;
           
           // generate disease progression status
           if (Zlag == 0) {
-            Z = static_cast<int>(R::rbinom(1, R::plogis(zeta0 + zeta1*L +
-              zeta2*bprog + zeta3*trtrand, 0, 1, 1, 0)));
+            Z = (R::runif(0,1) <= R::plogis(zeta0 + zeta1*L + zeta2*bprog + 
+              zeta3*trtrand, 0, 1, 1, 0));
           } else {
             Z = 1;
           }
@@ -417,8 +434,8 @@ List tssim(const bool tdxo = 0,
             if (((tdxo == 0 && Z == 1 && Zlag == 0) || 
                 (tdxo == 1 && Z == 1)) && 
                 ((coxo == 1 && trtrand == 0) || (coxo == 0))) {
-              A = static_cast<int>(R::rbinom(1, R::plogis(alpha0 + 
-                alpha1*L + alpha2*bprog, 0, 1, 1, 0)));
+              A = (R::runif(0,1) <= R::plogis(alpha0 + alpha1*L + 
+                alpha2*bprog, 0, 1, 1, 0));
             } else {
               A = 0;
             }
@@ -427,15 +444,14 @@ List tssim(const bool tdxo = 0,
           }
           
           // update survival time
-          theta1 = theta1_1*trtrand + theta1_0*(1-trtrand);
+          double theta1 = theta1_1*trtrand + theta1_0*(1-trtrand);
           T = days*j + (T - days*j)*exp(-theta1*(A-Alag) - theta2*(L-Llag));
           T = std::round(T);
-          if (T == 0) T = 1;
         }
         
         // add the data from the current cycle
         idx[k] = id;
-        arrivalTimex[k] = std::round(enrollt);
+        arrivalTimex[k] = arrivalTime;
         trtrandx[k] = trtrand;
         bprogx[k] = bprog;
         tpointx[k] = tpoint;
@@ -448,75 +464,86 @@ List tssim(const bool tdxo = 0,
         Ax[k] = A;
         Alagx[k] = Alag;
         Alag2x[k] = Alag2;
-        Yx[k] = Y;
+        eventx[k] = event;
         
         k++;
         
-        if (Y == 1) break;
+        if (event == 1) break;
       }
-      
-      if (j > followup) j--;  // j is the number of treatment cycles
       
       // generate random censoring due to dropout
-      C = R::rexp(1.0/rate_C);
+      double C = R::rexp(1.0/rate_C);
       C = std::round(C);
       if (C == 0) C = 1;
+      double time = std::min({T, C, fu});
       
-      J = j;
-      if (C <= days*followup) {
-        time = std::min(T, C);
-        for (J=1; J<=followup; J++) {
-          if (time <= J*days) break;
-        }
-        k = k - j + J; // discard treatment cycles after censoring
+      int J;  // J is the number of treatment cycles
+      if (time <= days*followup) {
+        J = static_cast<int>(std::ceil(time/days));
+        k = k - tpoint + J; // discard treatment cycles after censoring
         tstopx[k-1] = time; // update the ending time and event indicator
-        Yx[k-1] = T <= C ? 1 : 0;
+        eventx[k-1] = T == time ? 1 : 0;
+        Zx[k-1] = NA_INTEGER;
+        Ax[k-1] = NA_INTEGER;
+      } else { // add one more record 
+        J = followup + 1;
+        idx[k] = id;
+        arrivalTimex[k] = arrivalTime;
+        trtrandx[k] = trtrand;
+        bprogx[k] = bprog;
+        tpointx[k] = followup + 1;
+        tstartx[k] = days*followup;
+        tstopx[k] = time;
+        Lx[k] = (R::runif(0,1) <= R::plogis(gamma0 + gamma1*Alag + 
+          gamma2*Llag + gamma3*bprog + gamma4*trtrand, 0, 1, 1, 0));
+        Llagx[k] = L;
+        Zx[k] = NA_INTEGER;
+        Zlagx[k] = Z;
+        Ax[k] = NA_INTEGER;
+        Alagx[k] = A;
+        Alag2x[k] = Alag;
+        eventx[k] = T == time ? 1 : 0;
+        
+        k++;
       }
       
-      // create subject-level variables
-      for (j=1; j<=J; j++) {
-        timeOSx[k-1-J+j] = tstopx[k-1];
-        diedx[k-1-J+j] = Yx[k-1];
-        progressedx[k-1-J+j] = Zx[k-1];
-        xox[k-1-J+j] = Ax[k-1];
-        censor_timex[k-1-J+j] = days*followup;
+      // create subject-level survival time and death indicator
+      for (int j=k-J; j<k; j++) {
+        timeOSx[j] = tstopx[k-1];
+        diedx[j] = eventx[k-1];
+        censor_timex[j] = fu;
       }
       
-      // observed time to progression or censoring
-      tstop = tstopx[k-1];
-      if (Zx[k-1] == 1) {
-        for (j=1; j<=J; j++) {
-          if (Zx[k-1-J+j] == 1) {
-            tstop = tstopx[k-1-J+j]; break; 
-          }
+      // progression and time to progression (if applicable)
+      int pd = 0;
+      double pd_time = NA_REAL;
+      for (int j=k-J; j<k; j++) {
+        if (Zx[j] == 1) {
+          pd = 1; pd_time = tstopx[j]; break;
         }
       }
-      for (j=1; j<=J; j++) {
-        timePDx[k-1-J+j] = tstop;
+
+      // switching and time to switching (if applicable)
+      int xo = 0;
+      double xo_time = NA_REAL;
+      for (int j=k-J; j<k; j++) {
+        if (Ax[j] == 1) {
+          xo = 1; xo_time = tstopx[j]; break;
+        }
       }
       
-      // time of treatment switching (if applicable)
-      if (Ax[k-1] == 1) {
-        tstop = tstopx[k-1];
-        for (j=1; j<=J; j++) {
-          if (Ax[k-1-J+j] == 1) {
-            tstop = tstopx[k-1-J+j]; break; 
-          }
-        }
-        for (j=1; j<=J; j++) {
-          xotimex[k-1-J+j] = tstop;
-        }
-      } else {
-        for (j=1; j<=J; j++) {
-          xotimex[k-1-J+j] = NA_REAL;
-        }
+      for (int j=k-J; j<k; j++) {
+        progressedx[j] = pd;
+        timePDx[j] = pd_time;
+        xox[j] = xo;
+        xotimex[j] = xo_time;
       }
       
       // shift disease progression and alternative therapy status downward
-      for (j=1; j<=J; j++) {
-        Zx[k-1-J+j] = Zlagx[k-1-J+j];
-        Ax[k-1-J+j] = Alagx[k-1-J+j];
-        Alagx[k-1-J+j] = Alag2x[k-1-J+j];
+      for (int j=k-J; j<k; j++) {
+        Zx[j] = Zlagx[j];
+        Ax[j] = Alagx[j];
+        Alagx[j] = Alag2x[j];
       }
     }
     
@@ -531,7 +558,7 @@ List tssim(const bool tdxo = 0,
     Zx = Zx[sub];
     Ax = Ax[sub];
     Alagx = Alagx[sub];
-    Yx = Yx[sub];
+    eventx = eventx[sub];
     diedx = diedx[sub];
     progressedx = progressedx[sub];
     xox = xox[sub];
@@ -555,7 +582,7 @@ List tssim(const bool tdxo = 0,
       _["Z"] = Zx,
       _["A"] = Ax,
       _["Alag"] = Alagx,
-      _["Y"] = Yx,
+      _["event"] = eventx,
       _["timeOS"] = timeOSx,
       _["died"] = diedx,
       _["progressed"] = progressedx,

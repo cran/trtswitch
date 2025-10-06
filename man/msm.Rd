@@ -25,10 +25,10 @@ msm(
   trunc = 0,
   trunc_upper_only = TRUE,
   swtrt_control_only = TRUE,
-  treat_alt_interaction = FALSE,
+  treat_alt_interaction = TRUE,
   alpha = 0.05,
   ties = "efron",
-  boot = TRUE,
+  boot = FALSE,
   n_boot = 1000,
   seed = NA
 )
@@ -124,7 +124,7 @@ The default value is 0.05.}
 "breslow" or "efron" (default).}
 
 \item{boot}{Whether to use bootstrap to obtain the confidence
-interval for hazard ratio. Defaults to \code{TRUE}.}
+interval for hazard ratio. Defaults to \code{FALSE}.}
 
 \item{n_boot}{The number of bootstrap samples.}
 
@@ -235,12 +235,12 @@ sim1 <- tssim(
   alpha0 = 0.5, alpha1 = 0.5, alpha2 = 0.4, 
   theta1_1 = -0.4, theta1_0 = -0.4, theta2 = 0.2,
   rate_C = 0.0000855, accrualIntensity = 20/30,
-  followupTime = 600, fixedFollowup = 0, days = 30,
+  fixedFollowup = FALSE, plannedTime = 1350, days = 30,
   n = 500, NSim = 100, seed = 314159)
 
 fit1 <- msm(
   sim1[[1]], id = "id", tstart = "tstart", 
-  tstop = "tstop", event = "Y", treat = "trtrand", 
+  tstop = "tstop", event = "event", treat = "trtrand", 
   swtrt = "xo", swtrt_time = "xotime", 
   base_cov = "bprog", numerator = "bprog", 
   denominator = c("bprog", "L"), 

@@ -22,6 +22,7 @@ List est_psi_ipe(
     const bool recensor,
     const bool autoswitch,
     const double alpha) {
+  
   NumericVector init(1, NA_REAL);
   DataFrame df = unswitched(psi*treat_modifier, n, id, time, event, treat,
                             rx, censor_time, recensor, autoswitch);
@@ -72,6 +73,7 @@ List ipecpp(const DataFrame data,
             const bool recensor = 1,
             const bool admin_recensor_only = 1,
             const bool autoswitch = 1,
+            const std::string root_finding = "brent",
             const double alpha = 0.05,
             const std::string ties = "efron",
             const double tol = 1.0e-6,
@@ -389,6 +391,21 @@ List ipecpp(const DataFrame data,
     stop("treat_modifier must be positive");
   }
   
+  std::string rooting = root_finding;
+  std::for_each(rooting.begin(), rooting.end(), [](char & c) {
+    c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+  });
+  
+  if (rooting == "uniroot" || rooting.rfind("br", 0) == 0) {
+    rooting = "brent";
+  } else if (rooting.rfind("bi", 0) == 0) {
+    rooting = "bisect";
+  }
+  
+  if (!((rooting == "brent") || (rooting == "bisect"))) {
+    stop("root_finding must be brent or bisection");
+  }
+  
   if (alpha <= 0.0 || alpha >= 0.5) {
     stop("alpha must lie between 0 and 0.5");
   }
@@ -406,6 +423,34 @@ List ipecpp(const DataFrame data,
   }
   
   
+  // exclude observations with missing values
+  LogicalVector sub(n,1);
+  for (i=0; i<n; i++) {
+    if ((idn[i] == NA_INTEGER) || (stratumn[i] == NA_INTEGER) || 
+        (std::isnan(timen[i])) || (eventn[i] == NA_INTEGER) || 
+        (treatn[i] == NA_INTEGER) || (std::isnan(rxn[i])) ||
+        (std::isnan(censor_timen[i]))) {
+      sub[i] = 0;
+    }
+    for (j=0; j<p; j++) {
+      if (std::isnan(zn_aft(i,j))) sub[i] = 0;
+    }
+  }
+  
+  IntegerVector order = which(sub);
+  idn = idn[order];
+  stratumn = stratumn[order];
+  timen = timen[order];
+  eventn = eventn[order];
+  treatn = treatn[order];
+  rxn = rxn[order];
+  censor_timen = censor_timen[order];
+  if (p > 0) zn = subset_matrix_by_row(zn, order);
+  zn_aft = subset_matrix_by_row(zn_aft, order);
+  n = sum(sub);
+  if (n == 0) stop("no observations left after removing missing values");
+  
+  
   DataFrame lr = lrtest(data, "", stratum, treat, time, event, 0, 0);
   double logRankPValue = lr["logRankPValue"];
   
@@ -413,13 +458,12 @@ List ipecpp(const DataFrame data,
   
   k = -1;
   auto f = [&k, n, q, p, covariates, covariates_aft, dist, low_psi, hi_psi,
-            treat_modifier, recensor, autoswitch, alpha, ties, tol](
+            treat_modifier, recensor, autoswitch, rooting, alpha, ties, tol](
                 IntegerVector& idb, 
                 IntegerVector& stratumb, NumericVector& timeb,
                 IntegerVector& eventb, IntegerVector& treatb,
                 NumericVector& rxb, NumericVector& censor_timeb,
                 NumericMatrix& zb, NumericMatrix& zb_aft)->List {
-                  int j;
                   bool fail = 0; // whether any model fails to converge
                   NumericVector init(1, NA_REAL);
                   
@@ -434,15 +478,24 @@ List ipecpp(const DataFrame data,
                                 dist, treat_modifier, recensor, autoswitch, 
                                 alpha);
                               
-                              double psinew = out_aft["psinew"];
-                              return psinew - psi;
+                              bool fail = out_aft["fail"];
+                              if (!fail) {
+                                double psinew = out_aft["psinew"];
+                                return psinew - psi;
+                              } else {
+                                return NA_REAL;
+                              }
                             };
                   
                   double psihat = NA_REAL;
                   double psilo = getpsiend(g, 1, low_psi);
                   double psihi = getpsiend(g, 0, hi_psi);
                   if (!std::isnan(psilo) && !std::isnan(psihi)) {
-                    psihat = brent(g, psilo, psihi, tol);
+                    if (rooting == "brent") {
+                      psihat = brent(g, psilo, psihi, tol);  
+                    } else {
+                      psihat = bisect(g, psilo, psihi, tol);
+                    }
                   }
                   
                   // obtain the Kaplan-Meier estimates
@@ -464,7 +517,7 @@ List ipecpp(const DataFrame data,
                       
                       Sstar.push_back(stratumb, "ustratum");
                       
-                      for (j=0; j<p; j++) {
+                      for (int j=0; j<p; j++) {
                         String zj = covariates[j+1];
                         NumericVector u = zb(_,j);
                         Sstar.push_back(u, zj);
@@ -491,7 +544,7 @@ List ipecpp(const DataFrame data,
                     
                     data_outcome.push_back(stratumb, "ustratum");
                     
-                    for (j=0; j<p; j++) {
+                    for (int j=0; j<p; j++) {
                       String zj = covariates[j+1];
                       NumericVector u = zb(_,j);
                       data_outcome.push_back(u, zj);
@@ -869,6 +922,7 @@ List ipecpp(const DataFrame data,
     Named("recensor") = recensor,
     Named("admin_recensor_only") = admin_recensor_only,
     Named("autoswitch") = autoswitch,
+    Named("root_finding") = root_finding,
     Named("alpha") = alpha,
     Named("ties") = ties,
     Named("tol") = tol,

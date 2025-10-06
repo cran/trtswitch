@@ -34,6 +34,15 @@ IntegerVector which(const LogicalVector& vector) {
 //'
 //' @param x The numeric vector of interest.
 //' @param v The vector of break points.
+//' @param rightmost_closed Logical; if true, the rightmost interval, 
+//'   `vec[N-1] .. vec[N]` is treated as closed if `left_open` is false, 
+//'   and the leftmost interval, `vec[1] .. vec[2]` is treated as 
+//'   closed if left_open is true.
+//' @param all_inside Logical; if true, the returned indices are coerced
+//'   into `1, ..., N-1`, i.e., `0` is mapped to `1` and 
+//'   `N` is mapped to `N-1`.
+//' @param left_open Logical; if true, all intervals are open at left and 
+//'   closedat right. This may be useful, .e.g., in survival analysis.   
 //' @return A vector of \code{length(x)} with values in \code{0:N} where
 //'   \code{N = length(v)}.
 //'
@@ -48,20 +57,54 @@ IntegerVector which(const LogicalVector& vector) {
 //'
 //' @export
 // [[Rcpp::export]]
-IntegerVector findInterval3(NumericVector x, NumericVector v) {
+IntegerVector findInterval3(NumericVector x, NumericVector v, 
+                            bool rightmost_closed = 0, bool all_inside = 0, 
+                            bool left_open = 0) {
   IntegerVector out(x.size());
-
+  
   NumericVector::iterator it, pos;
   IntegerVector::iterator out_it;
-
+  
   NumericVector::iterator x_begin=x.begin(), x_end=x.end();
   NumericVector::iterator v_begin=v.begin(), v_end=v.end();
-
+  
+  int nv = v.size();
+  
   for(it = x_begin, out_it = out.begin(); it != x_end; ++it, ++out_it) {
-    pos = std::upper_bound(v_begin, v_end, *it);
-    *out_it = static_cast<int>(std::distance(v_begin, pos));
+    // Handle NA in x
+    if (NumericVector::is_na(*it)) {
+      *out_it = NA_INTEGER;
+      continue;
+    }
+    
+    // Choose bound depending on left_open
+    if (left_open) {
+      pos = std::lower_bound(v_begin, v_end, *it);
+    } else {
+      pos = std::upper_bound(v_begin, v_end, *it);
+    }
+    
+    int idx = static_cast<int>(std::distance(v_begin, pos));
+    
+    if (rightmost_closed) {
+      if (left_open) {
+        if (*it == v[0]) idx = 1;
+      } else {
+        if (*it == v[nv-1]) idx = nv-1;
+      }
+    }
+    
+    if (all_inside) {
+      if (idx == 0) {
+        idx = 1;
+      } else if (idx == nv) {
+        idx = nv-1;
+      }
+    }
+    
+    *out_it = idx;
   }
-
+  
   return out;
 }
 
@@ -70,28 +113,6 @@ IntegerVector findInterval3(NumericVector x, NumericVector v) {
 #define ITMAX 100
 #define EPS 3.0e-8
 #define SIGN(a,b) ((b) >= 0.0 ? fabs(a) : -fabs(a))
-
-//' @title Brent's Method for Root-Finding
-//' @description Using Brent's method, find the root of a function known to
-//' lie between x1 and x2. Program based on the book - Numerical Recipes in C
-//' The Art of Scientific Computing - Second Edition, by William H. Press,
-//' Saul A. Teukolsky, William T. Vetterling, and Brian P. Flannery.
-//' It mimics the uniroot() function in R.
-//'
-//' @param f Name of the univariate objective function.
-//' @param x1 One end of the interval bracket.
-//' @param x2 The other end of the interval bracket.
-//' @param tol The tolerance limit for stopping the iteration.
-//'
-//' @return The root x between x1 and x2 such that f(x) = 0.
-//'
-//' @author Kaifeng Lu, \email{kaifenglu@@gmail.com}
-//'
-//' @examples
-//' brent(sin, -1, 1, 0.0001)
-//' @export
-//'
-// [[Rcpp::plugins(cpp11)]]
 double brent(const std::function<double(double)>& f,
              double x1, double x2, double tol) {
   int iter;
@@ -167,6 +188,45 @@ double brent(const std::function<double(double)>& f,
 }
 
 
+double bisect(const std::function<double(double)>& f,
+              double x1, double x2, double tol) {
+  double f1 = f(x1);
+  double f2 = f(x2);
+  
+  if ((f1 > 0.0 && f2 > 0.0) || (f1 < 0.0 && f2 < 0.0)) {
+    stop("Root must be bracketed in bisect");
+  }
+  
+  // rtb will hold the endpoint where f is negative
+  // dx is the signed interval width
+  double rtb, dx;
+  if (f1 < 0.0) {
+    dx  = x2 - x1;
+    rtb = x1;
+  } else {
+    dx  = x1 - x2;
+    rtb = x2;
+  }
+  
+  for (int j = 1; j <= ITMAX; j++) {
+    dx *= 0.5;
+    double xmid = rtb + dx;
+    double fmid = f(xmid);
+    
+    if (fmid <= 0.0) {
+      rtb = xmid;
+    }
+    
+    if (std::fabs(dx) < tol || fmid == 0.0) {
+      return rtb;
+    }
+  }
+  
+  stop("Maximum number of iterations exceeded in bisect");
+  return 0.0; // never reached
+}
+
+
 // [[Rcpp::export]]
 bool hasVariable(DataFrame df, std::string varName) {
   StringVector names = df.names();
@@ -191,7 +251,7 @@ double quantilecpp(const NumericVector& x, const double p) {
 }
 
 
-// [[Rcpp::plugins(cpp11)]]
+
 double squantilecpp(const std::function<double(double)>& S, double p) {
   double lower = 0;
   double upper = 1;
@@ -945,32 +1005,7 @@ double qtpwexpcpp1(const double p,
   return q;
 }
 
-// [[Rcpp::export]]
-NumericVector getAccrualDurationFromN(
-    const NumericVector& nsubjects = NA_REAL,
-    const NumericVector& accrualTime = 0,
-    const NumericVector& accrualIntensity = NA_REAL) {
-  int i, j, I = static_cast<int>(nsubjects.size());
-  int J = static_cast<int>(accrualTime.size());
-  NumericVector t(I), p(J);
-  
-  p[0] = 0;
-  for (j=0; j<J-1; j++) {
-    p[j+1] = p[j] + accrualIntensity[j]*(accrualTime[j+1] - accrualTime[j]);
-  }
-  
-  IntegerVector m = findInterval3(nsubjects, p);
-  
-  for (i=0; i<I; i++) {
-    j = m[i] - 1;
-    t[i] = accrualTime[j] + (nsubjects[i] - p[j])/accrualIntensity[j];
-  }
-  
-  return t;
-}
 
-
-// [[Rcpp::export]]
 double getpsiest(const double target, const NumericVector& psi, 
                  const NumericVector& Z) {
   int i, n = static_cast<int>(psi.size());
@@ -978,17 +1013,15 @@ double getpsiest(const double target, const NumericVector& psi,
   
   int ilo = 0;
   for (i=0; i<n; ++i) {
-    if (!std::isnan(Z[i]) && Z[i] >= target) {
-      psilo = psi[i];
-      ilo = i;
+    if (!std::isinf(Z[i]) && Z[i] >= target) {
+      ilo = i; psilo = psi[i];
     }
   }
   
   int ihi = n-1;
   for (i=n-1; i>=0; --i) {
-    if (!std::isnan(Z[i]) && Z[i] <= target) {
-      psihi = psi[i];
-      ihi = i;
+    if (!std::isinf(Z[i]) && Z[i] <= target) {
+      ihi = i; psihi = psi[i];
     }
   }
   
@@ -1002,48 +1035,44 @@ double getpsiest(const double target, const NumericVector& psi,
 }
 
 
-// [[Rcpp::plugins(cpp11)]]
 double getpsiend(const std::function<double(double)>& f,
                  const bool lowerend, const double initialend) {
-  double psiend = initialend;
-  double zend = f(psiend);
+  double psiend = initialend, zend = f(initialend);
   if (lowerend) {
-    if (std::isnan(zend)) {
-      while (std::isnan(zend) && psiend <= 10) {
-        psiend = psiend + 1;
-        zend = f(psiend);
+    if ((std::isinf(zend) && zend > 0) || std::isnan(zend)) {
+      while (((std::isinf(zend) && zend > 0) || std::isnan(zend)) && 
+             psiend <= 10) {
+        psiend = psiend + 1; zend = f(psiend);
       }
       if (psiend > 10) {
-        psiend = NA_REAL;
+        psiend = NA_REAL; zend = NA_REAL;
       }
     }
     
     if (zend < 0) {
-      while (!std::isnan(zend) && zend < 0 && psiend >= -10) {
-        psiend = psiend - 1;
-        zend = f(psiend);
+      while (!std::isinf(zend) && zend < 0 && psiend >= -10) {
+        psiend = psiend - 1; zend = f(psiend);
       }
-      if (std::isnan(zend) || psiend < -10) {
+      if (std::isinf(zend) || std::isnan(zend) || psiend < -10) {
         psiend = NA_REAL;
       }
     }
   } else { // upper end
-    if (std::isnan(zend)) {
-      while (std::isnan(zend) && psiend >= -10) {
-        psiend = psiend - 1;
-        zend = f(psiend);
+    if ((std::isinf(zend) && zend < 0) || std::isnan(zend)) {
+      while (((std::isinf(zend) && zend < 0) || std::isnan(zend)) && 
+             psiend >= -10) {
+        psiend = psiend - 1; zend = f(psiend);
       }
       if (psiend < -10) {
-        psiend = NA_REAL;
+        psiend = NA_REAL; zend = NA_REAL;
       }
     }
     
     if (zend > 0) {
-      while (!std::isnan(zend) && zend > 0 && psiend <= 10) {
-        psiend = psiend + 1;
-        zend = f(psiend);
+      while (!std::isinf(zend) && zend > 0 && psiend <= 10) {
+        psiend = psiend + 1; zend = f(psiend);
       }
-      if (std::isnan(zend) || psiend > 10) {
+      if (std::isinf(zend) || std::isnan(zend) || psiend > 10) {
         psiend = NA_REAL;
       }
     }

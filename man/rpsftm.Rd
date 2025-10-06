@@ -26,6 +26,7 @@ rpsftm(
   admin_recensor_only = TRUE,
   autoswitch = TRUE,
   gridsearch = FALSE,
+  root_finding = "brent",
   alpha = 0.05,
   ties = "efron",
   tol = 1e-06,
@@ -105,6 +106,10 @@ with no switching. Defaults to \code{TRUE}.}
 parameter \code{psi}. Defaults to \code{FALSE}, in which case, a root
 finding algorithm will be used.}
 
+\item{root_finding}{Character string specifying the univariate
+root-finding algorithm to use. Options are \code{"brent"} (default)
+for Brent's method, or \code{"bisection"} for the bisection method.}
+
 \item{alpha}{The significance level to calculate confidence intervals.}
 
 \item{ties}{The method for handling ties in the Cox model, either
@@ -180,6 +185,7 @@ administrative censoring times only.
 arms with no switching.
 \item \code{gridsearch}: Whether to use grid search to estimate the
 causal parameter \code{psi}.
+\item \code{root_finding}: The univariate root-finding algorithm to use.
 \item \code{alpha}: The significance level to calculate confidence
 intervals.
 \item \code{ties}: The method for handling ties in the Cox model.

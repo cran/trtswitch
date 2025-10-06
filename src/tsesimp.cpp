@@ -37,7 +37,7 @@ List tsesimpcpp(const DataFrame data,
   
   int p2 = static_cast<int>(base2_cov.size());
   if (p2 == 1 && (base2_cov[0] == "" || base2_cov[0] == "none")) p2 = 0;
-  
+
   int p_stratum = static_cast<int>(stratum.size());
   
   bool has_stratum;
@@ -254,10 +254,12 @@ List tsesimpcpp(const DataFrame data,
   NumericVector pd_timenz = data[pd_time];
   NumericVector pd_timen = clone(pd_timenz);
   for (i=0; i<n; i++) {
-    if (pdn[i] == 1 && pd_timen[i] < 0.0) {
-      stop("pd_time must be nonnegative");
+    if (pdn[i] == 1 && std::isnan(pd_timen[i])) {
+      stop("pd_time must not be missing when pd=1");
     }
-    
+    if (pdn[i] == 1 && pd_timen[i] < 0.0) {
+      stop("pd_time must be nonnegative when pd=1");
+    }
     if (pdn[i] == 1 && pd_timen[i] > timen[i]) {
       stop("pd_time must be less than or equal to time");
     }
@@ -309,10 +311,12 @@ List tsesimpcpp(const DataFrame data,
   NumericVector swtrt_timenz = data[swtrt_time];
   NumericVector swtrt_timen = clone(swtrt_timenz);
   for (i=0; i<n; i++) {
-    if (swtrtn[i] == 1 && swtrt_timen[i] < 0.0) {
-      stop("swtrt_time must be nonnegative");
+    if (swtrtn[i] == 1 && std::isnan(swtrt_timen[i])) {
+      stop("swtrt_time must not be missing when swtrt=1");
     }
-    
+    if (swtrtn[i] == 1 && swtrt_timen[i] < 0.0) {
+      stop("swtrt_time must be nonnegative when swtrt=1");
+    }
     if (swtrtn[i] == 1 && swtrt_timen[i] > timen[i]) {
       stop("swtrt_time must be less than or equal to time");
     }
@@ -470,6 +474,38 @@ List tsesimpcpp(const DataFrame data,
     stop("n_boot must be greater than or equal to 100");
   }
   
+  
+  // exclude observations with missing values
+  LogicalVector sub(n,1);
+  for (i=0; i<n; i++) {
+    if ((idn[i] == NA_INTEGER) || (stratumn[i] == NA_INTEGER) || 
+        (std::isnan(timen[i])) || (eventn[i] == NA_INTEGER) || 
+        (treatn[i] == NA_INTEGER) || (std::isnan(censor_timen[i])) || 
+        (pdn[i] == NA_INTEGER) || (swtrtn[i] == NA_INTEGER)) {
+      sub[i] = 0;
+    }
+    for (j=0; j<p; j++) {
+      if (std::isnan(zn(i,j))) sub[i] = 0;
+    }
+  }
+  
+  IntegerVector order = which(sub);
+  idn = idn[order];
+  stratumn = stratumn[order];
+  timen = timen[order];
+  eventn = eventn[order];
+  treatn = treatn[order];
+  censor_timen = censor_timen[order];
+  pdn = pdn[order];
+  pd_timen = pd_timen[order];
+  swtrtn = swtrtn[order];
+  swtrt_timen = swtrt_timen[order];
+  if (p > 0) zn = subset_matrix_by_row(zn, order);
+  zn_aft = subset_matrix_by_row(zn_aft, order);
+  n = sum(sub);
+  if (n == 0) stop("no observations left after removing missing values");
+  
+  
   DataFrame lr = lrtest(data, "", stratum, treat, time, event, 0, 0);
   double logRankPValue = lr["logRankPValue"];
   double zcrit = R::qnorm(1-alpha/2, 0, 1, 1, 0);
@@ -485,7 +521,6 @@ List tsesimpcpp(const DataFrame data,
                 IntegerVector& pdb, NumericVector& pd_timeb, 
                 IntegerVector& swtrtb, NumericVector& swtrt_timeb, 
                 NumericMatrix& zb, NumericMatrix& zb_aft)->List {
-                  int h, i, j;
                   bool fail = 0; // whether any model fails to converge
                   NumericVector init(1, NA_REAL);
                   
@@ -496,12 +531,12 @@ List tsesimpcpp(const DataFrame data,
                   double psi0hat = NA_REAL;
                   double psi0lower = NA_REAL, psi0upper = NA_REAL;
                   double psi1hat = NA_REAL;
-                  double psi1lower = NA_REAL, psi1upper=NA_REAL;
+                  double psi1lower = NA_REAL, psi1upper = NA_REAL;
                   
                   // initialize data_aft and fit_aft
                   List data_aft(2), fit_aft(2);
                   if (k == -1) {
-                    for (h=0; h<2; h++) {
+                    for (int h=0; h<2; h++) {
                       List data_x = List::create(
                         Named("data") = R_NilValue,
                         Named(treat) = R_NilValue
@@ -551,7 +586,7 @@ List tsesimpcpp(const DataFrame data,
                   }
                   
                   int K = static_cast<int>(treats.size());
-                  for (h=0; h<K; h++) {
+                  for (int h=0; h<K; h++) {
                     // post progression data
                     IntegerVector l = which((treatb == h) & (pdb == 1));
                     IntegerVector id2 = idb[l];
@@ -564,7 +599,7 @@ List tsesimpcpp(const DataFrame data,
                       Named("event") = event2,
                       Named("swtrt") = swtrt2);
                     
-                    for (j=0; j<q+p2; j++) {
+                    for (int j=0; j<q+p2; j++) {
                       String zj = covariates_aft[j+1];
                       NumericVector u = zb_aft(_,j);
                       data1.push_back(u[l], zj);
@@ -601,7 +636,7 @@ List tsesimpcpp(const DataFrame data,
                       // calculate counter-factual survival times
                       double a = exp(psihat);
                       double c0 = std::min(1.0, a);
-                      for (i=0; i<n; i++) {
+                      for (int i=0; i<n; i++) {
                         if (treatb[i] == h) {
                           double b2, u_star, c_star;
                           if (swtrtb[i] == 1) {
@@ -628,7 +663,7 @@ List tsesimpcpp(const DataFrame data,
                         IntegerVector stratum2 = stratumb[l];
                         
                         if (has_stratum) {
-                          for (i=0; i<p_stratum; i++) {
+                          for (int i=0; i<p_stratum; i++) {
                             String s = stratum[i];
                             if (TYPEOF(data[s]) == INTSXP) {
                               IntegerVector stratumwi = u_stratum[s];
@@ -674,7 +709,7 @@ List tsesimpcpp(const DataFrame data,
                     
                     data_outcome.push_back(stratumb, "ustratum");
                     
-                    for (j=0; j<p; j++) {
+                    for (int j=0; j<p; j++) {
                       String zj = covariates[j+1];
                       NumericVector u = zb(_,j);
                       data_outcome.push_back(u, zj);

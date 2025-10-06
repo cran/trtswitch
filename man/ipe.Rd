@@ -22,6 +22,7 @@ ipe(
   recensor = TRUE,
   admin_recensor_only = TRUE,
   autoswitch = TRUE,
+  root_finding = "brent",
   alpha = 0.05,
   ties = "efron",
   tol = 1e-06,
@@ -87,6 +88,10 @@ recensoring will be applied to the actual censoring times for dropouts.}
 
 \item{autoswitch}{Whether to exclude recensoring for treatment arms
 with no switching. Defaults to \code{TRUE}.}
+
+\item{root_finding}{Character string specifying the univariate
+root-finding algorithm to use. Options are \code{"brent"} (default)
+for Brent's method, or \code{"bisection"} for the bisection method.}
 
 \item{alpha}{The significance level to calculate confidence intervals.}
 
@@ -158,6 +163,7 @@ survival times.
 administrative censoring times only.
 \item \code{autoswitch}: Whether to exclude recensoring for treatment
 arms with no switching.
+\item \code{root_finding}: The univariate root-finding algorithm to use.
 \item \code{alpha}: The significance level to calculate confidence
 intervals.
 \item \code{ties}: The method for handling ties in the Cox model.

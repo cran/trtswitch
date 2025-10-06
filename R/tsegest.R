@@ -67,6 +67,10 @@
 #'   should be used.
 #' @param flic Whether to apply intercept correction to obtain more
 #'   accurate predicted probabilities.
+#' @param ns_df Degrees of freedom for the natural cubic spline for 
+#'   visit-specific intercepts of the pooled logistic regression model. 
+#'   Defaults to 3 for two internal knots at the 33 and 67 percentiles
+#'   of the treatment switching times.
 #' @param recensor Whether to apply recensoring to counterfactual
 #'   survival times. Defaults to \code{TRUE}.
 #' @param admin_recensor_only Whether to apply recensoring to administrative
@@ -77,6 +81,9 @@
 #' @param gridsearch Whether to use grid search to estimate the causal
 #'   parameter \code{psi}. Defaults to \code{FALSE}, in which case, a root
 #'   finding algorithm will be used.
+#' @param root_finding Character string specifying the univariate 
+#'   root-finding algorithm to use. Options are \code{"brent"} (default)
+#'   for Brent's method, or \code{"bisection"} for the bisection method.
 #' @param alpha The significance level to calculate confidence intervals. 
 #'   The default value is 0.05.
 #' @param ties The method for handling ties in the Cox model, either
@@ -222,6 +229,8 @@
 #'
 #'     - \code{flic}: Whether to apply intercept correction.
 #'
+#'     - \code{ns_df}: Degrees of freedom for the natural cubic spline.
+#'
 #'     - \code{recensor}: Whether to apply recensoring to counterfactual
 #'       survival times.
 #'
@@ -234,6 +243,8 @@
 #'     - \code{gridsearch}: Whether to use grid search to estimate the 
 #'       causal parameter \code{psi}.
 #'       
+#'     - \code{root_finding}: The univariate root-finding algorithm to use.
+#'
 #'     - \code{alpha}: The significance level to calculate confidence
 #'       intervals.
 #'
@@ -307,7 +318,7 @@
 #'   swtrt = "xo", swtrt_time = "xotime", 
 #'   base_cov = "bprog", 
 #'   conf_cov = c("bprog*cattdc", "timePFSobs", "visit7on"), 
-#'   recensor = TRUE, admin_recensor_only = TRUE, 
+#'   ns_df = 3, recensor = TRUE, admin_recensor_only = TRUE, 
 #'   swtrt_control_only = TRUE, alpha = 0.05, ties = "efron", 
 #'   tol = 1.0e-6, offset = 0, boot = FALSE)
 #'   
@@ -322,9 +333,10 @@ tsegest <- function(data, id = "id", stratum = "",
                     base_cov = "", conf_cov = "",
                     low_psi = -2, hi_psi = 2, n_eval_z = 101,
                     strata_main_effect_only = TRUE,
-                    firth = FALSE, flic = FALSE,
+                    firth = FALSE, flic = FALSE, ns_df = 3,
                     recensor = TRUE, admin_recensor_only = TRUE,
-                    swtrt_control_only = TRUE, gridsearch = FALSE, 
+                    swtrt_control_only = TRUE, gridsearch = FALSE,
+                    root_finding = "brent",
                     alpha = 0.05, ties = "efron", tol = 1.0e-6, offset = 1, 
                     boot = TRUE, n_boot = 1000, seed = NA) {
 
@@ -395,9 +407,10 @@ tsegest <- function(data, id = "id", stratum = "",
     base_cov = varnames, conf_cov = varnames2,
     low_psi = low_psi, hi_psi = hi_psi, n_eval_z = n_eval_z,
     strata_main_effect_only = strata_main_effect_only,
-    firth = firth, flic = flic,
+    firth = firth, flic = flic, ns_df = ns_df,
     recensor = recensor, admin_recensor_only = admin_recensor_only,
     swtrt_control_only = swtrt_control_only, gridsearch = gridsearch, 
+    root_finding = root_finding, 
     alpha = alpha, ties = ties, tol = tol, offset = offset, 
     boot = boot, n_boot = n_boot, seed = seed)
   

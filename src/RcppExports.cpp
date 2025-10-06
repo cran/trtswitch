@@ -47,8 +47,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // ipecpp
-List ipecpp(const DataFrame data, const std::string id, const StringVector& stratum, const std::string time, const std::string event, const std::string treat, const std::string rx, const std::string censor_time, const StringVector& base_cov, const std::string aft_dist, const bool strata_main_effect_only, const double low_psi, const double hi_psi, const double treat_modifier, const bool recensor, const bool admin_recensor_only, const bool autoswitch, const double alpha, const std::string ties, const double tol, const bool boot, const int n_boot, const int seed);
-RcppExport SEXP _trtswitch_ipecpp(SEXP dataSEXP, SEXP idSEXP, SEXP stratumSEXP, SEXP timeSEXP, SEXP eventSEXP, SEXP treatSEXP, SEXP rxSEXP, SEXP censor_timeSEXP, SEXP base_covSEXP, SEXP aft_distSEXP, SEXP strata_main_effect_onlySEXP, SEXP low_psiSEXP, SEXP hi_psiSEXP, SEXP treat_modifierSEXP, SEXP recensorSEXP, SEXP admin_recensor_onlySEXP, SEXP autoswitchSEXP, SEXP alphaSEXP, SEXP tiesSEXP, SEXP tolSEXP, SEXP bootSEXP, SEXP n_bootSEXP, SEXP seedSEXP) {
+List ipecpp(const DataFrame data, const std::string id, const StringVector& stratum, const std::string time, const std::string event, const std::string treat, const std::string rx, const std::string censor_time, const StringVector& base_cov, const std::string aft_dist, const bool strata_main_effect_only, const double low_psi, const double hi_psi, const double treat_modifier, const bool recensor, const bool admin_recensor_only, const bool autoswitch, const std::string root_finding, const double alpha, const std::string ties, const double tol, const bool boot, const int n_boot, const int seed);
+RcppExport SEXP _trtswitch_ipecpp(SEXP dataSEXP, SEXP idSEXP, SEXP stratumSEXP, SEXP timeSEXP, SEXP eventSEXP, SEXP treatSEXP, SEXP rxSEXP, SEXP censor_timeSEXP, SEXP base_covSEXP, SEXP aft_distSEXP, SEXP strata_main_effect_onlySEXP, SEXP low_psiSEXP, SEXP hi_psiSEXP, SEXP treat_modifierSEXP, SEXP recensorSEXP, SEXP admin_recensor_onlySEXP, SEXP autoswitchSEXP, SEXP root_findingSEXP, SEXP alphaSEXP, SEXP tiesSEXP, SEXP tolSEXP, SEXP bootSEXP, SEXP n_bootSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -69,13 +69,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const bool >::type recensor(recensorSEXP);
     Rcpp::traits::input_parameter< const bool >::type admin_recensor_only(admin_recensor_onlySEXP);
     Rcpp::traits::input_parameter< const bool >::type autoswitch(autoswitchSEXP);
+    Rcpp::traits::input_parameter< const std::string >::type root_finding(root_findingSEXP);
     Rcpp::traits::input_parameter< const double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< const std::string >::type ties(tiesSEXP);
     Rcpp::traits::input_parameter< const double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< const bool >::type boot(bootSEXP);
     Rcpp::traits::input_parameter< const int >::type n_boot(n_bootSEXP);
     Rcpp::traits::input_parameter< const int >::type seed(seedSEXP);
-    rcpp_result_gen = Rcpp::wrap(ipecpp(data, id, stratum, time, event, treat, rx, censor_time, base_cov, aft_dist, strata_main_effect_only, low_psi, hi_psi, treat_modifier, recensor, admin_recensor_only, autoswitch, alpha, ties, tol, boot, n_boot, seed));
+    rcpp_result_gen = Rcpp::wrap(ipecpp(data, id, stratum, time, event, treat, rx, censor_time, base_cov, aft_dist, strata_main_effect_only, low_psi, hi_psi, treat_modifier, recensor, admin_recensor_only, autoswitch, root_finding, alpha, ties, tol, boot, n_boot, seed));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -177,8 +178,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // rpsftmcpp
-List rpsftmcpp(const DataFrame data, const std::string id, const StringVector& stratum, const std::string time, const std::string event, const std::string treat, const std::string rx, const std::string censor_time, const StringVector& base_cov, const std::string psi_test, const std::string aft_dist, const bool strata_main_effect_only, const double low_psi, const double hi_psi, const int n_eval_z, const double treat_modifier, const bool recensor, const bool admin_recensor_only, const bool autoswitch, const bool gridsearch, const double alpha, const std::string ties, const double tol, const bool boot, const int n_boot, const int seed);
-RcppExport SEXP _trtswitch_rpsftmcpp(SEXP dataSEXP, SEXP idSEXP, SEXP stratumSEXP, SEXP timeSEXP, SEXP eventSEXP, SEXP treatSEXP, SEXP rxSEXP, SEXP censor_timeSEXP, SEXP base_covSEXP, SEXP psi_testSEXP, SEXP aft_distSEXP, SEXP strata_main_effect_onlySEXP, SEXP low_psiSEXP, SEXP hi_psiSEXP, SEXP n_eval_zSEXP, SEXP treat_modifierSEXP, SEXP recensorSEXP, SEXP admin_recensor_onlySEXP, SEXP autoswitchSEXP, SEXP gridsearchSEXP, SEXP alphaSEXP, SEXP tiesSEXP, SEXP tolSEXP, SEXP bootSEXP, SEXP n_bootSEXP, SEXP seedSEXP) {
+List rpsftmcpp(const DataFrame data, const std::string id, const StringVector& stratum, const std::string time, const std::string event, const std::string treat, const std::string rx, const std::string censor_time, const StringVector& base_cov, const std::string psi_test, const std::string aft_dist, const bool strata_main_effect_only, const double low_psi, const double hi_psi, const int n_eval_z, const double treat_modifier, const bool recensor, const bool admin_recensor_only, const bool autoswitch, const bool gridsearch, const std::string root_finding, const double alpha, const std::string ties, const double tol, const bool boot, const int n_boot, const int seed);
+RcppExport SEXP _trtswitch_rpsftmcpp(SEXP dataSEXP, SEXP idSEXP, SEXP stratumSEXP, SEXP timeSEXP, SEXP eventSEXP, SEXP treatSEXP, SEXP rxSEXP, SEXP censor_timeSEXP, SEXP base_covSEXP, SEXP psi_testSEXP, SEXP aft_distSEXP, SEXP strata_main_effect_onlySEXP, SEXP low_psiSEXP, SEXP hi_psiSEXP, SEXP n_eval_zSEXP, SEXP treat_modifierSEXP, SEXP recensorSEXP, SEXP admin_recensor_onlySEXP, SEXP autoswitchSEXP, SEXP gridsearchSEXP, SEXP root_findingSEXP, SEXP alphaSEXP, SEXP tiesSEXP, SEXP tolSEXP, SEXP bootSEXP, SEXP n_bootSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -202,13 +203,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const bool >::type admin_recensor_only(admin_recensor_onlySEXP);
     Rcpp::traits::input_parameter< const bool >::type autoswitch(autoswitchSEXP);
     Rcpp::traits::input_parameter< const bool >::type gridsearch(gridsearchSEXP);
+    Rcpp::traits::input_parameter< const std::string >::type root_finding(root_findingSEXP);
     Rcpp::traits::input_parameter< const double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< const std::string >::type ties(tiesSEXP);
     Rcpp::traits::input_parameter< const double >::type tol(tolSEXP);
     Rcpp::traits::input_parameter< const bool >::type boot(bootSEXP);
     Rcpp::traits::input_parameter< const int >::type n_boot(n_bootSEXP);
     Rcpp::traits::input_parameter< const int >::type seed(seedSEXP);
-    rcpp_result_gen = Rcpp::wrap(rpsftmcpp(data, id, stratum, time, event, treat, rx, censor_time, base_cov, psi_test, aft_dist, strata_main_effect_only, low_psi, hi_psi, n_eval_z, treat_modifier, recensor, admin_recensor_only, autoswitch, gridsearch, alpha, ties, tol, boot, n_boot, seed));
+    rcpp_result_gen = Rcpp::wrap(rpsftmcpp(data, id, stratum, time, event, treat, rx, censor_time, base_cov, psi_test, aft_dist, strata_main_effect_only, low_psi, hi_psi, n_eval_z, treat_modifier, recensor, admin_recensor_only, autoswitch, gridsearch, root_finding, alpha, ties, tol, boot, n_boot, seed));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -500,8 +502,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // tsegestcpp
-List tsegestcpp(const DataFrame data, const std::string id, const StringVector& stratum, const std::string tstart, const std::string tstop, const std::string event, const std::string treat, const std::string censor_time, const std::string pd, const std::string pd_time, const std::string swtrt, const std::string swtrt_time, const StringVector& base_cov, const StringVector& conf_cov, const double low_psi, const double hi_psi, const int n_eval_z, const bool strata_main_effect_only, const bool firth, const bool flic, const bool recensor, const bool admin_recensor_only, const bool swtrt_control_only, const bool gridsearch, const double alpha, const std::string ties, const double tol, const double offset, const bool boot, const int n_boot, const int seed);
-RcppExport SEXP _trtswitch_tsegestcpp(SEXP dataSEXP, SEXP idSEXP, SEXP stratumSEXP, SEXP tstartSEXP, SEXP tstopSEXP, SEXP eventSEXP, SEXP treatSEXP, SEXP censor_timeSEXP, SEXP pdSEXP, SEXP pd_timeSEXP, SEXP swtrtSEXP, SEXP swtrt_timeSEXP, SEXP base_covSEXP, SEXP conf_covSEXP, SEXP low_psiSEXP, SEXP hi_psiSEXP, SEXP n_eval_zSEXP, SEXP strata_main_effect_onlySEXP, SEXP firthSEXP, SEXP flicSEXP, SEXP recensorSEXP, SEXP admin_recensor_onlySEXP, SEXP swtrt_control_onlySEXP, SEXP gridsearchSEXP, SEXP alphaSEXP, SEXP tiesSEXP, SEXP tolSEXP, SEXP offsetSEXP, SEXP bootSEXP, SEXP n_bootSEXP, SEXP seedSEXP) {
+List tsegestcpp(const DataFrame data, const std::string id, const StringVector& stratum, const std::string tstart, const std::string tstop, const std::string event, const std::string treat, const std::string censor_time, const std::string pd, const std::string pd_time, const std::string swtrt, const std::string swtrt_time, const StringVector& base_cov, const StringVector& conf_cov, const double low_psi, const double hi_psi, const int n_eval_z, const bool strata_main_effect_only, const bool firth, const bool flic, const int ns_df, const bool recensor, const bool admin_recensor_only, const bool swtrt_control_only, const bool gridsearch, const std::string root_finding, const double alpha, const std::string ties, const double tol, const double offset, const bool boot, const int n_boot, const int seed);
+RcppExport SEXP _trtswitch_tsegestcpp(SEXP dataSEXP, SEXP idSEXP, SEXP stratumSEXP, SEXP tstartSEXP, SEXP tstopSEXP, SEXP eventSEXP, SEXP treatSEXP, SEXP censor_timeSEXP, SEXP pdSEXP, SEXP pd_timeSEXP, SEXP swtrtSEXP, SEXP swtrt_timeSEXP, SEXP base_covSEXP, SEXP conf_covSEXP, SEXP low_psiSEXP, SEXP hi_psiSEXP, SEXP n_eval_zSEXP, SEXP strata_main_effect_onlySEXP, SEXP firthSEXP, SEXP flicSEXP, SEXP ns_dfSEXP, SEXP recensorSEXP, SEXP admin_recensor_onlySEXP, SEXP swtrt_control_onlySEXP, SEXP gridsearchSEXP, SEXP root_findingSEXP, SEXP alphaSEXP, SEXP tiesSEXP, SEXP tolSEXP, SEXP offsetSEXP, SEXP bootSEXP, SEXP n_bootSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -525,10 +527,12 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const bool >::type strata_main_effect_only(strata_main_effect_onlySEXP);
     Rcpp::traits::input_parameter< const bool >::type firth(firthSEXP);
     Rcpp::traits::input_parameter< const bool >::type flic(flicSEXP);
+    Rcpp::traits::input_parameter< const int >::type ns_df(ns_dfSEXP);
     Rcpp::traits::input_parameter< const bool >::type recensor(recensorSEXP);
     Rcpp::traits::input_parameter< const bool >::type admin_recensor_only(admin_recensor_onlySEXP);
     Rcpp::traits::input_parameter< const bool >::type swtrt_control_only(swtrt_control_onlySEXP);
     Rcpp::traits::input_parameter< const bool >::type gridsearch(gridsearchSEXP);
+    Rcpp::traits::input_parameter< const std::string >::type root_finding(root_findingSEXP);
     Rcpp::traits::input_parameter< const double >::type alpha(alphaSEXP);
     Rcpp::traits::input_parameter< const std::string >::type ties(tiesSEXP);
     Rcpp::traits::input_parameter< const double >::type tol(tolSEXP);
@@ -536,7 +540,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const bool >::type boot(bootSEXP);
     Rcpp::traits::input_parameter< const int >::type n_boot(n_bootSEXP);
     Rcpp::traits::input_parameter< const int >::type seed(seedSEXP);
-    rcpp_result_gen = Rcpp::wrap(tsegestcpp(data, id, stratum, tstart, tstop, event, treat, censor_time, pd, pd_time, swtrt, swtrt_time, base_cov, conf_cov, low_psi, hi_psi, n_eval_z, strata_main_effect_only, firth, flic, recensor, admin_recensor_only, swtrt_control_only, gridsearch, alpha, ties, tol, offset, boot, n_boot, seed));
+    rcpp_result_gen = Rcpp::wrap(tsegestcpp(data, id, stratum, tstart, tstop, event, treat, censor_time, pd, pd_time, swtrt, swtrt_time, base_cov, conf_cov, low_psi, hi_psi, n_eval_z, strata_main_effect_only, firth, flic, ns_df, recensor, admin_recensor_only, swtrt_control_only, gridsearch, root_finding, alpha, ties, tol, offset, boot, n_boot, seed));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -611,8 +615,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // tssim
-List tssim(const bool tdxo, const bool coxo, const int allocation1, const int allocation2, const double p_X_1, const double p_X_0, const double rate_T, const double beta1, const double beta2, const double gamma0, const double gamma1, const double gamma2, const double gamma3, const double gamma4, const double zeta0, const double zeta1, const double zeta2, const double zeta3, const double alpha0, const double alpha1, const double alpha2, const double theta1_1, const double theta1_0, const double theta2, const double rate_C, const NumericVector& accrualTime, const NumericVector& accrualIntensity, const double followupTime, const bool fixedFollowup, const double days, const int n, const int NSim, const int seed);
-RcppExport SEXP _trtswitch_tssim(SEXP tdxoSEXP, SEXP coxoSEXP, SEXP allocation1SEXP, SEXP allocation2SEXP, SEXP p_X_1SEXP, SEXP p_X_0SEXP, SEXP rate_TSEXP, SEXP beta1SEXP, SEXP beta2SEXP, SEXP gamma0SEXP, SEXP gamma1SEXP, SEXP gamma2SEXP, SEXP gamma3SEXP, SEXP gamma4SEXP, SEXP zeta0SEXP, SEXP zeta1SEXP, SEXP zeta2SEXP, SEXP zeta3SEXP, SEXP alpha0SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP theta1_1SEXP, SEXP theta1_0SEXP, SEXP theta2SEXP, SEXP rate_CSEXP, SEXP accrualTimeSEXP, SEXP accrualIntensitySEXP, SEXP followupTimeSEXP, SEXP fixedFollowupSEXP, SEXP daysSEXP, SEXP nSEXP, SEXP NSimSEXP, SEXP seedSEXP) {
+List tssim(const bool tdxo, const bool coxo, const int allocation1, const int allocation2, const double p_X_1, const double p_X_0, const double rate_T, const double beta1, const double beta2, const double gamma0, const double gamma1, const double gamma2, const double gamma3, const double gamma4, const double zeta0, const double zeta1, const double zeta2, const double zeta3, const double alpha0, const double alpha1, const double alpha2, const double theta1_1, const double theta1_0, const double theta2, const double rate_C, const NumericVector& accrualTime, const NumericVector& accrualIntensity, const double followupTime, const bool fixedFollowup, const double plannedTime, const double days, const int n, const int NSim, const int seed);
+RcppExport SEXP _trtswitch_tssim(SEXP tdxoSEXP, SEXP coxoSEXP, SEXP allocation1SEXP, SEXP allocation2SEXP, SEXP p_X_1SEXP, SEXP p_X_0SEXP, SEXP rate_TSEXP, SEXP beta1SEXP, SEXP beta2SEXP, SEXP gamma0SEXP, SEXP gamma1SEXP, SEXP gamma2SEXP, SEXP gamma3SEXP, SEXP gamma4SEXP, SEXP zeta0SEXP, SEXP zeta1SEXP, SEXP zeta2SEXP, SEXP zeta3SEXP, SEXP alpha0SEXP, SEXP alpha1SEXP, SEXP alpha2SEXP, SEXP theta1_1SEXP, SEXP theta1_0SEXP, SEXP theta2SEXP, SEXP rate_CSEXP, SEXP accrualTimeSEXP, SEXP accrualIntensitySEXP, SEXP followupTimeSEXP, SEXP fixedFollowupSEXP, SEXP plannedTimeSEXP, SEXP daysSEXP, SEXP nSEXP, SEXP NSimSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -645,23 +649,27 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const NumericVector& >::type accrualIntensity(accrualIntensitySEXP);
     Rcpp::traits::input_parameter< const double >::type followupTime(followupTimeSEXP);
     Rcpp::traits::input_parameter< const bool >::type fixedFollowup(fixedFollowupSEXP);
+    Rcpp::traits::input_parameter< const double >::type plannedTime(plannedTimeSEXP);
     Rcpp::traits::input_parameter< const double >::type days(daysSEXP);
     Rcpp::traits::input_parameter< const int >::type n(nSEXP);
     Rcpp::traits::input_parameter< const int >::type NSim(NSimSEXP);
     Rcpp::traits::input_parameter< const int >::type seed(seedSEXP);
-    rcpp_result_gen = Rcpp::wrap(tssim(tdxo, coxo, allocation1, allocation2, p_X_1, p_X_0, rate_T, beta1, beta2, gamma0, gamma1, gamma2, gamma3, gamma4, zeta0, zeta1, zeta2, zeta3, alpha0, alpha1, alpha2, theta1_1, theta1_0, theta2, rate_C, accrualTime, accrualIntensity, followupTime, fixedFollowup, days, n, NSim, seed));
+    rcpp_result_gen = Rcpp::wrap(tssim(tdxo, coxo, allocation1, allocation2, p_X_1, p_X_0, rate_T, beta1, beta2, gamma0, gamma1, gamma2, gamma3, gamma4, zeta0, zeta1, zeta2, zeta3, alpha0, alpha1, alpha2, theta1_1, theta1_0, theta2, rate_C, accrualTime, accrualIntensity, followupTime, fixedFollowup, plannedTime, days, n, NSim, seed));
     return rcpp_result_gen;
 END_RCPP
 }
 // findInterval3
-IntegerVector findInterval3(NumericVector x, NumericVector v);
-RcppExport SEXP _trtswitch_findInterval3(SEXP xSEXP, SEXP vSEXP) {
+IntegerVector findInterval3(NumericVector x, NumericVector v, bool rightmost_closed, bool all_inside, bool left_open);
+RcppExport SEXP _trtswitch_findInterval3(SEXP xSEXP, SEXP vSEXP, SEXP rightmost_closedSEXP, SEXP all_insideSEXP, SEXP left_openSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericVector >::type x(xSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type v(vSEXP);
-    rcpp_result_gen = Rcpp::wrap(findInterval3(x, v));
+    Rcpp::traits::input_parameter< bool >::type rightmost_closed(rightmost_closedSEXP);
+    Rcpp::traits::input_parameter< bool >::type all_inside(all_insideSEXP);
+    Rcpp::traits::input_parameter< bool >::type left_open(left_openSEXP);
+    rcpp_result_gen = Rcpp::wrap(findInterval3(x, v, rightmost_closed, all_inside, left_open));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -732,40 +740,14 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// getAccrualDurationFromN
-NumericVector getAccrualDurationFromN(const NumericVector& nsubjects, const NumericVector& accrualTime, const NumericVector& accrualIntensity);
-RcppExport SEXP _trtswitch_getAccrualDurationFromN(SEXP nsubjectsSEXP, SEXP accrualTimeSEXP, SEXP accrualIntensitySEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const NumericVector& >::type nsubjects(nsubjectsSEXP);
-    Rcpp::traits::input_parameter< const NumericVector& >::type accrualTime(accrualTimeSEXP);
-    Rcpp::traits::input_parameter< const NumericVector& >::type accrualIntensity(accrualIntensitySEXP);
-    rcpp_result_gen = Rcpp::wrap(getAccrualDurationFromN(nsubjects, accrualTime, accrualIntensity));
-    return rcpp_result_gen;
-END_RCPP
-}
-// getpsiest
-double getpsiest(const double target, const NumericVector& psi, const NumericVector& Z);
-RcppExport SEXP _trtswitch_getpsiest(SEXP targetSEXP, SEXP psiSEXP, SEXP ZSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const double >::type target(targetSEXP);
-    Rcpp::traits::input_parameter< const NumericVector& >::type psi(psiSEXP);
-    Rcpp::traits::input_parameter< const NumericVector& >::type Z(ZSEXP);
-    rcpp_result_gen = Rcpp::wrap(getpsiest(target, psi, Z));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_trtswitch_ipcwcpp", (DL_FUNC) &_trtswitch_ipcwcpp, 26},
-    {"_trtswitch_ipecpp", (DL_FUNC) &_trtswitch_ipecpp, 23},
+    {"_trtswitch_ipecpp", (DL_FUNC) &_trtswitch_ipecpp, 24},
     {"_trtswitch_logisregcpp", (DL_FUNC) &_trtswitch_logisregcpp, 17},
     {"_trtswitch_msmcpp", (DL_FUNC) &_trtswitch_msmcpp, 26},
     {"_trtswitch_recensor_sim_rpsftm", (DL_FUNC) &_trtswitch_recensor_sim_rpsftm, 24},
-    {"_trtswitch_rpsftmcpp", (DL_FUNC) &_trtswitch_rpsftmcpp, 26},
+    {"_trtswitch_rpsftmcpp", (DL_FUNC) &_trtswitch_rpsftmcpp, 27},
     {"_trtswitch_splineDesigncpp", (DL_FUNC) &_trtswitch_splineDesigncpp, 4},
     {"_trtswitch_bscpp", (DL_FUNC) &_trtswitch_bscpp, 7},
     {"_trtswitch_nscpp", (DL_FUNC) &_trtswitch_nscpp, 5},
@@ -780,18 +762,16 @@ static const R_CallMethodDef CallEntries[] = {
     {"_trtswitch_phregcpp", (DL_FUNC) &_trtswitch_phregcpp, 20},
     {"_trtswitch_survfit_phregcpp", (DL_FUNC) &_trtswitch_survfit_phregcpp, 14},
     {"_trtswitch_residuals_phregcpp", (DL_FUNC) &_trtswitch_residuals_phregcpp, 17},
-    {"_trtswitch_tsegestcpp", (DL_FUNC) &_trtswitch_tsegestcpp, 31},
+    {"_trtswitch_tsegestcpp", (DL_FUNC) &_trtswitch_tsegestcpp, 33},
     {"_trtswitch_tsegestsim", (DL_FUNC) &_trtswitch_tsegestsim, 26},
     {"_trtswitch_tsesimpcpp", (DL_FUNC) &_trtswitch_tsesimpcpp, 24},
-    {"_trtswitch_tssim", (DL_FUNC) &_trtswitch_tssim, 33},
-    {"_trtswitch_findInterval3", (DL_FUNC) &_trtswitch_findInterval3, 2},
+    {"_trtswitch_tssim", (DL_FUNC) &_trtswitch_tssim, 34},
+    {"_trtswitch_findInterval3", (DL_FUNC) &_trtswitch_findInterval3, 5},
     {"_trtswitch_hasVariable", (DL_FUNC) &_trtswitch_hasVariable, 2},
     {"_trtswitch_survsplit", (DL_FUNC) &_trtswitch_survsplit, 3},
     {"_trtswitch_qrcpp", (DL_FUNC) &_trtswitch_qrcpp, 2},
     {"_trtswitch_match3", (DL_FUNC) &_trtswitch_match3, 4},
     {"_trtswitch_qtpwexpcpp1", (DL_FUNC) &_trtswitch_qtpwexpcpp1, 6},
-    {"_trtswitch_getAccrualDurationFromN", (DL_FUNC) &_trtswitch_getAccrualDurationFromN, 3},
-    {"_trtswitch_getpsiest", (DL_FUNC) &_trtswitch_getpsiest, 3},
     {NULL, NULL, 0}
 };
 

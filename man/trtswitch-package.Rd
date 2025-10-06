@@ -6,7 +6,9 @@
 \description{
 Implements rank-preserving structural failure time model
 (RPSFTM), iterative parameter estimation (IPE), inverse probability of
-censoring weights (IPCW), and two-stage estimation (TSE) methods for
+censoring weights (IPCW), marginal structural model (MSM), simple
+two-stage estimation (TSEsimp), and improved two-stage with
+g-estimation (TSEgest) methods for
 treatment switching in randomized clinical trials.
 }
 \details{
@@ -20,8 +22,8 @@ in both treatment arms, stratification and covariates adjustment.
 For the AFT models, stratification factors are included as covariates
 (main effects only or all-way interactions) because SAS PROC LIFEREG
 does not have the strata statement. The RPSFTM, IPE and TSE methods
-can be used with or without recensoring. The IPCW method can produce
-stabilized and truncated weights.
+can be used with or without recensoring. The IPCW and MSM methods can
+produce stabilized and truncated weights.
 
 The \code{treat} variable adopts a treatment-before-control order,
 except with 1/0 or TRUE/FALSE coding.
@@ -63,6 +65,15 @@ Nicholas R. Latimer, Ian R. White, Kate Tilling, and Ulrike Siebert.
 Improved two-stage estimation to adjust for treatment switching in
 randomised trials: g-estimation to address time-dependent confounding.
 Statistical Methods in Medical Research. 2020;29(10):2900-2918.
+
+James M. Robins, Miguel Angel Hernan, and Babette Brumback.
+Marginal structural models and causal inference in epidemiology.
+Epidemiology. 2000;11(5):550-560.
+
+Miguel Angel Hernan, Babette Brumback, and James M. Robins.
+Marginal structural modesl to estimate the causual effect of
+zidovudine on the survival of HIV-positive men.
+Epidemiology. 2000;11(5):561-570.
 }
 \author{
 Kaifeng Lu, \email{kaifenglu@gmail.com}
