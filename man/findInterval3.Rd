@@ -4,7 +4,13 @@
 \alias{findInterval3}
 \title{Find Interval Numbers of Indices}
 \usage{
-findInterval3(x, v, rightmost_closed = 0L, all_inside = 0L, left_open = 0L)
+findInterval3(
+  x,
+  v,
+  rightmost_closed = FALSE,
+  all_inside = FALSE,
+  left_open = FALSE
+)
 }
 \arguments{
 \item{x}{The numeric vector of interest.}

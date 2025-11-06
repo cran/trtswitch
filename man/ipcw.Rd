@@ -2,8 +2,8 @@
 % Please edit documentation in R/ipcw.R
 \name{ipcw}
 \alias{ipcw}
-\title{Inverse Probability of Censoring Weights (IPCW) Method
-for Treatment Switching}
+\title{Inverse Probability of Censoring Weights (IPCW) for Treatment
+Switching}
 \usage{
 ipcw(
   data,
@@ -20,9 +20,9 @@ ipcw(
   denominator = "",
   logistic_switching_model = FALSE,
   strata_main_effect_only = TRUE,
+  ns_df = 3,
   firth = FALSE,
   flic = FALSE,
-  ns_df = 3,
   stabilized_weights = TRUE,
   trunc = 0,
   trunc_upper_only = TRUE,
@@ -92,16 +92,16 @@ effects in the logistic regression switching model. Defaults to
 \code{TRUE}, otherwise all possible strata combinations will be
 considered in the switching model.}
 
+\item{ns_df}{Degrees of freedom for the natural cubic spline for
+visit-specific intercepts of the pooled logistic regression model.
+Defaults to 3 for two internal knots at the 33 and 67 percentiles
+of the treatment switching times.}
+
 \item{firth}{Whether the Firth's bias reducing penalized likelihood
 should be used.}
 
 \item{flic}{Whether to apply intercept correction to obtain more
 accurate predicted probabilities.}
-
-\item{ns_df}{Degrees of freedom for the natural cubic spline for
-visit-specific intercepts of the pooled logistic regression model.
-Defaults to 3 for two internal knots at the 33 and 67 percentiles
-of the artificial censoring times due to treatment switching.}
 
 \item{stabilized_weights}{Whether to use the stabilized weights.
 The default is \code{TRUE}.}
@@ -117,8 +117,7 @@ the distribution.}
 \item{swtrt_control_only}{Whether treatment switching occurred only in
 the control group. The default is \code{TRUE}.}
 
-\item{alpha}{The significance level to calculate confidence intervals.
-The default value is 0.05.}
+\item{alpha}{The significance level to calculate confidence intervals.}
 
 \item{ties}{The method for handling ties in the Cox model, either
 "breslow" or "efron" (default).}
@@ -129,7 +128,7 @@ interval for hazard ratio. Defaults to \code{FALSE}.}
 \item{n_boot}{The number of bootstrap samples.}
 
 \item{seed}{The seed to reproduce the bootstrap results. The default is
-missing, in which case, the seed from the environment will be used.}
+\code{NA}, in which case, the seed from the environment will be used.}
 }
 \value{
 A list with the following components:
@@ -137,7 +136,7 @@ A list with the following components:
 \item \code{logrank_pvalue}:  The two-sided p-value of the log-rank test
 for the ITT analysis.
 \item \code{cox_pvalue}: The two-sided p-value for treatment effect based on
-the Cox model applied to counterfactual unswitched survival times.
+the weighted Cox model excluding data after treatment switch.
 If \code{boot} is \code{TRUE}, this value represents the
 bootstrap p-value.
 \item \code{hr}: The estimated hazard ratio from the Cox model.
@@ -147,7 +146,10 @@ either "Cox model" or "bootstrap".
 \item \code{data_switch}: A list of input data for the switching models by
 treatment group. The variables include \code{id}, \code{stratum},
 \code{"tstart"}, \code{"tstop"}, \code{"cross"}, \code{denominator},
-\code{swtrt}, and \code{swtrt_time}.
+\code{swtrt}, and \code{swtrt_time}. For logistic switching models,
+\code{stratum} variables are converted to dummy variables, and
+natural cubic spline basis variables are created for the visit-specific
+intercepts.
 \item \code{fit_switch}: A list of fitted switching models for the
 denominator and numerator by treatment group.
 \item \code{data_outcome}: The input data for the outcome Cox model
@@ -156,26 +158,29 @@ The variables include \code{id}, \code{stratum}, \code{"tstart"},
 \code{"tstop"}, \code{"event"}, \code{"treated"},
 \code{"unstablized_weight"}, \code{"stabilized_weight"},
 \code{base_cov}, and \code{treat}.
+\item \code{km_outcome}: The Kaplan-Meier estimates of the survival
+functions for the treatment and control groups based on the
+weighted outcome data.
+\item \code{lr_outcome}: The log-rank test results for the treatment
+effect based on the weighted outcome data.
 \item \code{fit_outcome}: The fitted outcome Cox model.
 \item \code{fail}: Whether a model fails to converge.
 \item \code{settings}: A list with the following components:
 \itemize{
 \item \code{logistic_switching_model}: Whether a pooled logistic
 regression switching model is used.
-\item \code{strata_main_effect_only}: Whether to only include the
-strata main effects in the logistic regression switching model.
-\item \code{firth}: Whether the Firth's bias reducing penalized likelihood
-should be used.
-\item \code{flic}: Whether to apply intercept correction to obtain more
-accurate predicted probabilities.
+\item \code{strata_main_effect_only}: Whether to only include the strata
+main effects in the logistic regression switching model.
 \item \code{ns_df}: Degrees of freedom for the natural cubic spline.
+\item \code{firth}: Whether the Firth's penalized likelihood is used.
+\item \code{flic}: Whether to apply intercept correction.
 \item \code{stabilized_weights}: Whether to use the stabilized weights.
 \item \code{trunc}: The truncation fraction of the weight distribution.
 \item \code{trunc_upper_only}: Whether to truncate the weights from the
 upper end of the distribution only.
-\item \code{swtrt_control_only} Whether treatment switching occurred only
-in the control group.
-\item \code{alpa}: The significance level to calculate confidence
+\item \code{swtrt_control_only} Whether treatment switching occurred
+only in the control group.
+\item \code{alpha}: The significance level to calculate confidence
 intervals.
 \item \code{ties}: The method for handling ties in the Cox model.
 \item \code{boot}: Whether to use bootstrap to obtain the confidence
@@ -187,39 +192,45 @@ interval for hazard ratio.
 if \code{boot} is \code{TRUE}.
 \item \code{fail_boots_data}: The data for failed bootstrap samples
 if \code{boot} is \code{TRUE}.
-\item \code{hr_boots}: The bootstrap hazard ratio estimates if \code{boot} is
-\code{TRUE}.
+\item \code{hr_boots}: The bootstrap hazard ratio estimates
+if \code{boot} is \code{TRUE}.
 }
 }
 \description{
-Uses the inverse probability of censoring weights (IPCW)
-method to obtain the hazard ratio estimate of the Cox model to
-adjust for treatment switching.
+Excludes data after treatment switching and fits a switching
+model to estimate the probability of not switching. The inverse of
+these probabilities (inverse probability of censoring weights) are then
+used as weights in a weighted Cox model to obtain the adjusted hazard
+ratio.
 }
 \details{
-We use the following steps to obtain the hazard ratio estimate
-and confidence interval had there been no treatment switching:
+The hazard ratio and confidence interval under a no-switching
+scenario are obtained as follows:
 \itemize{
-\item Exclude observations after treatment switch.
-\item Set up the crossover and event indicators for the last time interval
-for each subject.
-\item For time-dependent covariates Cox switching models, replicate unique
-event times across treatment arms within each subject.
-\item Fit the denominator switching model (and the numerator switching model
-for stabilized weights) to obtain the inverse probability
-of censoring weights. This can be a Cox model with time-dependent
-covariates or a pooled logistic regression model. For pooled logistic
-regression switching model, the probability of remaining uncensored
-(i.e., not switching) will be calculated by subtracting the
-predicted probability of switching from 1 and then multiplied over
-time up to the current time point.
-\item Fit the weighted Cox model to the censored outcome survival times
-to obtain the hazard ratio estimate.
-\item Use either robust sandwich variance or bootstrapping to construct the
-p-value and confidence interval for the hazard ratio.
-If bootstrapping is used, the confidence interval
-and corresponding p-value are calculated based on a t-distribution with
-\code{n_boot - 1} degrees of freedom.
+\item Exclude all observations after treatment switch.
+\item Define the crossover and event indicators for the last time interval
+of each subject.
+\item For time-dependent Cox switching models, replicate unique event times
+across treatment arms within each subject.
+\item Fit the denominator switching model (and numerator model for
+stabilized weights) to estimate inverse probability of censoring
+weights. Either a Cox model with time-dependent covariates or
+a pooled logistic regression model can be used.
+\itemize{
+\item For the pooled logistic regression model, the probability of
+remaining uncensored (i.e., not switching) is calculated as
+\eqn{1 - \hat{p}_{\text{switch}}}
+and accumulated over time up to the start of each interval.
+\item For the time-dependent Cox model, the probability of remaining
+unswitched is derived from the estimated baseline hazard and
+predicted risk score up to the end of each interval.
+}
+\item Fit a weighted Cox model to the outcome survival times (excluding
+data after switching) to estimate the hazard ratio.
+\item Construct the p-value and confidence interval for the hazard ratio
+using either robust sandwich variance or bootstrapping. When
+bootstrapping is used, the confidence interval and p-value are
+based on a t-distribution with \code{n_boot - 1} degrees of freedom.
 }
 }
 \examples{

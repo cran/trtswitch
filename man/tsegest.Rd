@@ -2,8 +2,8 @@
 % Please edit documentation in R/tsegest.R
 \name{tsegest}
 \alias{tsegest}
-\title{The Two-Stage Estimation (TSE) Method Using g-estimation
-for Treatment Switching}
+\title{Two-Stage Estimation with g-Estimation (TSEgest) for Treatment
+Switching}
 \usage{
 tsegest(
   data,
@@ -20,13 +20,13 @@ tsegest(
   swtrt_time = "swtrt_time",
   base_cov = "",
   conf_cov = "",
+  strata_main_effect_only = TRUE,
+  ns_df = 3,
+  firth = FALSE,
+  flic = FALSE,
   low_psi = -2,
   hi_psi = 2,
   n_eval_z = 101,
-  strata_main_effect_only = TRUE,
-  firth = FALSE,
-  flic = FALSE,
-  ns_df = 3,
   recensor = TRUE,
   admin_recensor_only = TRUE,
   swtrt_control_only = TRUE,
@@ -57,12 +57,12 @@ counting-process data with time-dependent covariates.
 \item \code{censor_time}: The administrative censoring time. It should
 be provided for all subjects including those who had events.
 \item \code{pd}: The disease progression indicator, 1=PD, 0=no PD.
-\item \code{pd_time}: The time from randomization to PD.
+\item \code{pd_time}: The time from randomization to disease progression.
 \item \code{swtrt}: The treatment switch indicator, 1=switch, 0=no switch.
 \item \code{swtrt_time}: The time from randomization to treatment switch.
 \item \code{base_cov}: The baseline covariates (excluding treat).
-\item \code{conf_cov}: The confounding variables for predicting
-treatment switching (excluding treat).
+\item \code{conf_cov}: The confounding variables (excluding treat) for
+predicting treatment switching.
 }}
 
 \item{id}{The name of the id variable in the input data.}
@@ -93,6 +93,22 @@ treat) in the input data for the Cox model.}
 \item{conf_cov}{The names of confounding variables (excluding
 treat) in the input data for the logistic regression switching model.}
 
+\item{strata_main_effect_only}{Whether to only include the strata main
+effects in the logistic regression switching model. Defaults to
+\code{TRUE}, otherwise all possible strata combinations will be
+considered in the switching model.}
+
+\item{ns_df}{Degrees of freedom for the natural cubic spline for
+visit-specific intercepts of the pooled logistic regression model.
+Defaults to 3 for two internal knots at the 33 and 67 percentiles
+of the treatment switching times.}
+
+\item{firth}{Whether the Firth's bias reducing penalized likelihood
+should be used.}
+
+\item{flic}{Whether to apply intercept correction to obtain more
+accurate predicted probabilities.}
+
 \item{low_psi}{The lower limit of the causal parameter.}
 
 \item{hi_psi}{The upper limit of the causal parameter.}
@@ -101,22 +117,6 @@ treat) in the input data for the logistic regression switching model.}
 \code{hi_psi} (inclusive) at which to evaluate the Wald
 statistics for the coefficient of the counterfactual in the logistic
 regression switching model.}
-
-\item{strata_main_effect_only}{Whether to only include the strata main
-effects in the logistic regression switching model. Defaults to
-\code{TRUE}, otherwise all possible strata combinations will be
-considered in the switching model.}
-
-\item{firth}{Whether the Firth's bias reducing penalized likelihood
-should be used.}
-
-\item{flic}{Whether to apply intercept correction to obtain more
-accurate predicted probabilities.}
-
-\item{ns_df}{Degrees of freedom for the natural cubic spline for
-visit-specific intercepts of the pooled logistic regression model.
-Defaults to 3 for two internal knots at the 33 and 67 percentiles
-of the treatment switching times.}
 
 \item{recensor}{Whether to apply recensoring to counterfactual
 survival times. Defaults to \code{TRUE}.}
@@ -136,8 +136,7 @@ finding algorithm will be used.}
 root-finding algorithm to use. Options are \code{"brent"} (default)
 for Brent's method, or \code{"bisection"} for the bisection method.}
 
-\item{alpha}{The significance level to calculate confidence intervals.
-The default value is 0.05.}
+\item{alpha}{The significance level to calculate confidence intervals.}
 
 \item{ties}{The method for handling ties in the Cox model, either
 "breslow" or "efron" (default).}
@@ -145,9 +144,12 @@ The default value is 0.05.}
 \item{tol}{The desired accuracy (convergence tolerance) for \code{psi}
 for the root finding algorithm.}
 
-\item{offset}{The offset to calculate the time to event, PD, and
-treatment switch. We can set \code{offset} equal to 1 (default),
-1/30.4375, or 1/365.25 if the time unit is day, month, or year.}
+\item{offset}{The offset to calculate the time from disease progression
+to death or censoring, the time from disease progression to treatment
+switch, and the time from treatment switch to death or censoring.
+We can set \code{offset} equal to 0 (no offset), and 1 (default),
+1/30.4375, or 1/365.25 if the time unit is day, month, or year,
+respectively.}
 
 \item{boot}{Whether to use bootstrap to obtain the confidence
 interval for hazard ratio. Defaults to \code{TRUE}.}
@@ -155,7 +157,7 @@ interval for hazard ratio. Defaults to \code{TRUE}.}
 \item{n_boot}{The number of bootstrap samples.}
 
 \item{seed}{The seed to reproduce the bootstrap results. The default is
-missing, in which case, the seed from the environment will be used.}
+\code{NA}, in which case, the seed from the environment will be used.}
 }
 \value{
 A list with the following components:
@@ -174,17 +176,13 @@ bootstrap p-value.
 \item \code{hr_CI}: The confidence interval for hazard ratio.
 \item \code{hr_CI_type}: The type of confidence interval for hazard ratio,
 either "Cox model" or "bootstrap".
-\item \code{analysis_switch}: A list of data and analysis results related to
-treatment switching.
-\itemize{
 \item \code{data_switch}: The list of input data for the time from
-secondary baseline to switch by treatment group. The variables
+disease progression to switch by treatment group. The variables
 include \code{id}, \code{stratum}, \code{"swtrt"},
 and \code{"swtrt_time"}. If \code{swtrt == 0}, then \code{swtrt_time}
-is censored at the time from secondary baseline to either
-death or censoring.
+is censored at the time from disease progression to death or censoring.
 \item \code{km_switch}: The list of Kaplan-Meier plot data for the
-time from secondary baseline to switch by treatment group.
+time from disease progression to switch by treatment group.
 \item \code{eval_z}: The list of data by treatment group containing
 the Wald statistics for the coefficient of the counterfactual
 in the logistic regression switching model, evaluated at
@@ -202,31 +200,30 @@ the martingale residuals.
 regression models for treatment switching using g-estimation.
 The variables include \code{id}, \code{stratum},
 \code{"tstart"}, \code{"tstop"}, \code{"cross"},
-\code{"counterfactual"}, \code{conf_cov},
+\code{"counterfactual"}, \code{conf_cov}, \code{ns},
 \code{pd_time}, \code{swtrt}, and \code{swtrt_time}.
 \item \code{fit_logis}: The list of fitted pooled logistic regression
 models for treatment switching using g-estimation.
-}
 \item \code{data_outcome}: The input data for the outcome Cox model
 of counterfactual unswitched survival times.
 The variables include \code{id}, \code{stratum}, \code{"t_star"},
 \code{"d_star"}, \code{"treated"}, \code{base_cov} and \code{treat}.
 \item \code{fit_outcome}: The fitted outcome Cox model.
 \item \code{fail}: Whether a model fails to converge.
-\item \code{psimissing}: Whether the psi parameter cannot be estimated.
+\item \code{psimissing}: Whether the \code{psi} parameter cannot be estimated.
 \item \code{settings}: A list with the following components:
 \itemize{
+\item \code{strata_main_effect_only}: Whether to only include the strata
+main effects in the logistic regression switching model.
+\item \code{ns_df}: Degrees of freedom for the natural cubic spline.
+\item \code{firth}: Whether the Firth's penalized likelihood is used.
+\item \code{flic}: Whether to apply intercept correction.
 \item \code{low_psi}: The lower limit of the causal parameter.
 \item \code{hi_psi}: The upper limit of the causal parameter.
 \item \code{n_eval_z}: The number of points between \code{low_psi} and
 \code{hi_psi} (inclusive) at which to evaluate the Wald statistics
 for the coefficient for the counterfactual in the logistic
 regression switching model.
-\item \code{strata_main_effect_only}: Whether to only include the strata
-main effects in the logistic regression switching model.
-\item \code{firth}: Whether the Firth's penalized likelihood is used.
-\item \code{flic}: Whether to apply intercept correction.
-\item \code{ns_df}: Degrees of freedom for the natural cubic spline.
 \item \code{recensor}: Whether to apply recensoring to counterfactual
 survival times.
 \item \code{admin_recensor_only}: Whether to apply recensoring to
@@ -241,8 +238,10 @@ intervals.
 \item \code{ties}: The method for handling ties in the Cox model.
 \item \code{tol}: The desired accuracy (convergence tolerance)
 for \code{psi}.
-\item \code{offset}: The offset to calculate the time to event, PD, and
-treatment switch.
+\item \code{offset}: The offset to calculate the time from disease
+progression to death or censoring, the time from disease
+progression to treatment switch, and the time from treatment
+switch to death or censoring.
 \item \code{boot}: Whether to use bootstrap to obtain the confidence
 interval for hazard ratio.
 \item \code{n_boot}: The number of bootstrap samples.
@@ -256,55 +255,61 @@ group if \code{swtrt_control_only} is \code{FALSE}.
 if \code{boot} is \code{TRUE}.
 \item \code{fail_boots_data}: The data for failed bootstrap samples
 if \code{boot} is \code{TRUE}.
-\item \code{hr_boots}: The bootstrap hazard ratio estimates if \code{boot} is
-\code{TRUE}.
-\item \code{psi_boots}: The bootstrap \code{psi} estimates if \code{boot} is
-\code{TRUE}.
-\item \code{psi_trt_boots}: The bootstrap \code{psi_trt} estimates if
-\code{boot} is \code{TRUE} and \code{swtrt_control_only} is
+\item \code{hr_boots}: The bootstrap hazard ratio estimates
+if \code{boot} is \code{TRUE}.
+\item \code{psi_boots}: The bootstrap \code{psi} estimates
+if \code{boot} is \code{TRUE}.
+\item \code{psi_trt_boots}: The bootstrap \code{psi_trt} estimates
+if \code{boot} is \code{TRUE} and \code{swtrt_control_only} is
 \code{FALSE}.
 }
 }
 \description{
-Obtains the causal parameter estimate using g-estimation
-based on the logistic regression switching model and the hazard ratio
-estimate of the Cox model to adjust for treatment switching.
+Estimates the causal parameter using g-estimation by
+fitting a pooled logistic regression switching model that includes
+counterfactual \emph{unswitched} survival times and time-dependent
+confounders as covariates. The adjusted hazard ratio is then obtained
+from the Cox model using counterfactual \emph{unswitched} survival
+times based on the estimated causal parameter.
 }
 \details{
-We use the following steps to obtain the hazard ratio estimate
-and confidence interval had there been no treatment switching:
+Assuming one-way switching from control to treatment, the
+hazard ratio and confidence interval under a no-switching scenario
+are obtained as follows:
 \itemize{
-\item Use a pooled logistic regression switching model to estimate
-the causal parameter \eqn{\psi} based on the patients in the
-control group  who had disease progression:
-\deqn{\textrm{logit}(p(E_{ik})) = \alpha U_{i,\psi} + 
-  \sum_{j} \beta_j x_{ijk}}
-where \eqn{E_{ik}} is the observed switch indicator for individual
-\eqn{i} at observation \eqn{k},
-\deqn{U_{i,\psi} = T_{C_i} + e^{\psi}T_{E_i}}
-is the counterfactual survival time for individual \eqn{i} given a
-specific value for \eqn{\psi}, and \eqn{x_{ijk}} is the confounder
-\eqn{j} for individual \eqn{i} at observation \eqn{k}.
-When applied from a secondary baseline, \eqn{U_{i,\psi}}
-refers to post-secondary baseline counterfactual survival, where
-\eqn{T_{C_i}} corresponds to the time spent after the secondary baseline
-on control treatment, and \eqn{T_{E_i}} corresponds to the time spent
-after the secondary baseline on the experimental treatment.
-\item Search for \eqn{\psi} such that the Z-statistic for \eqn{\alpha} is
-close to zero. This will be the estimate of the causal parameter. The
-confidence interval for \eqn{\psi} can be obtained as the value of
-\eqn{\psi} such that the corresponding two-sided p-value for
-testing \eqn{H_0: \alpha = 0} in the switching model is equal to the
-nominal significance level.
-\item Derive the counterfactual survival times for control patients
-had there been no treatment switching.
-\item Fit the Cox proportional hazards model to the observed survival times
-for the experimental group and the counterfactual survival times
-for the control group to obtain the hazard ratio estimate.
-\item If bootstrapping is used, the confidence interval and corresponding
-p-value for hazard ratio are calculated based on a t-distribution with
+\item Fit a pooled logistic regression switching model among control-arm
+patients who experienced disease progression:
+\deqn{\text{logit}(p(E_{ik})) = \alpha U_{i,\psi} + \sum_{j} \beta_j 
+  x_{ijk}}
+where \eqn{E_{ik}} is the switch indicator for subject \eqn{i} at
+observation \eqn{k},
+\deqn{U_{i,\psi} = T_{C_i} + e^{\psi}T_{E_i}} is the counterfactual
+survival time given a specific \eqn{\psi}, and \eqn{x_{ijk}}
+represents the time-dependent confounders.
+Natural cubic splines of time can be included to model time-varying
+baseline hazards. \eqn{U_{i,\psi}} is defined relative to the
+secondary baseline at disease progression and represents
+post-progression counterfactual survival, where \eqn{T_{C_i}} and
+\eqn{T_{E_i}} correspond to  time spent after progression on control
+and experimental treatments, respectively.
+Martingale residuals may be used in place of counterfactual survival
+times to account for censoring.
+\item Identify the value of \eqn{\psi} for which the Z-statistic of
+\eqn{\alpha} is approximately zero. This value is the causal
+parameter estimate.
+\item Compute counterfactual survival times for control patients using
+the estimated  \eqn{\psi}.
+\item Fit a Cox model to the observed survival times for the treatment group
+and the counterfactual survival times for the control group to
+estimate the hazard ratio.
+\item When bootstrapping is used, derive the confidence interval and
+p-value for the hazard ratio from a t-distribution with
 \code{n_boot - 1} degrees of freedom.
 }
+
+If treatment switching occurs before or in the absence of recorded disease
+progression, the patient is considered to have progressed at the time of
+treatment switching.
 }
 \examples{
 

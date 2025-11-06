@@ -2,7 +2,7 @@
 % Please edit documentation in R/RcppExports.R
 \name{tsegestsim}
 \alias{tsegestsim}
-\title{Simulate Survival Data for Two-Stage Estimation Method Using
+\title{Simulate Survival Data for Two-Stage Estimation with
 g-estimation}
 \usage{
 tsegestsim(
@@ -30,7 +30,7 @@ tsegestsim(
   pgoodmet = 0.2,
   xomult = 1.4188308,
   milestone = 546,
-  outputRawDataset = 1L,
+  outputRawDataset = TRUE,
   seed = NA_integer_
 )
 }

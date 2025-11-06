@@ -60,9 +60,9 @@ the control group.
 probabilities.
 \item \code{vsurv1}: The variance for surv1.
 \item \code{vsurv2}: The variance for surv2.
-\item \code{vsurvDiff}: The variance for survDiff.
+\item \code{sesurvDiff}: The standard error for survDiff.
 \item \code{survDiffZ}: The Z-statistic value.
-\item \code{survDiffPValue}: The one-sided p-value.
+\item \code{survDiffPValue}: The two-sided p-value.
 \item \code{lower}: The lower bound of confidence interval.
 \item \code{upper}: The upper bound of confidence interval.
 \item \code{conflev}: The level of confidence interval.

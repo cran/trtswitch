@@ -15,9 +15,9 @@ ipe(
   censor_time = "censor_time",
   base_cov = "",
   aft_dist = "weibull",
+  strata_main_effect_only = TRUE,
   low_psi = -2,
   hi_psi = 2,
-  strata_main_effect_only = 1,
   treat_modifier = 1,
   recensor = TRUE,
   admin_recensor_only = TRUE,
@@ -68,13 +68,13 @@ Cox model.}
 model. Options include "exponential", "weibull" (default),
 "loglogistic", and "lognormal".}
 
-\item{low_psi}{The lower limit of the causal parameter.}
-
-\item{hi_psi}{The upper limit of the causal parameter.}
-
 \item{strata_main_effect_only}{Whether to only include the strata main
 effects in the AFT model. Defaults to \code{TRUE}, otherwise all
 possible strata combinations will be considered in the AFT model.}
+
+\item{low_psi}{The lower limit of the causal parameter.}
+
+\item{hi_psi}{The upper limit of the causal parameter.}
 
 \item{treat_modifier}{The optional sensitivity parameter for the
 constant treatment effect assumption.}
@@ -109,7 +109,7 @@ test p-value.}
 \item{n_boot}{The number of bootstrap samples.}
 
 \item{seed}{The seed to reproduce the bootstrap results. The default is
-missing, in which case, the seed from the environment will be used.}
+\code{NA}, in which case, the seed from the environment will be used.}
 }
 \value{
 A list with the following components:
@@ -146,7 +146,7 @@ The variables include \code{id}, \code{stratum}, \code{"t_star"},
 \code{"d_star"}, \code{"treated"}, \code{base_cov}, and \code{treat}.
 \item \code{fit_outcome}: The fitted outcome Cox model.
 \item \code{fail}: Whether a model fails to converge.
-\item \code{psimissing}: Whether the psi parameter cannot be estimated.
+\item \code{psimissing}: Whether the \code{psi} parameter cannot be estimated.
 \item \code{settings}: A list with the following components:
 \itemize{
 \item \code{aft_dist}: The distribution for time to event for the AFT
@@ -178,33 +178,37 @@ interval for hazard ratio.
 if \code{boot} is \code{TRUE}.
 \item \code{fail_boots_data}: The data for failed bootstrap samples
 if \code{boot} is \code{TRUE}.
-\item \code{hr_boots}: The bootstrap hazard ratio estimates if \code{boot} is
-\code{TRUE}.
-\item \code{psi_boots}: The bootstrap \code{psi} estimates if \code{boot} is
-\code{TRUE}.
+\item \code{hr_boots}: The bootstrap hazard ratio estimates
+if \code{boot} is \code{TRUE}.
+\item \code{psi_boots}: The bootstrap \code{psi} estimates
+if \code{boot} is \code{TRUE}.
 }
 }
 \description{
-Obtains the causal parameter estimate from the
-accelerated failure-time (AFT) model and the hazard ratio estimate
-from the Cox model to adjust for treatment switching.
+Estimates the causal parameter by iteratively fitting an
+accelerated failure time (AFT) model to counterfactual
+\emph{unswitched} survival times, and derives the adjusted hazard
+ratio from the Cox model using counterfactual \emph{unswitched}
+survival times based on the estimated causal parameter.
 }
 \details{
-We use the following steps to obtain the hazard ratio estimate
-and confidence interval had there been no treatment switching:
+Assuming one-way switching from control to treatment, the
+hazard ratio and confidence interval under a no-switching scenario
+are obtained as follows:
 \itemize{
-\item Use IPE to estimate the causal parameter \eqn{\psi} based on the AFT
-model for the observed survival times for the experimental arm and
-the counterfactual survival times for the control arm,
+\item Estimate the causal parameter \eqn{\psi} by iteratively fitting an
+AFT model to the observed survival times for the treatment arm and
+the counterfactual survival times for the control arm:
 \deqn{U_{i,\psi} = T_{C_i} + e^{\psi}T_{E_i}}
-\item Fit the Cox proportional hazards model to the observed survival times
-for the experimental group and the counterfactual survival times
-for the control group to obtain the hazard ratio estimate.
-\item Use either the log-rank test p-value for the intention-to-treat (ITT)
-analysis or bootstrap to construct the confidence interval for
-hazard ratio. If bootstrapping is used, the confidence interval
-and corresponding p-value are calculated based on a t-distribution with
-\code{n_boot - 1} degrees of freedom.
+\item Compute counterfactual survival times for control patients using
+the estimated \eqn{\psi}.
+\item Fit a Cox model to the observed survival times for the treatment group
+and the counterfactual survival times for the control group to
+estimate the hazard ratio.
+\item Obtain the confidence interval for the hazard ratio using either
+the ITT log-rank test p-value or bootstrap. When bootstrapping,
+the interval and p-value are derived from a t-distribution
+with \code{n_boot - 1} degrees of freedom.
 }
 }
 \examples{

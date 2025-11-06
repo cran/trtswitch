@@ -2,8 +2,7 @@
 % Please edit documentation in R/tsesimp.R
 \name{tsesimp}
 \alias{tsesimp}
-\title{The Simple Two-Stage Estimation (TSE) Method for Treatment
-Switching}
+\title{Simple Two-Stage Estimation (TSEsimp) for Treatment Switching}
 \usage{
 tsesimp(
   data,
@@ -44,12 +43,12 @@ tsesimp(
 \item \code{censor_time}: The administrative censoring time. It should
 be provided for all subjects including those who had events.
 \item \code{pd}: The disease progression indicator, 1=PD, 0=no PD.
-\item \code{pd_time}: The time from randomization to PD.
+\item \code{pd_time}: The time from randomization to disease progression.
 \item \code{swtrt}: The treatment switch indicator, 1=switch, 0=no switch.
 \item \code{swtrt_time}: The time from randomization to treatment switch.
 \item \code{base_cov}: The baseline covariates (excluding treat).
 \item \code{base2_cov}: The baseline and secondary baseline
-covariates (excluding swtrt).
+covariates (excluding treat).
 }}
 
 \item{id}{The name of the id variable in the input data.}
@@ -76,7 +75,7 @@ covariates (excluding swtrt).
 treat) in the input data for the outcome Cox model.}
 
 \item{base2_cov}{The names of baseline and secondary baseline covariates
-(excluding swtrt) in the input data for the AFT model for
+(excluding treat) in the input data for the AFT model for
 post-progression survival.}
 
 \item{aft_dist}{The assumed distribution for time to event for the AFT
@@ -97,15 +96,15 @@ recensoring will be applied to the actual censoring times for dropouts.}
 \item{swtrt_control_only}{Whether treatment switching occurred only in
 the control group. The default is \code{TRUE}.}
 
-\item{alpha}{The significance level to calculate confidence intervals.
-The default value is 0.05.}
+\item{alpha}{The significance level to calculate confidence intervals.}
 
 \item{ties}{The method for handling ties in the Cox model, either
 "breslow" or "efron" (default).}
 
-\item{offset}{The offset to calculate the time to event, PD, and
-treatment switch. We can set \code{offset} equal to 1 (default),
-1/30.4375, or 1/365.25 if the time unit is day, month, or year.}
+\item{offset}{The offset to calculate the time disease progression to
+death or censoring. We can set \code{offset} equal to 0 (no offset),
+and 1 (default), 1/30.4375, or 1/365.25 if the time unit is day, month,
+or year, respectively.}
 
 \item{boot}{Whether to use bootstrap to obtain the confidence
 interval for hazard ratio. Defaults to \code{TRUE}.}
@@ -113,7 +112,7 @@ interval for hazard ratio. Defaults to \code{TRUE}.}
 \item{n_boot}{The number of bootstrap samples.}
 
 \item{seed}{The seed to reproduce the bootstrap results. The default is
-missing, in which case, the seed from the environment will be used.}
+\code{NA}, in which case, the seed from the environment will be used.}
 }
 \value{
 A list with the following components:
@@ -143,7 +142,7 @@ The variables include \code{id}, \code{stratum}, \code{"t_star"},
 \code{"d_star"}, \code{"treated"}, \code{base_cov}, and \code{treat}.
 \item \code{fit_outcome}: The fitted outcome Cox model.
 \item \code{fail}: Whether a model fails to converge.
-\item \code{psimissing}: Whether the psi parameter cannot be estimated.
+\item \code{psimissing}: Whether the \code{psi} parameter cannot be estimated.
 \item \code{settings}: A list with the following components:
 \itemize{
 \item \code{aft_dist}: The distribution for time to event for the AFT
@@ -159,8 +158,8 @@ only in the control group.
 \item \code{alpha}: The significance level to calculate confidence
 intervals.
 \item \code{ties}: The method for handling ties in the Cox model.
-\item \code{offset}: The offset to calculate the time to event, PD, and
-treatment switch.
+\item \code{offset}: The offset to calculate the time disease
+progression to death or censoring.
 \item \code{boot}: Whether to use bootstrap to obtain the confidence
 interval for hazard ratio.
 \item \code{n_boot}: The number of bootstrap samples.
@@ -168,48 +167,60 @@ interval for hazard ratio.
 }
 \item \code{psi_trt}: The estimated causal parameter for the experimental
 group if \code{swtrt_control_only} is \code{FALSE}.
-\item \code{psi_trt_CI}: The confidence interval for \code{psi_trt} if
-\code{swtrt_control_only} is \code{FALSE}.
+\item \code{psi_trt_CI}: The confidence interval for \code{psi_trt}
+if \code{swtrt_control_only} is \code{FALSE}.
 \item \code{fail_boots}: The indicators for failed bootstrap samples
 if \code{boot} is \code{TRUE}.
 \item \code{fail_boots_data}: The data for failed bootstrap samples
 if \code{boot} is \code{TRUE}.
-\item \code{hr_boots}: The bootstrap hazard ratio estimates if \code{boot} is
-\code{TRUE}.
-\item \code{psi_boots}: The bootstrap \code{psi} estimates if \code{boot} is
-\code{TRUE}.
-\item \code{psi_trt_boots}: The bootstrap \code{psi_trt} estimates if
-\code{boot} is \code{TRUE} and \code{swtrt_control_only} is
+\item \code{hr_boots}: The bootstrap hazard ratio estimates
+if \code{boot} is \code{TRUE}.
+\item \code{psi_boots}: The bootstrap \code{psi} estimates
+if \code{boot} is \code{TRUE}.
+\item \code{psi_trt_boots}: The bootstrap \code{psi_trt} estimates
+if \code{boot} is \code{TRUE} and \code{swtrt_control_only} is
 \code{FALSE}.
 }
 }
 \description{
-Obtains the causal parameter estimate of the accelerated
-failure-time (AFT) model
-for switching after disease progression and the hazard ratio estimate
-of the outcome Cox model to adjust for treatment switching.
+Estimates the causal parameter by fitting an accelerated
+failure time (AFT) model comparing post-progression survival between
+switchers and non-switchers, and derives the adjusted hazard ratio
+from the Cox model using counterfactual \emph{unswitched} survival
+times based on the estimated causal parameter.
 }
 \details{
-We use the following steps to obtain the hazard ratio estimate
-and confidence interval had there been no treatment switching:
+Assuming one-way switching from control to treatment, the
+hazard ratio and confidence interval under a no-switching scenario
+are obtained as follows:
 \itemize{
-\item Fit an AFT model to post-progression survival data to estimate
-the causal parameter \eqn{\psi} based on the patients
-in the control group who had disease progression.
-\item Derive the counterfactual survival times for control patients
-had there been no treatment switching.
-\item Fit the Cox proportional hazards model to the observed survival times
-for the experimental group and the counterfactual survival times
-for the control group to obtain the hazard ratio estimate.
-\item If bootstrapping is used, the confidence interval and corresponding
-p-value for hazard ratio are calculated based on a t-distribution with
+\item Estimate the causal parameter \eqn{\psi} by fitting an AFT model
+comparing post-progression survival between switchers and non-switchers
+in the control group who experienced disease progression.
+\item Compute counterfactual survival times for control patients using
+the estimated \eqn{\psi}.
+\item Fit a Cox model to the observed survival times for the treatment group
+and the counterfactual survival times for the control group to
+estimate the hazard ratio.
+\item When bootstrapping is used, derive the confidence interval and
+p-value for the hazard ratio from a t-distribution with
 \code{n_boot - 1} degrees of freedom.
 }
+
+If treatment switching occurs before or in the absence of recorded disease
+progression, the patient is considered to have progressed at the time of
+treatment switching.
 }
 \examples{
 
 library(dplyr)
 
+# modify pd and dpd based on co and dco
+shilong <- shilong \%>\%
+  mutate(dpd = ifelse(co & !pd, dco, dpd),
+         pd = ifelse(co & !pd, 1, pd)) \%>\%
+  mutate(dpd = ifelse(pd & co & dco < dpd, dco, dpd))
+  
 # the eventual survival time
 shilong1 <- shilong \%>\%
   arrange(bras.f, id, tstop) \%>\%

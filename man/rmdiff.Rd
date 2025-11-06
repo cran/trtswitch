@@ -14,7 +14,7 @@ rmdiff(
   milestone = NA_real_,
   rmstDiffH0 = 0,
   conflev = 0.95,
-  biascorrection = 0L
+  biascorrection = FALSE
 )
 }
 \arguments{
@@ -65,9 +65,9 @@ the control group.
 survival times.
 \item \code{vrmst1}: The variance for rmst1.
 \item \code{vrmst2}: The variance for rmst2.
-\item \code{vrmstDiff}: The variance for rmstDiff.
+\item \code{sermstDiff}: The standard error for rmstDiff.
 \item \code{rmstDiffZ}: The Z-statistic value.
-\item \code{rmstDiffPValue}: The one-sided p-value.
+\item \code{rmstDiffPValue}: The two-sided p-value.
 \item \code{lower}: The lower bound of confidence interval.
 \item \code{upper}: The upper bound of confidence interval.
 \item \code{conflev}: The level of confidence interval.

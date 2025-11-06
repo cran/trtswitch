@@ -1,11 +1,11 @@
 Package: trtswitch
 Type: Package
 Title: Treatment Switching
-Version: 0.2.0
+Version: 0.2.1
 Authors@R: 
     person("Kaifeng", "Lu", , "kaifenglu@gmail.com", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0002-6160-7119"))
-Description: Implements rank-preserving structural failure time model (RPSFTM), iterative parameter estimation (IPE), inverse probability of censoring weights (IPCW), marginal structural model (MSM), simple two-stage estimation (TSEsimp), and improved two-stage with g-estimation (TSEgest) methods for treatment switching in randomized clinical trials.
+Description: Implements rank preserving structural failure time model (RPSFTM), iterative parameter estimation (IPE), inverse probability of censoring weights (IPCW), marginal structural model (MSM), simple two-stage estimation (TSEsimp), and improved two-stage estimation with g-estimation (TSEgest) methods for treatment switching in randomized clinical trials.
 License: GPL (>= 2)
 Imports: Rcpp (>= 1.0.9), data.table (>= 1.14.10)
 LinkingTo: Rcpp
@@ -21,8 +21,8 @@ LazyData: true
 URL: https://github.com/kaifenglu/trtswitch
 BugReports: https://github.com/kaifenglu/trtswitch/issues
 Config/testthat/edition: 3
-Packaged: 2025-10-03 01:41:32 UTC; kaife
+Packaged: 2025-11-06 06:41:09 UTC; kaife
 Author: Kaifeng Lu [aut, cre] (ORCID: <https://orcid.org/0000-0002-6160-7119>)
 Maintainer: Kaifeng Lu <kaifenglu@gmail.com>
 Repository: CRAN
-Date/Publication: 2025-10-06 07:20:02 UTC
+Date/Publication: 2025-11-06 14:50:02 UTC

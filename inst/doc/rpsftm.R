@@ -41,7 +41,7 @@ ggplot(fit1$eval_z %>%
   theme(panel.grid.minor = element_blank())
 
 ## ----km-----------------------------------------------------------------------
-ggplot(fit1$kmstar, aes(x=time, y=survival, group=treated,
+ggplot(fit1$kmstar, aes(x=time, y=surv, group=treated,
                         linetype=as.factor(treated))) + 
   geom_step() + 
   scale_linetype_discrete(name = "treated") + 

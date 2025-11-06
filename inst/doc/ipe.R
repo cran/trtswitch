@@ -25,7 +25,7 @@ fit1$logrank_pvalue
 fit1$psi
 
 ## ----km-----------------------------------------------------------------------
-ggplot(fit1$kmstar, aes(x=time, y=survival, group=treated,
+ggplot(fit1$kmstar, aes(x=time, y=surv, group=treated,
                         linetype=as.factor(treated))) + 
   geom_step() + 
   scale_linetype_discrete(name = "treated") + 

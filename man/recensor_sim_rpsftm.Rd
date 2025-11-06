@@ -21,12 +21,12 @@ recensor_sim_rpsftm(
   hi_psi = 1,
   treat_modifier = 1,
   recensor_type = 1L,
-  admin_recensor_only = 1L,
-  autoswitch = 1L,
+  admin_recensor_only = TRUE,
+  autoswitch = TRUE,
   alpha = 0.05,
   ties = "efron",
   tol = 1e-06,
-  boot = 1L,
+  boot = TRUE,
   n_boot = 1000L,
   seed = NA_integer_
 )

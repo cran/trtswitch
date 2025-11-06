@@ -12,7 +12,7 @@ rmest(
   event = "event",
   milestone = NA_real_,
   conflev = 0.95,
-  biascorrection = 0L
+  biascorrection = FALSE
 )
 }
 \arguments{

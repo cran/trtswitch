@@ -7,7 +7,7 @@ Right-Censored Time-to-Event Data}
 \usage{
 survQuantile(
   time = NA_real_,
-  event = NA_real_,
+  event = NA_integer_,
   cilevel = 0.95,
   transform = "loglog",
   probs = NA_real_

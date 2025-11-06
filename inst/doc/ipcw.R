@@ -43,13 +43,13 @@ fit1$fit_switch[[1]]$fit_num$parest[, c("param", "beta", "sebeta", "z")]
 # unstabilized weights
 ggplot(fit1$data_outcome %>% filter(trtrand == 0), 
        aes(x = unstabilized_weight)) + 
-  geom_density(fill="#77bd89", color="#1f6e34", alpha=0.8) +
+  geom_histogram(fill="#77bd89", color="#1f6e34", alpha=0.8) +
   scale_x_continuous("unstabilized weights")
 
 # stabilized weights
 ggplot(fit1$data_outcome %>% filter(trtrand == 0), 
        aes(x = stabilized_weight)) + 
-  geom_density(fill="#77bd89", color="#1f6e34", alpha=0.8) +
+  geom_histogram(fill="#77bd89", color="#1f6e34", alpha=0.8) +
   scale_x_continuous("stabilized weights")
 
 ## ----cox example 1------------------------------------------------------------
@@ -87,13 +87,13 @@ fit2$fit_switch[[2]]$fit_num$parest[, c("param", "beta", "sebeta", "z")]
 ## ----weights example 2--------------------------------------------------------
 # unstabilized weights
 ggplot(fit2$data_outcome, aes(x = unstabilized_weight)) + 
-  geom_density(fill="#77bd89", color="#1f6e34", alpha=0.8) + 
+  geom_histogram(fill="#77bd89", color="#1f6e34", alpha=0.8) + 
   scale_x_continuous("unstabilized weights") + 
   facet_wrap(~treated) 
 
 # stabilized weights
 ggplot(fit2$data_outcome, aes(x = stabilized_weight)) + 
-  geom_density(fill="#77bd89", color="#1f6e34", alpha=0.8) + 
+  geom_histogram(fill="#77bd89", color="#1f6e34", alpha=0.8) + 
   scale_x_continuous("stabilized weights") + 
   facet_wrap(~treated)
 

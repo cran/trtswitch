@@ -9,6 +9,12 @@ library(trtswitch)
 library(dplyr, warn.conflicts = FALSE)
 
 ## ----data---------------------------------------------------------------------
+# modify pd and dpd based on co and dco
+shilong <- shilong %>%
+  mutate(dpd = ifelse(co & !pd, dco, dpd),
+         pd = ifelse(co & !pd, 1, pd)) %>%
+  mutate(dpd = ifelse(pd & co & dco < dpd, dco, dpd))
+  
 # the eventual survival time
 shilong1 <- shilong %>%
   arrange(bras.f, id, tstop) %>%

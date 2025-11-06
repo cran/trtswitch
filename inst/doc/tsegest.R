@@ -32,30 +32,26 @@ fit1 <- tsegest(
   swtrt = "xo", swtrt_time = "xotime", 
   base_cov = "bprog", 
   conf_cov = c("bprog*cattdc", "timePFSobs", "visit7on"), 
-  ns_df = 3, strata_main_effect_only = TRUE,
-  recensor = TRUE, admin_recensor_only = TRUE, 
+  ns_df = 3, recensor = TRUE, admin_recensor_only = TRUE, 
   swtrt_control_only = TRUE, alpha = 0.05, ties = "efron", 
   tol = 1.0e-6, offset = 0, boot = FALSE)
 
 ## ----switch time points-------------------------------------------------------
-switched <- fit1$analysis_switch$data_switch[[1]]$data %>% 
-  filter(swtrt == 1)
+switched <- fit1$data_switch[[1]]$data %>% filter(swtrt == 1)
 table(switched$swtrt_time)
 
 ## ----km-----------------------------------------------------------------------
-ggplot(fit1$analysis_switch$km_switch[[1]]$data %>% 
-         filter(nevent > 0), 
-       aes(x=time, y=survival)) + 
+ggplot(fit1$km_switch[[1]]$data %>% filter(nevent > 0), 
+       aes(x=time, y=surv)) + 
   geom_step() + 
   scale_y_continuous(limits = c(0,1)) + 
   scale_x_continuous(breaks = seq(0,105,21)) + 
   xlab("time from progression to switch") + 
-  ggtitle(paste("trtrand: ", 
-                fit1$analysis_switch$km_switch[[1]]$trtrand)) + 
+  ggtitle(paste("trtrand: ", fit1$km_switch[[1]]$trtrand)) + 
   theme(panel.grid.minor.x = element_blank())
 
 ## ----logis--------------------------------------------------------------------
-parest <- fit1$analysis_switch$fit_logis[[1]]$fit$parest
+parest <- fit1$fit_logis[[1]]$fit$parest
 parest[, c("param", "beta", "sebeta", "z")]
 
 ## ----psi estimates------------------------------------------------------------
@@ -64,7 +60,7 @@ c(fit1$psi, fit1$psi_CI)
 ## ----Z(psi)-------------------------------------------------------------------
 psi_CI_width <- fit1$psi_CI[2] - fit1$psi_CI[1]
 
-ggplot(fit1$analysis_switch$eval_z[[1]]$data %>% 
+ggplot(fit1$eval_z[[1]]$data %>% 
          filter(psi > fit1$psi_CI[1] - psi_CI_width*0.25 & 
                   psi < fit1$psi_CI[2] + psi_CI_width*0.25), 
        aes(x=psi, y=Z)) + 
