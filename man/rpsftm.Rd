@@ -25,7 +25,7 @@ rpsftm(
   recensor = TRUE,
   admin_recensor_only = TRUE,
   autoswitch = TRUE,
-  gridsearch = FALSE,
+  gridsearch = TRUE,
   root_finding = "brent",
   alpha = 0.05,
   ties = "efron",
@@ -103,7 +103,7 @@ recensoring will be applied to the actual censoring times for dropouts.}
 with no switching. Defaults to \code{TRUE}.}
 
 \item{gridsearch}{Whether to use grid search to estimate the causal
-parameter \code{psi}. Defaults to \code{FALSE}, in which case, a root
+parameter \code{psi}. Defaults to \code{TRUE}, otherwise, a root
 finding algorithm will be used.}
 
 \item{root_finding}{Character string specifying the univariate
@@ -132,6 +132,8 @@ test p-value.}
 A list with the following components:
 \itemize{
 \item \code{psi}: The estimated causal parameter.
+\item \code{psi_roots}: Vector of \code{psi} values at which the Z-statistic
+is zero, identified using grid search and linear interpolation.
 \item \code{psi_CI}: The confidence interval for \code{psi}.
 \item \code{psi_CI_type}: The type of confidence interval for \code{psi},
 i.e., "grid search", "root finding", or "bootstrap".
@@ -145,6 +147,8 @@ bootstrap p-value.
 \item \code{hr_CI}: The confidence interval for hazard ratio.
 \item \code{hr_CI_type}: The type of confidence interval for hazard ratio,
 either "log-rank p-value" or "bootstrap".
+\item \code{event_summary}: A data frame containing the count and percentage
+of deaths and switches by treatment arm.
 \item \code{eval_z}: A data frame containing the Z-statistics for treatment
 effect evaluated at a sequence of \code{psi} values. Used to plot and
 check if the range of \code{psi} values to search for the solution and
@@ -160,41 +164,15 @@ based on the counterfactual untreated survival times by treatment arm.
 counterfactual unswitched survival times.
 The variables include \code{id}, \code{stratum}, \code{"t_star"},
 \code{"d_star"}, \code{"treated"}, \code{base_cov}, and \code{treat}.
+\item \code{km_outcome}: The Kaplan-Meier estimates of the survival
+functions for the treatment and control groups based on the
+counterfactual unswitched survival times.
+\item \code{lr_outcome}: The log-rank test results for the treatment
+effect based on the counterfactual unswitched survival times.
 \item \code{fit_outcome}: The fitted outcome Cox model.
 \item \code{fail}: Whether a model fails to converge.
 \item \code{psimissing}: Whether the \code{psi} parameter cannot be estimated.
-\item \code{settings}: A list with the following components:
-\itemize{
-\item \code{psi_test}: The survival function to calculate the Z-statistic.
-\item \code{aft_dist}: The distribution for time to event for the AFT
-model.
-\item \code{strata_main_effect_only}: Whether to only include the strata
-main effects in the AFT model.
-\item \code{low_psi}: The lower limit of the causal parameter.
-\item \code{hi_psi}: The upper limit of the causal parameter.
-\item \code{n_eval_z}: The number of points between \code{low_psi} and
-\code{hi_psi} (inclusive) at which to evaluate the Z-statistics.
-\item \code{treat_modifier}: The sensitivity parameter for the constant
-treatment effect assumption.
-\item \code{recensor}: Whether to apply recensoring to counterfactual
-survival times.
-\item \code{admin_recensor_only}: Whether to apply recensoring to
-administrative censoring times only.
-\item \code{autoswitch}: Whether to exclude recensoring for treatment
-arms with no switching.
-\item \code{gridsearch}: Whether to use grid search to estimate the
-causal parameter \code{psi}.
-\item \code{root_finding}: The univariate root-finding algorithm to use.
-\item \code{alpha}: The significance level to calculate confidence
-intervals.
-\item \code{ties}: The method for handling ties in the Cox model.
-\item \code{tol}: The desired accuracy (convergence tolerance)
-for \code{psi}.
-\item \code{boot}: Whether to use bootstrap to obtain the confidence
-interval for hazard ratio.
-\item \code{n_boot}: The number of bootstrap samples.
-\item \code{seed}: The seed to reproduce the bootstrap results.
-}
+\item \code{settings}: A list containing the input parameter values.
 \item \code{fail_boots}: The indicators for failed bootstrap samples
 if \code{boot} is \code{TRUE}.
 \item \code{fail_boots_data}: The data for failed bootstrap samples
@@ -233,6 +211,12 @@ the ITT log-rank test p-value or bootstrap. When bootstrapping,
 the interval and p-value are derived from a t-distribution
 with \code{n_boot - 1} degrees of freedom.
 }
+
+If grid search is used to estimate \eqn{\psi}, the estimated \eqn{\psi}
+is the one with the smallest absolute value among those at which
+the Z-statistic is zero based on linear interpolation.
+If root finding is used, the estimated \eqn{\psi} is
+the solution to the equation where the Z-statistic is zero.
 }
 \examples{
 
@@ -246,7 +230,7 @@ fit1 <- rpsftm(
   data, id = "id", time = "progyrs", event = "prog", treat = "imm",
   rx = "rx", censor_time = "censyrs", boot = FALSE)
 
-c(fit1$hr, fit1$hr_CI)
+fit1
 
 # Example 2: two-way treatment switching (illustration only)
 
@@ -269,7 +253,7 @@ fit2 <- rpsftm(
                "pathway.f"),
   low_psi = -3, hi_psi = 3, boot = FALSE)
 
-c(fit2$hr, fit2$hr_CI)
+fit2
 
 }
 \references{

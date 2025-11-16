@@ -82,7 +82,7 @@
 #' @param swtrt_control_only Whether treatment switching occurred only in
 #'   the control group. The default is \code{TRUE}.
 #' @param gridsearch Whether to use grid search to estimate the causal
-#'   parameter \code{psi}. Defaults to \code{FALSE}, in which case, a root
+#'   parameter \code{psi}. Defaults to \code{TRUE}, otherwise, a root
 #'   finding algorithm will be used.
 #' @param root_finding Character string specifying the univariate 
 #'   root-finding algorithm to use. Options are \code{"brent"} (default)
@@ -145,9 +145,19 @@
 #' progression, the patient is considered to have progressed at the time of 
 #' treatment switching. 
 #' 
+#' If grid search is used to estimate \eqn{\psi}, the estimated \eqn{\psi} 
+#' is the one with the smallest absolute value among those at which 
+#' the Z-statistic is zero based on linear interpolation. 
+#' If root finding is used, the estimated \eqn{\psi} is
+#' the solution to the equation where the Z-statistic is zero.
+#'
 #' @return A list with the following components:
 #'
 #' * \code{psi}: The estimated causal parameter for the control group.
+#' 
+#' * \code{psi_roots}: Vector of \code{psi} values for the control group 
+#'   at which the Z-statistic is zero, identified using grid search and 
+#'   linear interpolation.
 #'
 #' * \code{psi_CI}: The confidence interval for \code{psi}.
 #'
@@ -168,6 +178,9 @@
 #'
 #' * \code{hr_CI_type}: The type of confidence interval for hazard ratio,
 #'   either "Cox model" or "bootstrap".
+#'   
+#' * \code{event_summary}: A data frame containing the count and percentage
+#'   of deaths, disease progressions, and switches by treatment arm.
 #'   
 #' * \code{data_switch}: The list of input data for the time from 
 #'   disease progression to switch by treatment group. The variables 
@@ -209,68 +222,28 @@
 #'   The variables include \code{id}, \code{stratum}, \code{"t_star"}, 
 #'   \code{"d_star"}, \code{"treated"}, \code{base_cov} and \code{treat}.
 #'
+#' * \code{km_outcome}: The Kaplan-Meier estimates of the survival
+#'   functions for the treatment and control groups based on the
+#'   counterfactual unswitched survival times.
+#'   
+#' * \code{lr_outcome}: The log-rank test results for the treatment
+#'   effect based on the counterfactual unswitched survival times.
+#'   
 #' * \code{fit_outcome}: The fitted outcome Cox model.
 #'
 #' * \code{fail}: Whether a model fails to converge.
 #' 
 #' * \code{psimissing}: Whether the `psi` parameter cannot be estimated.
 #'
-#' * \code{settings}: A list with the following components:
-#'
-#'     - \code{strata_main_effect_only}: Whether to only include the strata
-#'       main effects in the logistic regression switching model.
-#'
-#'     - \code{ns_df}: Degrees of freedom for the natural cubic spline.
-#'       
-#'     - \code{firth}: Whether the Firth's penalized likelihood is used.
-#'
-#'     - \code{flic}: Whether to apply intercept correction.
-#'
-#'     - \code{low_psi}: The lower limit of the causal parameter.
-#'     
-#'     - \code{hi_psi}: The upper limit of the causal parameter.
-#'     
-#'     - \code{n_eval_z}: The number of points between \code{low_psi} and 
-#'       \code{hi_psi} (inclusive) at which to evaluate the Wald statistics 
-#'       for the coefficient for the counterfactual in the logistic 
-#'       regression switching model.
-#'
-#'     - \code{recensor}: Whether to apply recensoring to counterfactual
-#'       survival times.
-#'
-#'     - \code{admin_recensor_only}: Whether to apply recensoring to
-#'       administrative censoring times only.
-#'
-#'     - \code{swtrt_control_only}: Whether treatment switching occurred
-#'       only in the control group.
-#'
-#'     - \code{gridsearch}: Whether to use grid search to estimate the 
-#'       causal parameter \code{psi}.
-#'       
-#'     - \code{root_finding}: The univariate root-finding algorithm to use.
-#'
-#'     - \code{alpha}: The significance level to calculate confidence
-#'       intervals.
-#'
-#'     - \code{ties}: The method for handling ties in the Cox model.
-#'     
-#'     - \code{tol}: The desired accuracy (convergence tolerance) 
-#'       for \code{psi}.
-#'
-#'     - \code{offset}: The offset to calculate the time from disease 
-#'       progression to death or censoring, the time from disease 
-#'       progression to treatment switch, and the time from treatment 
-#'       switch to death or censoring.
-#'
-#'     - \code{boot}: Whether to use bootstrap to obtain the confidence
-#'       interval for hazard ratio.
-#'
-#'     - \code{n_boot}: The number of bootstrap samples.
-#'
-#'     - \code{seed}: The seed to reproduce the bootstrap results.
+#' * \code{settings}: A list containing the input parameter values.
 #'
 #' * \code{psi_trt}: The estimated causal parameter for the experimental 
 #'   group if \code{swtrt_control_only} is \code{FALSE}.
+#'   
+#' * \code{psi_trt_roots}: Vector of \code{psi_trt} values for the 
+#'  experimental group at which the Z-statistic is zero, identified using
+#'  grid search and linear interpolation, if \code{swtrt_control_only}
+#'  is \code{FALSE}.
 #'
 #' * \code{psi_trt_CI}: The confidence interval for \code{psi_trt} if
 #'   \code{swtrt_control_only} is \code{FALSE}.
@@ -324,11 +297,12 @@
 #'   swtrt = "xo", swtrt_time = "xotime", 
 #'   base_cov = "bprog", 
 #'   conf_cov = c("bprog*cattdc", "timePFSobs", "visit7on"), 
-#'   ns_df = 3, recensor = TRUE, admin_recensor_only = TRUE, 
+#'   ns_df = 3, low_psi = -1, hi_psi = 1, n_eval_z = 101,
+#'   recensor = TRUE, admin_recensor_only = TRUE, 
 #'   swtrt_control_only = TRUE, alpha = 0.05, ties = "efron", 
 #'   tol = 1.0e-6, offset = 0, boot = FALSE)
 #'   
-#' c(fit1$hr, fit1$hr_CI)
+#' fit1
 #' 
 #' @export
 tsegest <- function(data, id = "id", stratum = "", 
@@ -342,7 +316,7 @@ tsegest <- function(data, id = "id", stratum = "",
                     low_psi = -2, hi_psi = 2, n_eval_z = 101,
                     recensor = TRUE, admin_recensor_only = TRUE,
                     swtrt_control_only = TRUE, 
-                    gridsearch = FALSE, root_finding = "brent",
+                    gridsearch = TRUE, root_finding = "brent",
                     alpha = 0.05, ties = "efron", tol = 1.0e-6, offset = 1, 
                     boot = TRUE, n_boot = 1000, seed = NA) {
 
@@ -469,5 +443,52 @@ tsegest <- function(data, id = "id", stratum = "",
     }
   }
   
+  
+  # convert treatment back to a factor variable if needed
+  if (is.factor(data[[treat]])) {
+    levs = levels(data[[treat]])
+    
+    out$event_summary[[treat]] <- factor(out$event_summary[[treat]], 
+                                         levels = c(1,2), labels = levs)
+    
+    for (h in 1:2) {
+      out$data_switch[[h]][[treat]] <- factor(
+        out$data_switch[[h]][[treat]], levels = c(1,2), labels = levs)
+      
+      out$km_switch[[h]][[treat]] <- factor(
+        out$km_switch[[h]][[treat]], levels = c(1,2), labels = levs)
+      
+      out$data_logis[[h]]$data[[treat]] <- factor(
+        out$data_logis[[h]]$data[[treat]], levels = c(1,2), labels = levs)
+      
+      out$data_nullcox[[h]]$data[[treat]] <- factor(
+        out$data_nullcox[[h]]$data[[treat]], levels = c(1,2), labels = levs)
+    }
+    
+    out$data_outcome[[treat]] <- factor(out$data_outcome[[treat]], 
+                                        levels = c(1,2), labels = levs)
+    
+    out$km_outcome[[treat]] <- factor(out$km_outcome[[treat]], 
+                                      levels = c(1,2), labels = levs)
+  }
+  
+  
+  out$settings <- list(
+    data = data, id = id, stratum = stratum, tstart = tstart, 
+    tstop = tstop, event = event, treat = treat,
+    censor_time = censor_time, pd = pd, pd_time = pd_time,
+    swtrt = swtrt, swtrt_time = swtrt_time,
+    base_cov = base_cov, conf_cov = conf_cov,
+    strata_main_effect_only = strata_main_effect_only,
+    ns_df = ns_df, firth = firth, flic = flic,
+    low_psi = low_psi, hi_psi = hi_psi, n_eval = n_eval_z,
+    recensor = recensor, admin_recensor_only = admin_recensor_only,
+    swtrt_control_only = swtrt_control_only, 
+    gridsearch = gridsearch, root_finding = root_finding,
+    alpha = alpha, ties = ties, tol = tol, offset = offset,
+    boot = boot, n_boot = n_boot, seed = seed
+  )
+  
+  class(out) <- "tsegest"
   out
 }

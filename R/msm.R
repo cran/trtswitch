@@ -136,6 +136,9 @@
 #' * \code{hr_CI_type}: The type of confidence interval for hazard ratio,
 #'   either "Cox model" or "bootstrap".
 #'
+#' * \code{event_summary}: A data frame containing the count and percentage
+#'   of deaths and switches by treatment arm.
+#'   
 #' * \code{data_switch}: A list of input data for the switching models by 
 #'   treatment group. The variables include \code{id}, \code{stratum}, 
 #'   \code{"tstart"}, \code{"tstop"}, \code{"cross"}, \code{denominator}, 
@@ -156,6 +159,9 @@
 #'   If \code{treat_alt_interaction} is \code{TRUE}, 
 #'   the data set also includes the \code{"treated_crossed"} variable. 
 #'
+#' * \code{weight_summary}: A data frame summarizing the weights by
+#'   treatment arm.
+#'   
 #' * \code{km_outcome}: The Kaplan-Meier estimates of the survival
 #'   functions for the treatment and control groups based on the
 #'   weighted outcome data truncated at time of treatment switching.
@@ -168,41 +174,7 @@
 #'
 #' * \code{fail}: Whether a model fails to converge.
 #'
-#' * \code{settings}: A list with the following components:
-#'
-#'     - \code{strata_main_effect_only}: Whether to only include the strata 
-#'       main effects in the logistic regression switching model. 
-#'       
-#'     - \code{ns_df}: Degrees of freedom for the natural cubic spline.
-#'   
-#'     - \code{firth}: Whether the Firth's penalized likelihood is used.
-#'       
-#'     - \code{flic}: Whether to apply intercept correction.
-#'       
-#'     - \code{stabilized_weights}: Whether to use the stabilized weights.
-#'
-#'     - \code{trunc}: The truncation fraction of the weight distribution.
-#'
-#'     - \code{trunc_upper_only}: Whether to truncate the weights from the
-#'       upper end of the distribution only.
-#'
-#'     - \code{swtrt_control_only} Whether treatment switching occurred only
-#'       in the control group.
-#'
-#'     - \code{treat_alt_interaction} Whether to include an interaction 
-#'       between randomized and alternative treatments in the outcome model.
-#'
-#'     - \code{alpha}: The significance level to calculate confidence
-#'       intervals.
-#'
-#'     - \code{ties}: The method for handling ties in the Cox model.
-#'
-#'     - \code{boot}: Whether to use bootstrap to obtain the confidence
-#'       interval for hazard ratio.
-#'
-#'     - \code{n_boot}: The number of bootstrap samples.
-#'
-#'     - \code{seed}: The seed to reproduce the bootstrap results.
+#' * \code{settings}: A list containing the input parameter values.
 #'
 #' * \code{fail_boots}: The indicators for failed bootstrap samples
 #'   if \code{boot} is \code{TRUE}.
@@ -254,7 +226,7 @@
 #'   denominator = c("bprog", "L"), 
 #'   ns_df = 3, swtrt_control_only = TRUE, boot = FALSE)
 #'   
-#' c(fit1$hr, fit1$hr_CI)
+#' fit1
 #' 
 #' @export
 msm <- function(data, id = "id", stratum = "", tstart = "tstart",
@@ -434,5 +406,45 @@ msm <- function(data, id = "id", stratum = "", tstart = "tstart",
     }
   }
   
+  
+  # convert treatment back to a factor variable if needed
+  if (is.factor(data[[treat]])) {
+    levs = levels(data[[treat]])
+    
+    out$event_summary[[treat]] <- factor(out$event_summary[[treat]], 
+                                         levels = c(1,2), labels = levs)
+    
+    for (h in 1:2) {
+      out$data_switch[[h]][[treat]] <- factor(
+        out$data_switch[[h]][[treat]], levels = c(1,2), labels = levs)
+    }
+    
+    out$data_outcome[[treat]] <- factor(out$data_outcome[[treat]], 
+                                        levels = c(1,2), labels = levs)
+    
+    out$weight_summary[[treat]] <- factor(out$weight_summary[[treat]], 
+                                          levels = c(1,2), labels = levs)
+    
+    out$km_outcome[[treat]] <- factor(out$km_outcome[[treat]], 
+                                      levels = c(1,2), labels = levs)
+  }
+  
+  
+  out$settings <- list(
+    data = data, id = id, stratum = stratum, tstart = tstart,
+    tstop = tstop, event = event, treat = treat, swtrt = swtrt, 
+    swtrt_time = swtrt_time, base_cov = base_cov, 
+    numerator = numerator, denominator = denominator,
+    strata_main_effect_only = strata_main_effect_only,
+    ns_df = ns_df, firth = firth, flic = flic,
+    stabilized_weights = stabilized_weights, 
+    trunc = trunc, trunc_upper_only = trunc_upper_only,
+    swtrt_control_only = swtrt_control_only,
+    treat_alt_interaction = treat_alt_interaction,
+    alpha = alpha, ties = ties, boot = boot,
+    n_boot = n_boot, seed = seed
+  )
+  
+  class(out) <- "msm"
   out
 }

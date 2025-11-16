@@ -118,7 +118,7 @@ recensor_sim_rpsftm <- function(nsim = NA_integer_, n = NA_integer_, shape = NA_
     .Call(`_trtswitch_recensor_sim_rpsftm`, nsim, n, shape, scale, gamma, tfmin, tfmax, psi, omega, pswitch, a, b, low_psi, hi_psi, treat_modifier, recensor_type, admin_recensor_only, autoswitch, alpha, ties, tol, boot, n_boot, seed)
 }
 
-rpsftmcpp <- function(data, id = "id", stratum = "", time = "time", event = "event", treat = "treat", rx = "rx", censor_time = "censor_time", base_cov = "", psi_test = "logrank", aft_dist = "weibull", strata_main_effect_only = TRUE, low_psi = -2, hi_psi = 2, n_eval_z = 101L, treat_modifier = 1, recensor = TRUE, admin_recensor_only = TRUE, autoswitch = TRUE, gridsearch = FALSE, root_finding = "brent", alpha = 0.05, ties = "efron", tol = 1.0e-6, boot = FALSE, n_boot = 1000L, seed = NA_integer_) {
+rpsftmcpp <- function(data, id = "id", stratum = "", time = "time", event = "event", treat = "treat", rx = "rx", censor_time = "censor_time", base_cov = "", psi_test = "logrank", aft_dist = "weibull", strata_main_effect_only = TRUE, low_psi = -2, hi_psi = 2, n_eval_z = 101L, treat_modifier = 1, recensor = TRUE, admin_recensor_only = TRUE, autoswitch = TRUE, gridsearch = TRUE, root_finding = "brent", alpha = 0.05, ties = "efron", tol = 1.0e-6, boot = FALSE, n_boot = 1000L, seed = NA_integer_) {
     .Call(`_trtswitch_rpsftmcpp`, data, id, stratum, time, event, treat, rx, censor_time, base_cov, psi_test, aft_dist, strata_main_effect_only, low_psi, hi_psi, n_eval_z, treat_modifier, recensor, admin_recensor_only, autoswitch, gridsearch, root_finding, alpha, ties, tol, boot, n_boot, seed)
 }
 
@@ -467,7 +467,7 @@ kmdiff <- function(data, rep = "", stratum = "", treat = "treat", time = "time",
 #'
 #'   * \code{event}: The event indicator, 1=event, 0=no event.
 #'   
-#'   * \code{weight}: The optional subject-level weight.
+#'   * \code{weight}: The weight for each observation.
 #'
 #' @param rep The name(s) of the replication variable(s) in the input data.
 #' @param stratum The name(s) of the stratum variable(s) in the input data.
@@ -478,6 +478,9 @@ kmdiff <- function(data, rep = "", stratum = "", treat = "treat", time = "time",
 #'   process data in the input data.
 #' @param event The name of the event variable in the input data.
 #' @param weight The name of the weight variable in the input data.
+#' @param weight_readj Whether the weight variable at each event time 
+#'   will be readjusted to be proportional to the number at risk by 
+#'   treatment group. Defaults to `FALSE`.
 #' @param rho1 The first parameter of the Fleming-Harrington family of
 #'   weighted log-rank test. Defaults to 0 for conventional log-rank test.
 #' @param rho2 The second parameter of the Fleming-Harrington family of
@@ -492,6 +495,8 @@ kmdiff <- function(data, rep = "", stratum = "", treat = "treat", time = "time",
 #' * \code{logRankZ}: The Z-statistic value.
 #'
 #' * \code{logRankPValue}: The two-sided p-value.
+#' 
+#' * \code{weight_readj}: Whether the weight variable will be readjusted.
 #'
 #' * \code{rho1}: The first parameter of the Fleming-Harrington weights.
 #'
@@ -510,8 +515,8 @@ kmdiff <- function(data, rep = "", stratum = "", treat = "treat", time = "time",
 #' head(df)
 #'
 #' @export
-lrtest <- function(data, rep = "", stratum = "", treat = "treat", time = "time", time2 = "", event = "event", weight = "", rho1 = 0, rho2 = 0) {
-    .Call(`_trtswitch_lrtest`, data, rep, stratum, treat, time, time2, event, weight, rho1, rho2)
+lrtest <- function(data, rep = "", stratum = "", treat = "treat", time = "time", time2 = "", event = "event", weight = "", weight_readj = FALSE, rho1 = 0, rho2 = 0) {
+    .Call(`_trtswitch_lrtest`, data, rep, stratum, treat, time, time2, event, weight, weight_readj, rho1, rho2)
 }
 
 #' @title Estimate of Restricted Mean Survival Time
@@ -677,7 +682,7 @@ residuals_phregcpp <- function(p, beta, vbeta, resmart, data, stratum = "", time
     .Call(`_trtswitch_residuals_phregcpp`, p, beta, vbeta, resmart, data, stratum, time, time2, event, covariates, weight, offset, id, ties, type, collapse, weighted)
 }
 
-tsegestcpp <- function(data, id = "id", stratum = "", tstart = "tstart", tstop = "tstop", event = "event", treat = "treat", censor_time = "censor_time", pd = "pd", pd_time = "pd_time", swtrt = "swtrt", swtrt_time = "swtrt_time", base_cov = "", conf_cov = "", strata_main_effect_only = TRUE, ns_df = 3L, firth = FALSE, flic = FALSE, low_psi = -2, hi_psi = 2, n_eval_z = 101L, recensor = TRUE, admin_recensor_only = TRUE, swtrt_control_only = TRUE, gridsearch = FALSE, root_finding = "brent", alpha = 0.05, ties = "efron", tol = 1.0e-6, offset = 1, boot = TRUE, n_boot = 1000L, seed = NA_integer_) {
+tsegestcpp <- function(data, id = "id", stratum = "", tstart = "tstart", tstop = "tstop", event = "event", treat = "treat", censor_time = "censor_time", pd = "pd", pd_time = "pd_time", swtrt = "swtrt", swtrt_time = "swtrt_time", base_cov = "", conf_cov = "", strata_main_effect_only = TRUE, ns_df = 3L, firth = FALSE, flic = FALSE, low_psi = -2, hi_psi = 2, n_eval_z = 101L, recensor = TRUE, admin_recensor_only = TRUE, swtrt_control_only = TRUE, gridsearch = TRUE, root_finding = "brent", alpha = 0.05, ties = "efron", tol = 1.0e-6, offset = 1, boot = TRUE, n_boot = 1000L, seed = NA_integer_) {
     .Call(`_trtswitch_tsegestcpp`, data, id, stratum, tstart, tstop, event, treat, censor_time, pd, pd_time, swtrt, swtrt_time, base_cov, conf_cov, strata_main_effect_only, ns_df, firth, flic, low_psi, hi_psi, n_eval_z, recensor, admin_recensor_only, swtrt_control_only, gridsearch, root_finding, alpha, ties, tol, offset, boot, n_boot, seed)
 }
 

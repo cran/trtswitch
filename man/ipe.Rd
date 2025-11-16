@@ -128,6 +128,8 @@ bootstrap p-value.
 \item \code{hr_CI}: The confidence interval for hazard ratio.
 \item \code{hr_CI_type}: The type of confidence interval for hazard ratio,
 either "log-rank p-value" or "bootstrap".
+\item \code{event_summary}: A data frame containing the count and percentage
+of deaths and switches by treatment arm.
 \item \code{Sstar}: A data frame containing the counterfactual untreated
 survival times and event indicators for each treatment group.
 The variables include \code{id}, \code{stratum},
@@ -140,40 +142,20 @@ estimating \code{psi}. The variables include \code{id}, \code{stratum},
 \code{"t_star"}, \code{"d_star"}, \code{"treated"}, \code{base_cov},
 and \code{treat}.
 \item \code{fit_aft}: The fitted AFT model for estimating \code{psi}.
+\item \code{res_aft}: The deviance residuals from the fitted AFT model.
 \item \code{data_outcome}: The input data for the outcome Cox model of
 counterfactual unswitched survival times.
 The variables include \code{id}, \code{stratum}, \code{"t_star"},
 \code{"d_star"}, \code{"treated"}, \code{base_cov}, and \code{treat}.
+\item \code{km_outcome}: The Kaplan-Meier estimates of the survival
+functions for the treatment and control groups based on the
+counterfactual unswitched survival times.
+\item \code{lr_outcome}: The log-rank test results for the treatment
+effect based on the counterfactual unswitched survival times.
 \item \code{fit_outcome}: The fitted outcome Cox model.
 \item \code{fail}: Whether a model fails to converge.
 \item \code{psimissing}: Whether the \code{psi} parameter cannot be estimated.
-\item \code{settings}: A list with the following components:
-\itemize{
-\item \code{aft_dist}: The distribution for time to event for the AFT
-model.
-\item \code{strata_main_effect_only}: Whether to only include the strata
-main effects in the AFT model.
-\item \code{low_psi}: The lower limit of the causal parameter.
-\item \code{hi_psi}: The upper limit of the causal parameter.
-\item \code{treat_modifier}: The sensitivity parameter for the constant
-treatment effect assumption.
-\item \code{recensor}: Whether to apply recensoring to counterfactual
-survival times.
-\item \code{admin_recensor_only}: Whether to apply recensoring to
-administrative censoring times only.
-\item \code{autoswitch}: Whether to exclude recensoring for treatment
-arms with no switching.
-\item \code{root_finding}: The univariate root-finding algorithm to use.
-\item \code{alpha}: The significance level to calculate confidence
-intervals.
-\item \code{ties}: The method for handling ties in the Cox model.
-\item \code{tol}: The desired accuracy (convergence tolerance)
-for \code{psi}.
-\item \code{boot}: Whether to use bootstrap to obtain the confidence
-interval for hazard ratio.
-\item \code{n_boot}: The number of bootstrap samples.
-\item \code{seed}: The seed to reproduce the bootstrap results.
-}
+\item \code{settings}: A list containing the input parameter values.
 \item \code{fail_boots}: The indicators for failed bootstrap samples
 if \code{boot} is \code{TRUE}.
 \item \code{fail_boots_data}: The data for failed bootstrap samples
@@ -224,7 +206,7 @@ fit1 <- ipe(
   rx = "rx", censor_time = "censyrs", aft_dist = "weibull",
   boot = FALSE)
 
-c(fit1$hr, fit1$hr_CI)
+fit1
 
 # Example 2: two-way treatment switching (illustration only)
 
@@ -247,7 +229,7 @@ fit2 <- ipe(
                "pathway.f"),
   aft_dist = "weibull", boot = FALSE)
 
-c(fit2$hr, fit2$hr_CI)
+fit2
 
 }
 \references{

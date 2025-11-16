@@ -315,8 +315,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // lrtest
-DataFrame lrtest(const DataFrame data, const StringVector& rep, const StringVector& stratum, const std::string treat, const std::string time, const std::string time2, const std::string event, const std::string weight, const double rho1, const double rho2);
-RcppExport SEXP _trtswitch_lrtest(SEXP dataSEXP, SEXP repSEXP, SEXP stratumSEXP, SEXP treatSEXP, SEXP timeSEXP, SEXP time2SEXP, SEXP eventSEXP, SEXP weightSEXP, SEXP rho1SEXP, SEXP rho2SEXP) {
+DataFrame lrtest(const DataFrame data, const StringVector& rep, const StringVector& stratum, const std::string treat, const std::string time, const std::string time2, const std::string event, const std::string weight, const bool weight_readj, const double rho1, const double rho2);
+RcppExport SEXP _trtswitch_lrtest(SEXP dataSEXP, SEXP repSEXP, SEXP stratumSEXP, SEXP treatSEXP, SEXP timeSEXP, SEXP time2SEXP, SEXP eventSEXP, SEXP weightSEXP, SEXP weight_readjSEXP, SEXP rho1SEXP, SEXP rho2SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -328,9 +328,10 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const std::string >::type time2(time2SEXP);
     Rcpp::traits::input_parameter< const std::string >::type event(eventSEXP);
     Rcpp::traits::input_parameter< const std::string >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< const bool >::type weight_readj(weight_readjSEXP);
     Rcpp::traits::input_parameter< const double >::type rho1(rho1SEXP);
     Rcpp::traits::input_parameter< const double >::type rho2(rho2SEXP);
-    rcpp_result_gen = Rcpp::wrap(lrtest(data, rep, stratum, treat, time, time2, event, weight, rho1, rho2));
+    rcpp_result_gen = Rcpp::wrap(lrtest(data, rep, stratum, treat, time, time2, event, weight, weight_readj, rho1, rho2));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -758,7 +759,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_trtswitch_survQuantile", (DL_FUNC) &_trtswitch_survQuantile, 5},
     {"_trtswitch_kmest", (DL_FUNC) &_trtswitch_kmest, 10},
     {"_trtswitch_kmdiff", (DL_FUNC) &_trtswitch_kmdiff, 9},
-    {"_trtswitch_lrtest", (DL_FUNC) &_trtswitch_lrtest, 10},
+    {"_trtswitch_lrtest", (DL_FUNC) &_trtswitch_lrtest, 11},
     {"_trtswitch_rmest", (DL_FUNC) &_trtswitch_rmest, 8},
     {"_trtswitch_rmdiff", (DL_FUNC) &_trtswitch_rmdiff, 10},
     {"_trtswitch_liferegcpp", (DL_FUNC) &_trtswitch_liferegcpp, 17},

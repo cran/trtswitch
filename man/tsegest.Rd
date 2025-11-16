@@ -30,7 +30,7 @@ tsegest(
   recensor = TRUE,
   admin_recensor_only = TRUE,
   swtrt_control_only = TRUE,
-  gridsearch = FALSE,
+  gridsearch = TRUE,
   root_finding = "brent",
   alpha = 0.05,
   ties = "efron",
@@ -129,7 +129,7 @@ recensoring will be applied to the actual censoring times for dropouts.}
 the control group. The default is \code{TRUE}.}
 
 \item{gridsearch}{Whether to use grid search to estimate the causal
-parameter \code{psi}. Defaults to \code{FALSE}, in which case, a root
+parameter \code{psi}. Defaults to \code{TRUE}, otherwise, a root
 finding algorithm will be used.}
 
 \item{root_finding}{Character string specifying the univariate
@@ -163,6 +163,9 @@ interval for hazard ratio. Defaults to \code{TRUE}.}
 A list with the following components:
 \itemize{
 \item \code{psi}: The estimated causal parameter for the control group.
+\item \code{psi_roots}: Vector of \code{psi} values for the control group
+at which the Z-statistic is zero, identified using grid search and
+linear interpolation.
 \item \code{psi_CI}: The confidence interval for \code{psi}.
 \item \code{psi_CI_type}: The type of confidence interval for \code{psi},
 i.e., "grid search", "root finding", or "bootstrap".
@@ -176,6 +179,8 @@ bootstrap p-value.
 \item \code{hr_CI}: The confidence interval for hazard ratio.
 \item \code{hr_CI_type}: The type of confidence interval for hazard ratio,
 either "Cox model" or "bootstrap".
+\item \code{event_summary}: A data frame containing the count and percentage
+of deaths, disease progressions, and switches by treatment arm.
 \item \code{data_switch}: The list of input data for the time from
 disease progression to switch by treatment group. The variables
 include \code{id}, \code{stratum}, \code{"swtrt"},
@@ -208,47 +213,21 @@ models for treatment switching using g-estimation.
 of counterfactual unswitched survival times.
 The variables include \code{id}, \code{stratum}, \code{"t_star"},
 \code{"d_star"}, \code{"treated"}, \code{base_cov} and \code{treat}.
+\item \code{km_outcome}: The Kaplan-Meier estimates of the survival
+functions for the treatment and control groups based on the
+counterfactual unswitched survival times.
+\item \code{lr_outcome}: The log-rank test results for the treatment
+effect based on the counterfactual unswitched survival times.
 \item \code{fit_outcome}: The fitted outcome Cox model.
 \item \code{fail}: Whether a model fails to converge.
 \item \code{psimissing}: Whether the \code{psi} parameter cannot be estimated.
-\item \code{settings}: A list with the following components:
-\itemize{
-\item \code{strata_main_effect_only}: Whether to only include the strata
-main effects in the logistic regression switching model.
-\item \code{ns_df}: Degrees of freedom for the natural cubic spline.
-\item \code{firth}: Whether the Firth's penalized likelihood is used.
-\item \code{flic}: Whether to apply intercept correction.
-\item \code{low_psi}: The lower limit of the causal parameter.
-\item \code{hi_psi}: The upper limit of the causal parameter.
-\item \code{n_eval_z}: The number of points between \code{low_psi} and
-\code{hi_psi} (inclusive) at which to evaluate the Wald statistics
-for the coefficient for the counterfactual in the logistic
-regression switching model.
-\item \code{recensor}: Whether to apply recensoring to counterfactual
-survival times.
-\item \code{admin_recensor_only}: Whether to apply recensoring to
-administrative censoring times only.
-\item \code{swtrt_control_only}: Whether treatment switching occurred
-only in the control group.
-\item \code{gridsearch}: Whether to use grid search to estimate the
-causal parameter \code{psi}.
-\item \code{root_finding}: The univariate root-finding algorithm to use.
-\item \code{alpha}: The significance level to calculate confidence
-intervals.
-\item \code{ties}: The method for handling ties in the Cox model.
-\item \code{tol}: The desired accuracy (convergence tolerance)
-for \code{psi}.
-\item \code{offset}: The offset to calculate the time from disease
-progression to death or censoring, the time from disease
-progression to treatment switch, and the time from treatment
-switch to death or censoring.
-\item \code{boot}: Whether to use bootstrap to obtain the confidence
-interval for hazard ratio.
-\item \code{n_boot}: The number of bootstrap samples.
-\item \code{seed}: The seed to reproduce the bootstrap results.
-}
+\item \code{settings}: A list containing the input parameter values.
 \item \code{psi_trt}: The estimated causal parameter for the experimental
 group if \code{swtrt_control_only} is \code{FALSE}.
+\item \code{psi_trt_roots}: Vector of \code{psi_trt} values for the
+experimental group at which the Z-statistic is zero, identified using
+grid search and linear interpolation, if \code{swtrt_control_only}
+is \code{FALSE}.
 \item \code{psi_trt_CI}: The confidence interval for \code{psi_trt} if
 \code{swtrt_control_only} is \code{FALSE}.
 \item \code{fail_boots}: The indicators for failed bootstrap samples
@@ -310,6 +289,12 @@ p-value for the hazard ratio from a t-distribution with
 If treatment switching occurs before or in the absence of recorded disease
 progression, the patient is considered to have progressed at the time of
 treatment switching.
+
+If grid search is used to estimate \eqn{\psi}, the estimated \eqn{\psi}
+is the one with the smallest absolute value among those at which
+the Z-statistic is zero based on linear interpolation.
+If root finding is used, the estimated \eqn{\psi} is
+the solution to the equation where the Z-statistic is zero.
 }
 \examples{
 
@@ -336,11 +321,12 @@ fit1 <- tsegest(
   swtrt = "xo", swtrt_time = "xotime", 
   base_cov = "bprog", 
   conf_cov = c("bprog*cattdc", "timePFSobs", "visit7on"), 
-  ns_df = 3, recensor = TRUE, admin_recensor_only = TRUE, 
+  ns_df = 3, low_psi = -1, hi_psi = 1, n_eval_z = 101,
+  recensor = TRUE, admin_recensor_only = TRUE, 
   swtrt_control_only = TRUE, alpha = 0.05, ties = "efron", 
   tol = 1.0e-6, offset = 0, boot = FALSE)
   
-c(fit1$hr, fit1$hr_CI)
+fit1
 
 }
 \references{

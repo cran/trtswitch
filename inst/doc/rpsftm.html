@@ -581,7 +581,7 @@ crossover.</p></li>
 <span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a></span>
 <span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>fit1 <span class="ot">&lt;-</span> <span class="fu">rpsftm</span>(</span>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  data, <span class="at">id =</span> <span class="st">&quot;id&quot;</span>, <span class="at">time =</span> <span class="st">&quot;progyrs&quot;</span>, <span class="at">event =</span> <span class="st">&quot;prog&quot;</span>, <span class="at">treat =</span> <span class="st">&quot;imm&quot;</span>,</span>
-<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="at">rx =</span> <span class="st">&quot;rx&quot;</span>, <span class="at">censor_time =</span> <span class="st">&quot;censyrs&quot;</span>, <span class="at">boot =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="at">rx =</span> <span class="st">&quot;rx&quot;</span>, <span class="at">censor_time =</span> <span class="st">&quot;censyrs&quot;</span>, <span class="at">gridsearch =</span> <span class="cn">FALSE</span>, <span class="at">boot =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
 <p>The log-rank test for an ITT analysis, which ignores treatment
 changes, produces a borderline significant p-value of <span class="math inline">\(0.056\)</span>.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>fit1<span class="sc">$</span>logrank_pvalue</span>

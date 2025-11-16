@@ -310,6 +310,8 @@ List ipcwcpp(
     q = nstrata - 1;
   }
   
+  // covariates for the logistic regression switch model for denominator
+  // including stratum, denominator, and ns_df spline terms
   StringVector covariates_lgs_den(q+p2+ns_df);
   NumericMatrix z_lgs_denn(n,q+p2);
   if (strata_main_effect_only) {
@@ -402,7 +404,8 @@ List ipcwcpp(
     covariates_lgs_den[q+p2+j] = "ns" + std::to_string(j+1);
   }
   
-  
+  // covariates for the logistic regression switch model for numerator
+  // including stratum, numerator, and ns_df spline terms
   StringVector covariates_lgs_num(q+p1+ns_df);
   for (int j=0; j<q; ++j) {
     covariates_lgs_num[j] = covariates_lgs_den[j];
@@ -562,6 +565,37 @@ List ipcwcpp(
   IntegerVector treatn1 = treatn[idx1];
   NumericVector tstopn1 = tstopn[idx1];
   IntegerVector eventn1 = eventn[idx1];
+  IntegerVector swtrtn1 = swtrtn[idx1];
+  
+  // summarize number of deaths and switches by treatment arm
+  IntegerVector treat_out = IntegerVector::create(0, 1);
+  NumericVector n_total(2);
+  NumericVector n_event(2);
+  NumericVector n_switch(2);
+  for (int i = 0; i < nids; ++i) {
+    int g = treatn1[i];
+    n_total[g]++;
+    if (eventn1[i] == 1) n_event[g]++;
+    if (swtrtn1[i] == 1) n_switch[g]++;
+  }
+  
+  // Compute percentages
+  NumericVector pct_event(2);
+  NumericVector pct_switch(2);
+  for (int g = 0; g < 2; g++) {
+    pct_event[g] = 100.0 * n_event[g] / n_total[g];
+    pct_switch[g] = 100.0 * n_switch[g] / n_total[g];
+  }
+  
+  // Combine count and percentage
+  List event_summary = List::create(
+    _["treated"] = treat_out,
+    _["n"] = n_total,
+    _["event_n"] = n_event,
+    _["event_pct"] = pct_event,
+    _["switch_n"] = n_switch,
+    _["switch_pct"] = pct_switch
+  );
   
   DataFrame dt = DataFrame::create(
     Named("stratum") = stratumn1,
@@ -569,7 +603,7 @@ List ipcwcpp(
     Named("time") = tstopn1,
     Named("event") = eventn1);
   
-  DataFrame lr = lrtest(dt,"","stratum","treat","time","","event","",0,0);
+  DataFrame lr = lrtest(dt,"","stratum","treat","time","","event","",0,0,0);
   double logRankPValue = lr["logRankPValue"];
   
   double zcrit = R::qnorm(1-alpha/2, 0, 1, 1, 0);
@@ -664,6 +698,9 @@ List ipcwcpp(
                   }
                   
                   int K = static_cast<int>(treats.size());
+                  IntegerVector w_treated(K), w_n(K);
+                  NumericVector w_min(K), w_Q1(K), w_median(K), w_mean(K), 
+                  w_Q3(K), w_max(K);
                   if (!logistic_switching_model) { // time-dependent Cox
                     // obtain the unique event times across treatment groups
                     NumericVector cut = tstop1[event1 == 1];
@@ -759,7 +796,7 @@ List ipcwcpp(
                     }
                     
                     // initialize weights
-                    NumericVector w2(n2, NA_REAL), sw2(n2, NA_REAL);
+                    NumericVector w2(n2, 1.0), sw2(n2, 1.0);
                     
                     // fit the switching models by treatment group
                     for (int h=0; h<K; ++h) {
@@ -952,11 +989,32 @@ List ipcwcpp(
                         }
                       }
                       
+                      // summarize weights for the treatment arm
+                      if (k == -1) {
+                        w_treated[h] = h;
+                        w_n[h] = n3;
+                        if (stabilized_weights) {
+                          w_min[h] = min(sw3);
+                          w_Q1[h] = quantilecpp(sw3, 0.25);
+                          w_median[h] = quantilecpp(sw3, 0.5);
+                          w_mean[h] = mean(sw3);
+                          w_Q3[h] = quantilecpp(sw3, 0.75);
+                          w_max[h] = max(sw3);
+                        } else {
+                          w_min[h] = min(w3);
+                          w_Q1[h] = quantilecpp(w3, 0.25);
+                          w_median[h] = quantilecpp(w3, 0.5);
+                          w_mean[h] = mean(w3);
+                          w_Q3[h] = quantilecpp(w3, 0.75);
+                          w_max[h] = max(w3);
+                        }
+                      }
+                      
                       // fill in the weights
                       w2[l] = w3;
                       sw2[l] = sw3;
                     }
-                    
+
                     // prepare data for the outcome model
                     data_outcome = List::create(
                       Named("uid") = id2,
@@ -1170,10 +1228,33 @@ List ipcwcpp(
                         }
                       }
                       
+                      // summarize weights for the treatment arm
+                      if (k == -1) {
+                        w_treated[h] = h;
+                        w_n[h] = n3;
+                        if (stabilized_weights) {
+                          w_min[h] = min(sw3);
+                          w_Q1[h] = quantilecpp(sw3, 0.25);
+                          w_median[h] = quantilecpp(sw3, 0.5);
+                          w_mean[h] = mean(sw3);
+                          w_Q3[h] = quantilecpp(sw3, 0.75);
+                          w_max[h] = max(sw3);
+                        } else {
+                          w_min[h] = min(w3);
+                          w_Q1[h] = quantilecpp(w3, 0.25);
+                          w_median[h] = quantilecpp(w3, 0.5);
+                          w_mean[h] = mean(w3);
+                          w_Q3[h] = quantilecpp(w3, 0.75);
+                          w_max[h] = max(w3);
+                        }
+                      }
+                      
                       // fill in the weights
                       w1[l] = w3;
                       sw1[l] = sw3;
                     }
+                    
+                    
                     
                     // prepare data for the outcome model
                     data_outcome = List::create(
@@ -1194,20 +1275,29 @@ List ipcwcpp(
                     }
                   }
                   
-
                   std::string weight_variable = stabilized_weights ? 
                   "stabilized_weight" : "unstabilized_weight";
                   
-                  // generate weighted KM estimate and log-rank test
-                  List km_outcome, lr_outcome;
+                  List weight_summary, km_outcome, lr_outcome;
                   if (k == -1) {
+                    weight_summary = List::create(
+                      Named("treated") = w_treated,
+                      Named("N") = w_n,
+                      Named("Min") = w_min,
+                      Named("Q1") = w_Q1,
+                      Named("Median") = w_median,
+                      Named("Mean") = w_mean,
+                      Named("Q3") = w_Q3,
+                      Named("Max") = w_max);
+                    
+                    // generate weighted KM estimate and log-rank test
                     km_outcome = kmest(
                       data_outcome, "", "treated", "tstart", "tstop", 
                       "event", weight_variable, "log-log", 1-alpha, 1);
                     
                     lr_outcome = lrtest(
                       data_outcome, "", "ustratum", "treated", "tstart", 
-                      "tstop", "event", weight_variable, 0, 0);
+                      "tstop", "event", weight_variable, 0, 0, 0);
                   }
                   
                   // fit the outcome model with weights
@@ -1235,6 +1325,7 @@ List ipcwcpp(
                       Named("data_switch") = data_switch,
                       Named("fit_switch") = fit_switch,
                       Named("data_outcome") = data_outcome,
+                      Named("weight_summary") = weight_summary,
                       Named("km_outcome") = km_outcome,
                       Named("lr_outcome") = lr_outcome,
                       Named("fit_outcome") = fit_outcome,
@@ -1261,6 +1352,7 @@ List ipcwcpp(
   List data_switch = out["data_switch"];
   List fit_switch = out["fit_switch"];
   List data_outcome = out["data_outcome"];
+  List weight_summary = out["weight_summary"];
   List km_outcome = out["km_outcome"];
   List lr_outcome = out["lr_outcome"];
   List fit_outcome = out["fit_outcome"];
@@ -1271,11 +1363,27 @@ List ipcwcpp(
   double pvalue = out["pvalue"];
   bool fail = out["fail"];
   
-  
   NumericVector hrhats(n_boot);
   LogicalVector fails(n_boot);
   List fail_boots_data;
   String hr_CI_type;
+  
+  // summarize number of deaths by treatment arm in the outcome data
+  IntegerVector treated = data_outcome["treated"];
+  IntegerVector event_out = data_outcome["event"];
+  NumericVector n_event_out(2);
+  for (int i = 0; i < treated.size(); ++i) {
+    int g = treated[i];
+    if (event_out[i] == 1) n_event_out[g]++;
+  }
+  
+  NumericVector pct_event_out(2);
+  for (int g = 0; g < 2; g++) {
+    pct_event_out[g] = 100.0 * n_event_out[g] / n_total[g];
+  }
+  
+  event_summary.push_back(n_event_out, "event_out_n");
+  event_summary.push_back(pct_event_out, "event_out_pct");
   
   IntegerVector uid = data_outcome["uid"];
   if (type_id == INTSXP) {
@@ -1286,13 +1394,31 @@ List ipcwcpp(
     data_outcome.push_front(idwc[uid], id);
   }
   
-  IntegerVector treated = data_outcome["treated"];
+  treated = event_summary["treated"];
+  if (type_treat == LGLSXP || type_treat == INTSXP) {
+    event_summary.push_back(treatwi[1-treated], treat);
+  } else if (type_treat == REALSXP) {
+    event_summary.push_back(treatwn[1-treated], treat);
+  } else if (type_treat == STRSXP) {
+    event_summary.push_back(treatwc[1-treated], treat);
+  }
+  
+  treated = data_outcome["treated"];
   if (type_treat == LGLSXP || type_treat == INTSXP) {
     data_outcome.push_back(treatwi[1-treated], treat);
   } else if (type_treat == REALSXP) {
     data_outcome.push_back(treatwn[1-treated], treat);
   } else if (type_treat == STRSXP) {
     data_outcome.push_back(treatwc[1-treated], treat);
+  }
+  
+  treated = weight_summary["treated"];
+  if (type_treat == LGLSXP || type_treat == INTSXP) {
+    weight_summary.push_back(treatwi[1-treated], treat);
+  } else if (type_treat == REALSXP) {
+    weight_summary.push_back(treatwn[1-treated], treat);
+  } else if (type_treat == STRSXP) {
+    weight_summary.push_back(treatwc[1-treated], treat);
   }
   
   treated = km_outcome["treated"];
@@ -1545,7 +1671,8 @@ List ipcwcpp(
     double loghr = log(hrhat);
     LogicalVector ok = (!fails) & !is_na(hrhats);
     int n_ok = sum(ok);
-    NumericVector loghrs = log(hrhats[ok]);
+    NumericVector subset_hrhats = hrhats[ok];
+    NumericVector loghrs = log(subset_hrhats);
     double sdloghr = sd(loghrs);
     double tcrit = R::qt(1-alpha/2, n_ok-1, 1, 0);
     hrlower = exp(loghr - tcrit*sdloghr);
@@ -1553,37 +1680,22 @@ List ipcwcpp(
     hr_CI_type = "bootstrap";
     pvalue = 2*(1 - R::pt(fabs(loghr/sdloghr), n_ok-1, 1, 0));
   }
-  
-  List settings = List::create(
-    Named("logistic_switching_model") = logistic_switching_model,
-    Named("strata_main_effect_only") = strata_main_effect_only,
-    Named("ns_df") = ns_df,
-    Named("firth") = firth,
-    Named("flic") = flic,
-    Named("stabilized_weights") = stabilized_weights,
-    Named("trunc") = trunc,
-    Named("trunc_upper_only") = trunc_upper_only,
-    Named("swtrt_control_only") = swtrt_control_only,
-    Named("alpha") = alpha,
-    Named("ties") = ties,
-    Named("boot") = boot,
-    Named("n_boot") = n_boot,
-    Named("seed") = seed);
-  
+
   List result = List::create(
     Named("logrank_pvalue") = logRankPValue,
     Named("cox_pvalue") = pvalue,
     Named("hr") = hrhat,
     Named("hr_CI") = NumericVector::create(hrlower, hrupper),
     Named("hr_CI_type") = hr_CI_type,
+    Named("event_summary") = as<DataFrame>(event_summary),
     Named("data_switch") = data_switch,
     Named("fit_switch") = fit_switch,
     Named("data_outcome") = as<DataFrame>(data_outcome),
+    Named("weight_summary") = as<DataFrame>(weight_summary),
     Named("km_outcome") = as<DataFrame>(km_outcome),
     Named("lr_outcome") = as<DataFrame>(lr_outcome),
     Named("fit_outcome") = fit_outcome,
-    Named("fail") = fail,
-    Named("settings") = settings);
+    Named("fail") = fail);
   
   if (boot) {
     result.push_back(fails, "fail_boots");

@@ -13,6 +13,7 @@ lrtest(
   time2 = "",
   event = "event",
   weight = "",
+  weight_readj = FALSE,
   rho1 = 0,
   rho2 = 0
 )
@@ -30,7 +31,7 @@ data. Intervals are assumed to be open on the left
 and closed on the right, and event indicates whether an event
 occurred at the right end of each interval.
 \item \code{event}: The event indicator, 1=event, 0=no event.
-\item \code{weight}: The optional subject-level weight.
+\item \code{weight}: The weight for each observation.
 }}
 
 \item{rep}{The name(s) of the replication variable(s) in the input data.}
@@ -49,6 +50,10 @@ process data in the input data.}
 
 \item{weight}{The name of the weight variable in the input data.}
 
+\item{weight_readj}{Whether the weight variable at each event time
+will be readjusted to be proportional to the number at risk by
+treatment group. Defaults to \code{FALSE}.}
+
 \item{rho1}{The first parameter of the Fleming-Harrington family of
 weighted log-rank test. Defaults to 0 for conventional log-rank test.}
 
@@ -62,6 +67,7 @@ A data frame with the following variables:
 \item \code{vscore}: The variance of the log-rank score test statistic.
 \item \code{logRankZ}: The Z-statistic value.
 \item \code{logRankPValue}: The two-sided p-value.
+\item \code{weight_readj}: Whether the weight variable will be readjusted.
 \item \code{rho1}: The first parameter of the Fleming-Harrington weights.
 \item \code{rho2}: The second parameter of the Fleming-Harrington weights.
 \item \code{rep}: The replication.

@@ -140,21 +140,7 @@ the link function.
 \item \code{fitted_values}: The fitted probabilities of having an event.
 \item \code{terms}: The terms object.
 \item \code{xlevels}: A record of the levels of the factors used in fitting.
-\item \code{data}: The input data.
-\item \code{rep}: The name(s) of the replication variable(s).
-\item \code{event}: The name of the event variable.
-\item \code{covariates}: The names of baseline covariates.
-\item \code{freq}: The name of the freq variable.
-\item \code{weight}: The name of the weight variable.
-\item \code{offset}: The name of the offset variable.
-\item \code{id}: The name of the id variable.
-\item \code{robust}: Whether a robust sandwich variance estimate should be
-computed.
-\item \code{firth}: Whether to use the firth's bias reducing penalized
-likelihood.
-\item \code{flic}: Whether to apply intercept correction.
-\item \code{plci}: Whether to obtain profile likelihood confidence interval.
-\item \code{alpha}: The two-sided significance level.
+\item \code{settings}: A list containing the input parameter values.
 }
 }
 \description{

@@ -143,6 +143,8 @@ bootstrap p-value.
 \item \code{hr_CI}: The confidence interval for hazard ratio.
 \item \code{hr_CI_type}: The type of confidence interval for hazard ratio,
 either "Cox model" or "bootstrap".
+\item \code{event_summary}: A data frame containing the count and percentage
+of deaths and switches by treatment arm.
 \item \code{data_switch}: A list of input data for the switching models by
 treatment group. The variables include \code{id}, \code{stratum},
 \code{"tstart"}, \code{"tstop"}, \code{"cross"}, \code{denominator},
@@ -158,6 +160,8 @@ The variables include \code{id}, \code{stratum}, \code{"tstart"},
 \code{"tstop"}, \code{"event"}, \code{"treated"},
 \code{"unstablized_weight"}, \code{"stabilized_weight"},
 \code{base_cov}, and \code{treat}.
+\item \code{weight_summary}: A data frame summarizing the weights by
+treatment arm.
 \item \code{km_outcome}: The Kaplan-Meier estimates of the survival
 functions for the treatment and control groups based on the
 weighted outcome data.
@@ -165,29 +169,7 @@ weighted outcome data.
 effect based on the weighted outcome data.
 \item \code{fit_outcome}: The fitted outcome Cox model.
 \item \code{fail}: Whether a model fails to converge.
-\item \code{settings}: A list with the following components:
-\itemize{
-\item \code{logistic_switching_model}: Whether a pooled logistic
-regression switching model is used.
-\item \code{strata_main_effect_only}: Whether to only include the strata
-main effects in the logistic regression switching model.
-\item \code{ns_df}: Degrees of freedom for the natural cubic spline.
-\item \code{firth}: Whether the Firth's penalized likelihood is used.
-\item \code{flic}: Whether to apply intercept correction.
-\item \code{stabilized_weights}: Whether to use the stabilized weights.
-\item \code{trunc}: The truncation fraction of the weight distribution.
-\item \code{trunc_upper_only}: Whether to truncate the weights from the
-upper end of the distribution only.
-\item \code{swtrt_control_only} Whether treatment switching occurred
-only in the control group.
-\item \code{alpha}: The significance level to calculate confidence
-intervals.
-\item \code{ties}: The method for handling ties in the Cox model.
-\item \code{boot}: Whether to use bootstrap to obtain the confidence
-interval for hazard ratio.
-\item \code{n_boot}: The number of bootstrap samples.
-\item \code{seed}: The seed to reproduce the bootstrap results.
-}
+\item \code{settings}: A list containing the input parameter values.
 \item \code{fail_boots}: The indicators for failed bootstrap samples
 if \code{boot} is \code{TRUE}.
 \item \code{fail_boots_data}: The data for failed bootstrap samples
@@ -259,7 +241,7 @@ fit1 <- ipcw(
   logistic_switching_model = TRUE, ns_df = 3,
   swtrt_control_only = TRUE, boot = FALSE)
   
-c(fit1$hr, fit1$hr_CI) 
+fit1 
 
 # Example 2: time-dependent covariates Cox switching model
 
@@ -275,7 +257,7 @@ fit2 <- ipcw(
                   "pathway.f", "ps", "ttc", "tran"),
   swtrt_control_only = FALSE, boot = FALSE)
 
-c(fit2$hr, fit2$hr_CI)
+fit2
 
 }
 \references{

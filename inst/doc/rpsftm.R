@@ -17,7 +17,7 @@ data <- immdef %>% mutate(rx = 1-xoyrs/progyrs)
 
 fit1 <- rpsftm(
   data, id = "id", time = "progyrs", event = "prog", treat = "imm",
-  rx = "rx", censor_time = "censyrs", boot = FALSE)
+  rx = "rx", censor_time = "censyrs", gridsearch = FALSE, boot = FALSE)
 
 ## ----logrank------------------------------------------------------------------
 fit1$logrank_pvalue

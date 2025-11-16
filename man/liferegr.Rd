@@ -138,21 +138,7 @@ the intercept.
 \item \code{vbeta_naive}: The naive covariance matrix for parameter estimates.
 \item \code{terms}: The terms object.
 \item \code{xlevels}: A record of the levels of the factors used in fitting.
-\item \code{data}: The input data.
-\item \code{rep}: The name(s) of the replication variable(s).
-\item \code{stratum}: The name(s) of the stratum variable(s).
-\item \code{time}: The name of the time variable.
-\item \code{time2}: The name of the time2 variable.
-\item \code{event}: The name of the event variable.
-\item \code{covariates}: The names of baseline covariates.
-\item \code{weight}: The name of the weight variable.
-\item \code{offset}: The name of the offset variable.
-\item \code{id}: The name of the id variable.
-\item \code{dist}: The assumed distribution for time to event.
-\item \code{robust}: Whether a robust sandwich variance estimate should be
-computed.
-\item \code{plci}: Whether to obtain profile likelihood confidence interval.
-\item \code{alpha}: The two-sided significance level.
+\item \code{settings}: A list containing the input parameter values.
 }
 }
 \description{

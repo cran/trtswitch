@@ -9,12 +9,12 @@ List est_psi_ipe(
     const int n,
     const int q,
     const int p,
-    const IntegerVector& id,
-    const NumericVector& time,
-    const IntegerVector& event,
-    const IntegerVector& treat,
-    const NumericVector& rx,
-    const NumericVector& censor_time,
+    const IntegerVector& idb,
+    const NumericVector& timeb,
+    const IntegerVector& eventb,
+    const IntegerVector& treatb,
+    const NumericVector& rxb,
+    const NumericVector& censor_timeb,
     const StringVector& covariates_aft,
     const NumericMatrix& z_aftb,
     const std::string dist,
@@ -24,8 +24,8 @@ List est_psi_ipe(
     const double alpha) {
   
   NumericVector init(1, NA_REAL);
-  DataFrame df = unswitched(psi*treat_modifier, n, id, time, event, treat,
-                            rx, censor_time, recensor, autoswitch);
+  DataFrame df = unswitched(psi*treat_modifier, n, idb, timeb, eventb, treatb,
+                            rxb, censor_timeb, recensor, autoswitch);
   
   for (int j=0; j<q+p; ++j) {
     String zj = covariates_aft[j+1];
@@ -295,8 +295,6 @@ List ipecpp(const DataFrame data,
   }
   
 
-  // covariates for the accelerated failure time model
-  // including treat, stratum, and base_cov
   int q; // number of columns corresponding to the strata effects
   if (strata_main_effect_only) {
     q = sum(d - 1);
@@ -304,6 +302,8 @@ List ipecpp(const DataFrame data,
     q = nstrata - 1;
   }
   
+  // covariates for the accelerated failure time model
+  // including treat, stratum, and base_cov
   StringVector covariates_aft(q+p+1);
   NumericMatrix z_aftn(n,q+p);
   covariates_aft[0] = "treated";
@@ -328,6 +328,7 @@ List ipecpp(const DataFrame data,
           IntegerVector u = col_level;
           covariates_aft[k+j+1] += std::to_string(u[j]);
         }
+        
         z_aftn(_,k+j) = (stratan(_,i) == j);
       }
       k += di;
@@ -477,7 +478,42 @@ List ipecpp(const DataFrame data,
   n = sum(sub);
   if (n == 0) stop("no observations left after removing missing values");
   
-  DataFrame lr = lrtest(data, "", stratum, treat, time, "", event, "", 0, 0);
+  
+  // summarize number of deaths and switches by treatment arm
+  IntegerVector treat_out = IntegerVector::create(0, 1);
+  NumericVector n_total(2);
+  NumericVector n_event(2);
+  NumericVector n_switch(2);
+  for (int i = 0; i < n; ++i) {
+    int g = treatn[i];
+    n_total[g]++;
+    if (eventn[i] == 1) n_event[g]++;
+    if ((treatn[i] == 0 && rxn[i] > 0) || (treatn[i] == 1 && rxn[i] < 1)) {
+      n_switch[g]++;
+    }
+  }
+  
+  // Compute percentages
+  NumericVector pct_event(2);
+  NumericVector pct_switch(2);
+  for (int g = 0; g < 2; g++) {
+    pct_event[g] = 100.0 * n_event[g] / n_total[g];
+    pct_switch[g] = 100.0 * n_switch[g] / n_total[g];
+  }
+  
+  // Combine count and percentage
+  List event_summary = List::create(
+    _["treated"] = treat_out,
+    _["n"] = n_total,
+    _["event_n"] = n_event,
+    _["event_pct"] = pct_event,
+    _["switch_n"] = n_switch,
+    _["switch_pct"] = pct_switch
+  );
+  
+  
+  // ITT analysis log-rank test
+  DataFrame lr = lrtest(data, "", stratum, treat, time, "", event, "", 0,0,0);
   double logRankZ = lr["logRankZ"];
   double logRankPValue = lr["logRankPValue"];
   double zcrit = R::qnorm(1-alpha/2, 0, 1, 1, 0);
@@ -527,7 +563,9 @@ List ipecpp(const DataFrame data,
                   // obtain the Kaplan-Meier estimates
                   List Sstar, kmstar, data_aft, data_outcome;
                   List fit_aft, fit_outcome;
+                  NumericVector res_aft;
                   double hrhat = NA_REAL, pvalue = NA_REAL;
+                  List km_outcome, lr_outcome;
                   
                   bool psimissing = std::isnan(psihat);
                   
@@ -537,10 +575,7 @@ List ipecpp(const DataFrame data,
                       Sstar = untreated(
                         psihat*treat_modifier, idb, timeb, eventb, treatb,
                         rxb, censor_timeb, recensor, autoswitch);
-                      
-                      kmstar = kmest(Sstar, "", "treated", "t_star", "",
-                                     "d_star", "", "log-log", 1-alpha, 1);
-                      
+                       
                       Sstar.push_back(stratumb, "ustratum");
                       
                       for (int j=0; j<p; ++j) {
@@ -548,6 +583,9 @@ List ipecpp(const DataFrame data,
                         NumericVector u = zb(_,j);
                         Sstar.push_back(u, zj);
                       }
+                      
+                      kmstar = kmest(Sstar, "", "treated", "t_star", "",
+                                     "d_star", "", "log-log", 1-alpha, 1);
                       
                       List out_aft = est_psi_ipe(
                         psihat, n, q, p, idb, timeb, eventb, treatb, rxb,
@@ -561,6 +599,14 @@ List ipecpp(const DataFrame data,
                       data_aft.push_back(stratumb, "ustratum");
                       
                       fit_aft = out_aft["fit_aft"];
+                      
+                      DataFrame parest = DataFrame(fit_aft["parest"]);
+                      NumericVector beta = parest["beta"];
+                      NumericMatrix vbeta(q+p+1, q+p+1);
+                      NumericMatrix rr = residuals_liferegcpp(
+                        beta, vbeta, data_aft, "", "t_star", "", "d_star",
+                        covariates_aft, "", "", "", dist, "deviance", 0, 0);
+                      res_aft = rr(_,0);
                     }
                     
                     // run Cox model to obtain the hazard ratio estimate
@@ -576,6 +622,18 @@ List ipecpp(const DataFrame data,
                       data_outcome.push_back(u, zj);
                     }
                     
+                    // generate KM estimate and log-rank test
+                    if (k == -1) {
+                      km_outcome = kmest(
+                        data_outcome, "", "treated", "t_star", "", 
+                        "d_star", "", "log-log", 1-alpha, 1);
+                      
+                      lr_outcome = lrtest(
+                        data_outcome, "", "ustratum", "treated", "t_star", 
+                        "", "d_star", "", 0, 0, 0);
+                    }
+                    
+                    // fit the outcome model
                     fit_outcome = phregcpp(
                       data_outcome, "", "ustratum", "t_star", "", "d_star", 
                       covariates, "", "", "", ties, init, 
@@ -599,7 +657,10 @@ List ipecpp(const DataFrame data,
                       Named("kmstar") = kmstar,
                       Named("data_aft") = data_aft,
                       Named("fit_aft") = fit_aft,
+                      Named("res_aft") = res_aft,
                       Named("data_outcome") = data_outcome,
+                      Named("km_outcome") = km_outcome,
+                      Named("lr_outcome") = lr_outcome,
                       Named("fit_outcome") = fit_outcome,
                       Named("psihat") = psihat,
                       Named("hrhat") = hrhat,
@@ -625,7 +686,10 @@ List ipecpp(const DataFrame data,
   List kmstar = out["kmstar"];
   List data_aft = out["data_aft"];
   List fit_aft = out["fit_aft"];
+  NumericVector res_aft = out["res_aft"];
   List data_outcome = out["data_outcome"];
+  List km_outcome = out["km_outcome"];
+  List lr_outcome = out["lr_outcome"];
   List fit_outcome = out["fit_outcome"];
   
   double psihat = out["psihat"];
@@ -645,6 +709,23 @@ List ipecpp(const DataFrame data,
   String hr_CI_type;
   
   if (!psimissing) {
+    // summarize number of deaths by treatment arm in the outcome data
+    IntegerVector treated = data_outcome["treated"];
+    IntegerVector event_out = data_outcome["d_star"];
+    NumericVector n_event_out(2);
+    for (int i = 0; i < n; ++i) {
+      int g = treated[i];
+      if (event_out[i] == 1) n_event_out[g]++;
+    }
+    
+    NumericVector pct_event_out(2);
+    for (int g = 0; g < 2; g++) {
+      pct_event_out[g] = 100.0 * n_event_out[g] / n_total[g];
+    }
+    
+    event_summary.push_back(n_event_out, "event_out_n");
+    event_summary.push_back(pct_event_out, "event_out_pct");
+    
     IntegerVector uid = Sstar["uid"];
     if (type_id == INTSXP) {
       Sstar.push_front(idwi[uid], id);
@@ -672,7 +753,16 @@ List ipecpp(const DataFrame data,
       data_outcome.push_front(idwc[uid], id);
     }
     
-    IntegerVector treated = Sstar["treated"];
+    treated = event_summary["treated"];
+    if (type_treat == LGLSXP || type_treat == INTSXP) {
+      event_summary.push_back(treatwi[1-treated], treat);
+    } else if (type_treat == REALSXP) {
+      event_summary.push_back(treatwn[1-treated], treat);
+    } else if (type_treat == STRSXP) {
+      event_summary.push_back(treatwc[1-treated], treat);
+    }
+    
+    treated = Sstar["treated"];
     if (type_treat == LGLSXP || type_treat == INTSXP) {
       Sstar.push_back(treatwi[1-treated], treat);
     } else if (type_treat == REALSXP) {
@@ -706,6 +796,15 @@ List ipecpp(const DataFrame data,
       data_outcome.push_back(treatwn[1-treated], treat);
     } else if (type_treat == STRSXP) {
       data_outcome.push_back(treatwc[1-treated], treat);
+    }
+    
+    treated = km_outcome["treated"];
+    if (type_treat == LGLSXP || type_treat == INTSXP) {
+      km_outcome.push_back(treatwi[1-treated], treat);
+    } else if (type_treat == REALSXP) {
+      km_outcome.push_back(treatwn[1-treated], treat);
+    } else if (type_treat == STRSXP) {
+      km_outcome.push_back(treatwc[1-treated], treat);
     }
     
     if (has_stratum) {
@@ -924,7 +1023,8 @@ List ipecpp(const DataFrame data,
       double loghr = log(hrhat);
       LogicalVector ok = (!fails) & !is_na(hrhats);
       int n_ok = sum(ok);
-      NumericVector loghrs = log(hrhats[ok]);
+      NumericVector subset_hrhats = hrhats[ok];
+      NumericVector loghrs = log(subset_hrhats);
       double sdloghr = sd(loghrs);
       double tcrit = R::qt(1-alpha/2, n_ok-1, 1, 0);
       hrlower = exp(loghr - tcrit*sdloghr);
@@ -941,23 +1041,6 @@ List ipecpp(const DataFrame data,
     }
   }
 
-  List settings = List::create(
-    Named("aft_dist") = aft_dist,
-    Named("strata_main_effect_only") = strata_main_effect_only,
-    Named("low_psi") = low_psi,
-    Named("hi_psi") = hi_psi,
-    Named("treat_modifer") = treat_modifier,
-    Named("recensor") = recensor,
-    Named("admin_recensor_only") = admin_recensor_only,
-    Named("autoswitch") = autoswitch,
-    Named("root_finding") = root_finding,
-    Named("alpha") = alpha,
-    Named("ties") = ties,
-    Named("tol") = tol,
-    Named("boot") = boot,
-    Named("n_boot") = n_boot,
-    Named("seed") = seed);
-  
   List result = List::create(
     Named("psi") = psihat,
     Named("psi_CI") = NumericVector::create(psilower, psiupper),
@@ -967,15 +1050,18 @@ List ipecpp(const DataFrame data,
     Named("hr") = hrhat,
     Named("hr_CI") = NumericVector::create(hrlower, hrupper),
     Named("hr_CI_type") = hr_CI_type,
+    Named("event_summary") = as<DataFrame>(event_summary),
     Named("Sstar") = as<DataFrame>(Sstar),
     Named("kmstar") = as<DataFrame>(kmstar),
     Named("data_aft") = as<DataFrame>(data_aft),
     Named("fit_aft") = fit_aft,
+    Named("res_aft") = res_aft,
     Named("data_outcome") = as<DataFrame>(data_outcome),
+    Named("km_outcome") = as<DataFrame>(km_outcome),
+    Named("lr_outcome") = as<DataFrame>(lr_outcome),
     Named("fit_outcome") = fit_outcome,
     Named("fail") = fail,
-    Named("psimissing") = psimissing,
-    Named("settings") = settings);
+    Named("psimissing") = psimissing);
   
   if (boot) {
     result.push_back(fails, "fail_boots");

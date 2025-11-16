@@ -72,20 +72,23 @@ residuals_phregr <- function(
                    "dfbeta", "dfbetas", "scaledsch"),
     collapse=FALSE, weighted=(type %in% c("dfbeta", "dfbetas"))) {
   
+  if (!inherits(object, "phregr"))
+    stop("object must be of class 'phregr'");
+  
   p = object$p
   beta = object$beta
   residuals = object$residuals
 
-  data = object$data
-  stratum = object$stratum
-  time = object$time
-  time2 = object$time2
-  event = object$event
-  covariates = object$covariates
-  weight = object$weight
-  offset = object$offset
-  id = object$id
-  ties = object$ties
+  data = object$settings$data
+  stratum = object$settings$stratum
+  time = object$settings$time
+  time2 = object$settings$time2
+  event = object$settings$event
+  covariates = object$settings$covariates
+  weight = object$settings$weight
+  offset = object$settings$offset
+  id = object$settings$id
+  ties = object$settings$ties
   param = object$param
 
   rownames(data) = NULL

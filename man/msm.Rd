@@ -143,6 +143,8 @@ bootstrap p-value.
 \item \code{hr_CI}: The confidence interval for hazard ratio.
 \item \code{hr_CI_type}: The type of confidence interval for hazard ratio,
 either "Cox model" or "bootstrap".
+\item \code{event_summary}: A data frame containing the count and percentage
+of deaths and switches by treatment arm.
 \item \code{data_switch}: A list of input data for the switching models by
 treatment group. The variables include \code{id}, \code{stratum},
 \code{"tstart"}, \code{"tstop"}, \code{"cross"}, \code{denominator},
@@ -160,6 +162,8 @@ The variables include \code{id}, \code{stratum}, \code{"tstart"},
 \code{base_cov}, and \code{treat}.
 If \code{treat_alt_interaction} is \code{TRUE},
 the data set also includes the \code{"treated_crossed"} variable.
+\item \code{weight_summary}: A data frame summarizing the weights by
+treatment arm.
 \item \code{km_outcome}: The Kaplan-Meier estimates of the survival
 functions for the treatment and control groups based on the
 weighted outcome data truncated at time of treatment switching.
@@ -168,29 +172,7 @@ effect based on the weighted outcome data truncated at time of
 treatment switching.
 \item \code{fit_outcome}: The fitted outcome Cox model.
 \item \code{fail}: Whether a model fails to converge.
-\item \code{settings}: A list with the following components:
-\itemize{
-\item \code{strata_main_effect_only}: Whether to only include the strata
-main effects in the logistic regression switching model.
-\item \code{ns_df}: Degrees of freedom for the natural cubic spline.
-\item \code{firth}: Whether the Firth's penalized likelihood is used.
-\item \code{flic}: Whether to apply intercept correction.
-\item \code{stabilized_weights}: Whether to use the stabilized weights.
-\item \code{trunc}: The truncation fraction of the weight distribution.
-\item \code{trunc_upper_only}: Whether to truncate the weights from the
-upper end of the distribution only.
-\item \code{swtrt_control_only} Whether treatment switching occurred only
-in the control group.
-\item \code{treat_alt_interaction} Whether to include an interaction
-between randomized and alternative treatments in the outcome model.
-\item \code{alpha}: The significance level to calculate confidence
-intervals.
-\item \code{ties}: The method for handling ties in the Cox model.
-\item \code{boot}: Whether to use bootstrap to obtain the confidence
-interval for hazard ratio.
-\item \code{n_boot}: The number of bootstrap samples.
-\item \code{seed}: The seed to reproduce the bootstrap results.
-}
+\item \code{settings}: A list containing the input parameter values.
 \item \code{fail_boots}: The indicators for failed bootstrap samples
 if \code{boot} is \code{TRUE}.
 \item \code{fail_boots_data}: The data for failed bootstrap samples
@@ -259,7 +241,7 @@ fit1 <- msm(
   denominator = c("bprog", "L"), 
   ns_df = 3, swtrt_control_only = TRUE, boot = FALSE)
   
-c(fit1$hr, fit1$hr_CI)
+fit1
 
 }
 \references{

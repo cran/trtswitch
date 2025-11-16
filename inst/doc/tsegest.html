@@ -447,8 +447,9 @@ subsequent model-fitting process.</p>
 <span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>  <span class="at">base_cov =</span> <span class="st">&quot;bprog&quot;</span>, </span>
 <span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>  <span class="at">conf_cov =</span> <span class="fu">c</span>(<span class="st">&quot;bprog*cattdc&quot;</span>, <span class="st">&quot;timePFSobs&quot;</span>, <span class="st">&quot;visit7on&quot;</span>), </span>
 <span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>  <span class="at">ns_df =</span> <span class="dv">3</span>, <span class="at">recensor =</span> <span class="cn">TRUE</span>, <span class="at">admin_recensor_only =</span> <span class="cn">TRUE</span>, </span>
-<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>  <span class="at">swtrt_control_only =</span> <span class="cn">TRUE</span>, <span class="at">alpha =</span> <span class="fl">0.05</span>, <span class="at">ties =</span> <span class="st">&quot;efron&quot;</span>, </span>
-<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>  <span class="at">tol =</span> <span class="fl">1.0e-6</span>, <span class="at">offset =</span> <span class="dv">0</span>, <span class="at">boot =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a>  <span class="at">swtrt_control_only =</span> <span class="cn">TRUE</span>, <span class="at">gridsearch =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>  <span class="at">alpha =</span> <span class="fl">0.05</span>, <span class="at">ties =</span> <span class="st">&quot;efron&quot;</span>, </span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>  <span class="at">tol =</span> <span class="fl">1.0e-6</span>, <span class="at">offset =</span> <span class="dv">0</span>, <span class="at">boot =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
 <p>The Kaplan-Meier plot for the control arm demonstrates that treatment
 switching can occur at the secondary baseline and at each of the ensuing
 five scheduled visits, spaced 21 days apart.</p>
@@ -525,12 +526,13 @@ bootstrapped.</p>
 <span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>  conf_cov = c(&quot;bprog*cattdc&quot;, &quot;timePFSobs&quot;, &quot;visit7on&quot;),</span>
 <span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>  low_psi = -2, hi_psi = 2, n_eval_z = 101, </span>
 <span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>  ns_df = 3, recensor = TRUE, admin_recensor_only = TRUE, </span>
-<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>  swtrt_control_only = TRUE, alpha = 0.05, ties = &quot;efron&quot;, </span>
-<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>  tol = 1.0e-6, offset = 0, boot = TRUE, </span>
-<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>  n_boot = 1000, seed = 12345)</span>
-<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a></span>
-<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>c(fit2$hr, fit2$hr_CI)</span>
-<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>```</span></code></pre></div>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>  swtrt_control_only = TRUE, gridsearch = FALSE, </span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>  alpha = 0.05, ties = &quot;efron&quot;, </span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>  tol = 1.0e-6, offset = 0, boot = TRUE, </span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>  n_boot = 1000, seed = 12345)</span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a></span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>c(fit2$hr, fit2$hr_CI)</span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a>```</span></code></pre></div>
 </div>
 
 

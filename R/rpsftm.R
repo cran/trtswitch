@@ -62,7 +62,7 @@
 #' @param autoswitch Whether to exclude recensoring for treatment arms
 #'   with no switching. Defaults to \code{TRUE}.
 #' @param gridsearch Whether to use grid search to estimate the causal
-#'   parameter \code{psi}. Defaults to \code{FALSE}, in which case, a root
+#'   parameter \code{psi}. Defaults to \code{TRUE}, otherwise, a root 
 #'   finding algorithm will be used.
 #' @param root_finding Character string specifying the univariate 
 #'   root-finding algorithm to use. Options are \code{"brent"} (default)
@@ -101,10 +101,19 @@
 #'   the ITT log-rank test p-value or bootstrap. When bootstrapping, 
 #'   the interval and p-value are derived from a t-distribution 
 #'   with \code{n_boot - 1} degrees of freedom.
+#'   
+#' If grid search is used to estimate \eqn{\psi}, the estimated \eqn{\psi} 
+#' is the one with the smallest absolute value among those at which 
+#' the Z-statistic is zero based on linear interpolation. 
+#' If root finding is used, the estimated \eqn{\psi} is
+#' the solution to the equation where the Z-statistic is zero.
 #'
 #' @return A list with the following components:
 #'
 #' * \code{psi}: The estimated causal parameter.
+#' 
+#' * \code{psi_roots}: Vector of \code{psi} values at which the Z-statistic 
+#'   is zero, identified using grid search and linear interpolation.
 #'
 #' * \code{psi_CI}: The confidence interval for \code{psi}.
 #' 
@@ -125,6 +134,9 @@
 #'
 #' * \code{hr_CI_type}: The type of confidence interval for hazard ratio,
 #'   either "log-rank p-value" or "bootstrap".
+#'   
+#' * \code{event_summary}: A data frame containing the count and percentage
+#'   of deaths and switches by treatment arm.
 #'
 #' * \code{eval_z}: A data frame containing the Z-statistics for treatment
 #'   effect evaluated at a sequence of \code{psi} values. Used to plot and 
@@ -145,61 +157,21 @@
 #'   The variables include \code{id}, \code{stratum}, \code{"t_star"}, 
 #'   \code{"d_star"}, \code{"treated"}, \code{base_cov}, and \code{treat}.
 #'
+#' * \code{km_outcome}: The Kaplan-Meier estimates of the survival
+#'   functions for the treatment and control groups based on the
+#'   counterfactual unswitched survival times.
+#'   
+#' * \code{lr_outcome}: The log-rank test results for the treatment
+#'   effect based on the counterfactual unswitched survival times.
+#'   
 #' * \code{fit_outcome}: The fitted outcome Cox model.
 #'
 #' * \code{fail}: Whether a model fails to converge.
 #'
 #' * \code{psimissing}: Whether the `psi` parameter cannot be estimated.
 #'
-#' * \code{settings}: A list with the following components:
+#' * \code{settings}: A list containing the input parameter values.
 #' 
-#'     - \code{psi_test}: The survival function to calculate the Z-statistic.
-#'     
-#'     - \code{aft_dist}: The distribution for time to event for the AFT
-#'       model.
-#'
-#'     - \code{strata_main_effect_only}: Whether to only include the strata
-#'       main effects in the AFT model.
-#'
-#'     - \code{low_psi}: The lower limit of the causal parameter.
-#'     
-#'     - \code{hi_psi}: The upper limit of the causal parameter.
-#'     
-#'     - \code{n_eval_z}: The number of points between \code{low_psi} and 
-#'       \code{hi_psi} (inclusive) at which to evaluate the Z-statistics.
-#'
-#'     - \code{treat_modifier}: The sensitivity parameter for the constant 
-#'       treatment effect assumption.
-#'
-#'     - \code{recensor}: Whether to apply recensoring to counterfactual
-#'       survival times.
-#'
-#'     - \code{admin_recensor_only}: Whether to apply recensoring to
-#'       administrative censoring times only.
-#'
-#'     - \code{autoswitch}: Whether to exclude recensoring for treatment 
-#'       arms with no switching.
-#'
-#'     - \code{gridsearch}: Whether to use grid search to estimate the 
-#'       causal parameter \code{psi}.
-#'       
-#'     - \code{root_finding}: The univariate root-finding algorithm to use.
-#'
-#'     - \code{alpha}: The significance level to calculate confidence
-#'       intervals.
-#'
-#'     - \code{ties}: The method for handling ties in the Cox model.
-#'
-#'     - \code{tol}: The desired accuracy (convergence tolerance) 
-#'       for \code{psi}.
-#'
-#'     - \code{boot}: Whether to use bootstrap to obtain the confidence
-#'       interval for hazard ratio.
-#'
-#'     - \code{n_boot}: The number of bootstrap samples.
-#'
-#'     - \code{seed}: The seed to reproduce the bootstrap results.
-#'
 #' * \code{fail_boots}: The indicators for failed bootstrap samples
 #'   if \code{boot} is \code{TRUE}.
 #'
@@ -237,7 +209,7 @@
 #'   data, id = "id", time = "progyrs", event = "prog", treat = "imm",
 #'   rx = "rx", censor_time = "censyrs", boot = FALSE)
 #'
-#' c(fit1$hr, fit1$hr_CI)
+#' fit1
 #'
 #' # Example 2: two-way treatment switching (illustration only)
 #'
@@ -260,7 +232,7 @@
 #'                "pathway.f"),
 #'   low_psi = -3, hi_psi = 3, boot = FALSE)
 #'
-#' c(fit2$hr, fit2$hr_CI)
+#' fit2
 #'
 #' @export
 rpsftm <- function(data, id = "id", stratum = "", time = "time", 
@@ -271,7 +243,7 @@ rpsftm <- function(data, id = "id", stratum = "", time = "time",
                    low_psi = -2, hi_psi = 2,
                    n_eval_z = 101, treat_modifier = 1,
                    recensor = TRUE, admin_recensor_only = TRUE,
-                   autoswitch = TRUE, gridsearch = FALSE,
+                   autoswitch = TRUE, gridsearch = TRUE,
                    root_finding = "brent",
                    alpha = 0.05, ties = "efron", tol = 1.0e-6,
                    boot = FALSE, n_boot = 1000, seed = NA) {
@@ -346,5 +318,43 @@ rpsftm <- function(data, id = "id", stratum = "", time = "time",
     }
   }
   
+  
+  # convert treatment back to a factor variable if needed
+  if (is.factor(data[[treat]])) {
+    levs = levels(data[[treat]])
+    
+    out$event_summary[[treat]] <- factor(out$event_summary[[treat]], 
+                                         levels = c(1,2), labels = levs)
+    
+    out$Sstar[[treat]] <- factor(out$Sstar[[treat]], 
+                                 levels = c(1,2), labels = levs)
+    
+    out$kmstar[[treat]] <- factor(out$kmstar[[treat]], 
+                                  levels = c(1,2), labels = levs)
+    
+    out$data_outcome[[treat]] <- factor(out$data_outcome[[treat]], 
+                                        levels = c(1,2), labels = levs)
+    
+    out$km_outcome[[treat]] <- factor(out$km_outcome[[treat]], 
+                                      levels = c(1,2), labels = levs)
+  }
+ 
+  
+  out$settings <- list(
+    data = data, id = id, stratum = stratum, time = time, 
+    event = event, treat = treat, rx = rx, 
+    censor_time = censor_time, base_cov = base_cov,
+    psi_test = psi_test, aft_dist = aft_dist,
+    strata_main_effect_only = strata_main_effect_only,
+    low_psi = low_psi, hi_psi = hi_psi, n_eval_z = n_eval_z,
+    treat_modifier = treat_modifier, recensor = recensor,
+    admin_recensor_only = admin_recensor_only,
+    autoswitch = autoswitch, gridsearch = gridsearch,
+    root_finding = root_finding,
+    alpha = alpha, ties = ties, tol = tol, 
+    boot = boot, n_boot = n_boot, seed = seed
+  )
+  
+  class(out) = "rpsftm"
   out
 }

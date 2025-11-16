@@ -131,40 +131,28 @@ bootstrap p-value.
 \item \code{hr_CI}: The confidence interval for hazard ratio.
 \item \code{hr_CI_type}: The type of confidence interval for hazard ratio,
 either "Cox model" or "bootstrap".
+\item \code{event_summary}: A data frame containing the count and percentage
+of deaths, disease progressions, and switches by treatment arm.
 \item \code{data_aft}: A list of input data for the AFT model by treatment
 group. The variables include \code{id}, \code{stratum}, \code{"pps"},
 \code{"event"}, \code{"swtrt"}, \code{base2_cov}, \code{pd_time},
 \code{swtrt_time}, and \code{time}.
 \item \code{fit_aft}: A list of fitted AFT models by treatment group.
+\item \code{res_aft}: A list of deviance residuals from the AFT models
+by treatment group.
 \item \code{data_outcome}: The input data for the outcome Cox model
 of counterfactual unswitched survival times.
 The variables include \code{id}, \code{stratum}, \code{"t_star"},
 \code{"d_star"}, \code{"treated"}, \code{base_cov}, and \code{treat}.
+\item \code{km_outcome}: The Kaplan-Meier estimates of the survival
+functions for the treatment and control groups based on the
+counterfactual unswitched survival times.
+\item \code{lr_outcome}: The log-rank test results for the treatment
+effect based on the counterfactual unswitched survival times.
 \item \code{fit_outcome}: The fitted outcome Cox model.
 \item \code{fail}: Whether a model fails to converge.
 \item \code{psimissing}: Whether the \code{psi} parameter cannot be estimated.
-\item \code{settings}: A list with the following components:
-\itemize{
-\item \code{aft_dist}: The distribution for time to event for the AFT
-model.
-\item \code{strata_main_effect_only}: Whether to only include the strata
-main effects in the AFT model.
-\item \code{recensor}: Whether to apply recensoring to counterfactual
-survival times.
-\item \code{admin_recensor_only}: Whether to apply recensoring to
-administrative censoring times only.
-\item \code{swtrt_control_only}: Whether treatment switching occurred
-only in the control group.
-\item \code{alpha}: The significance level to calculate confidence
-intervals.
-\item \code{ties}: The method for handling ties in the Cox model.
-\item \code{offset}: The offset to calculate the time disease
-progression to death or censoring.
-\item \code{boot}: Whether to use bootstrap to obtain the confidence
-interval for hazard ratio.
-\item \code{n_boot}: The number of bootstrap samples.
-\item \code{seed}: The seed to reproduce the bootstrap results.
-}
+\item \code{settings}: A list containing the input parameter values.
 \item \code{psi_trt}: The estimated causal parameter for the experimental
 group if \code{swtrt_control_only} is \code{FALSE}.
 \item \code{psi_trt_CI}: The confidence interval for \code{psi_trt}
@@ -253,7 +241,7 @@ fit1 <- tsesimp(
   recensor = TRUE, swtrt_control_only = FALSE, offset = 1,
   boot = FALSE)
 
-c(fit1$hr, fit1$hr_CI)
+fit1
 
 }
 \references{

@@ -122,6 +122,9 @@
 #' * \code{hr_CI_type}: The type of confidence interval for hazard ratio,
 #'   either "Cox model" or "bootstrap".
 #'
+#' * \code{event_summary}: A data frame containing the count and percentage
+#'   of deaths, disease progressions, and switches by treatment arm.
+#'   
 #' * \code{data_aft}: A list of input data for the AFT model by treatment 
 #'   group. The variables include \code{id}, \code{stratum}, \code{"pps"}, 
 #'   \code{"event"}, \code{"swtrt"}, \code{base2_cov}, \code{pd_time}, 
@@ -129,48 +132,28 @@
 #' 
 #' * \code{fit_aft}: A list of fitted AFT models by treatment group.
 #' 
+#' * \code{res_aft}: A list of deviance residuals from the AFT models 
+#'   by treatment group.
+#'   
 #' * \code{data_outcome}: The input data for the outcome Cox model 
 #'   of counterfactual unswitched survival times.
 #'   The variables include \code{id}, \code{stratum}, \code{"t_star"}, 
 #'   \code{"d_star"}, \code{"treated"}, \code{base_cov}, and \code{treat}.
 #'
+#' * \code{km_outcome}: The Kaplan-Meier estimates of the survival
+#'   functions for the treatment and control groups based on the
+#'   counterfactual unswitched survival times.
+#'   
+#' * \code{lr_outcome}: The log-rank test results for the treatment
+#'   effect based on the counterfactual unswitched survival times.
+#'   
 #' * \code{fit_outcome}: The fitted outcome Cox model.
 #' 
 #' * \code{fail}: Whether a model fails to converge.
 #'
 #' * \code{psimissing}: Whether the `psi` parameter cannot be estimated.
 #' 
-#' * \code{settings}: A list with the following components:
-#'
-#'     - \code{aft_dist}: The distribution for time to event for the AFT
-#'       model.
-#'
-#'     - \code{strata_main_effect_only}: Whether to only include the strata
-#'       main effects in the AFT model.
-#'
-#'     - \code{recensor}: Whether to apply recensoring to counterfactual
-#'       survival times.
-#'
-#'     - \code{admin_recensor_only}: Whether to apply recensoring to
-#'       administrative censoring times only.
-#'
-#'     - \code{swtrt_control_only}: Whether treatment switching occurred
-#'       only in the control group.
-#'
-#'     - \code{alpha}: The significance level to calculate confidence
-#'       intervals.
-#'
-#'     - \code{ties}: The method for handling ties in the Cox model.
-#'
-#'     - \code{offset}: The offset to calculate the time disease 
-#'       progression to death or censoring.
-#'
-#'     - \code{boot}: Whether to use bootstrap to obtain the confidence
-#'       interval for hazard ratio.
-#'
-#'     - \code{n_boot}: The number of bootstrap samples.
-#'
-#'     - \code{seed}: The seed to reproduce the bootstrap results.
+#' * \code{settings}: A list containing the input parameter values.
 #'
 #' * \code{psi_trt}: The estimated causal parameter for the experimental 
 #'   group if \code{swtrt_control_only} is \code{FALSE}.
@@ -245,7 +228,7 @@
 #'   recensor = TRUE, swtrt_control_only = FALSE, offset = 1,
 #'   boot = FALSE)
 #'
-#' c(fit1$hr, fit1$hr_CI)
+#' fit1
 #'
 #' @export
 tsesimp <- function(data, id = "id", stratum = "", time = "time", 
@@ -330,6 +313,7 @@ tsesimp <- function(data, id = "id", stratum = "", time = "time",
     ties = ties, offset = offset, 
     boot = boot, n_boot = n_boot, seed = seed)
   
+  
   if (!out$psimissing) {
     out$data_outcome$uid <- NULL
     out$data_outcome$ustratum <- NULL
@@ -369,5 +353,40 @@ tsesimp <- function(data, id = "id", stratum = "", time = "time",
     }
   }
 
+  
+  # convert treatment back to a factor variable if needed
+  if (is.factor(data[[treat]])) {
+    levs = levels(data[[treat]])
+    
+    out$event_summary[[treat]] <- factor(out$event_summary[[treat]], 
+                                         levels = c(1,2), labels = levs)
+    
+    for (h in 1:2) {
+      out$data_aft[[h]][[treat]] <- factor(
+        out$data_aft[[h]][[treat]], levels = c(1,2), labels = levs)
+    }
+
+    out$data_outcome[[treat]] <- factor(out$data_outcome[[treat]], 
+                                        levels = c(1,2), labels = levs)
+    
+    out$km_outcome[[treat]] <- factor(out$km_outcome[[treat]], 
+                                      levels = c(1,2), labels = levs)
+  }
+  
+  
+  out$settings <- list(
+    data = data, id = id, stratum = stratum, time = time, 
+    event = event, treat = treat, censor_time = censor_time, 
+    pd = pd, pd_time = pd_time, swtrt = swtrt, 
+    swtrt_time = swtrt_time, base_cov = base_cov, 
+    base2_cov = base2_cov, aft_dist = aft_dist,
+    strata_main_effect_only = strata_main_effect_only,
+    recensor = recensor, admin_recensor_only = admin_recensor_only,
+    swtrt_control_only = swtrt_control_only,
+    alpha = alpha, ties = ties, offset = offset,
+    boot = boot, n_boot = n_boot, seed = seed
+  )
+  
+  class(out) <- "tsesimp"
   out
 }
