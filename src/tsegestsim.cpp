@@ -1,7 +1,18 @@
-#include "utilities.h"
-#include "survival_analysis.h"
+#include <Rcpp.h>
 
-using namespace Rcpp;
+#include <boost/random.hpp>
+
+#include "survival_analysis.h"
+#include "utilities.h"
+#include "dataframe_list.h"
+
+#include <algorithm>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <random>
+#include <stdexcept>
+#include <vector>
 
 
 //' @title Simulate Survival Data for Two-Stage Estimation with  
@@ -53,9 +64,7 @@ using namespace Rcpp;
 //'   survival time.
 //' @param milestone The milestone to calculate restricted mean survival 
 //'   time.
-//' @param outputRawDataset Whether to output the raw data set.
 //' @param seed The seed to reproduce the simulation results.
-//'   The seed from the environment will be used if left unspecified.
 //'
 //' @return A list with two data frames.
 //' 
@@ -151,121 +160,115 @@ using namespace Rcpp;
 //'   pcattrtbprog = 0.25, pcatnotrt = 0.2, pcattrt = 0.1, 
 //'   catmult = 0.5, tdxo = 1, ppoor = 0.1, pgood = 0.04, 
 //'   ppoormet = 0.4, pgoodmet = 0.2, xomult = 1.4188308, 
-//'   milestone = 546, outputRawDataset = 1, seed = 2000)
+//'   milestone = 546, seed = 2000)
 //'
 //' @export
 // [[Rcpp::export]]
-List tsegestsim(const int n = 500,
-                const int allocation1 = 2,
-                const int allocation2 = 1,
-                const double pbprog = 0.5,
-                const double trtlghr = -0.5,
-                const double bprogsl = 0.3,
-                const double shape1 = 1.8,
-                const double scale1 = 360,
-                const double shape2 = 1.7,
-                const double scale2 = 688,
-                const double pmix = 0.5,
-                const double admin = 5000,
-                const double pcatnotrtbprog = 0.5,
-                const double pcattrtbprog = 0.25,
-                const double pcatnotrt = 0.2,
-                const double pcattrt = 0.1,
-                const double catmult = 0.5,
-                const double tdxo = 1,
-                const double ppoor = 0.1,
-                const double pgood = 0.04,
-                const double ppoormet = 0.4,
-                const double pgoodmet = 0.2,
-                const double xomult = 1.4188308,
-                const double milestone = 546,
-                const bool outputRawDataset = true,
-                const int seed = NA_INTEGER) {
+Rcpp::List tsegestsim(const int n = 500,
+                      const int allocation1 = 2,
+                      const int allocation2 = 1,
+                      const double pbprog = 0.5,
+                      const double trtlghr = -0.5,
+                      const double bprogsl = 0.3,
+                      const double shape1 = 1.8,
+                      const double scale1 = 360,
+                      const double shape2 = 1.7,
+                      const double scale2 = 688,
+                      const double pmix = 0.5,
+                      const double admin = 5000,
+                      const double pcatnotrtbprog = 0.5,
+                      const double pcattrtbprog = 0.25,
+                      const double pcatnotrt = 0.2,
+                      const double pcattrt = 0.1,
+                      const double catmult = 0.5,
+                      const double tdxo = 1,
+                      const double ppoor = 0.1,
+                      const double pgood = 0.04,
+                      const double ppoormet = 0.4,
+                      const double pgoodmet = 0.2,
+                      const double xomult = 1.4188308,
+                      const double milestone = 546,
+                      const int seed = 0) {
   
-  if (seed != NA_INTEGER) {
-    set_seed(seed);
-  }
-
+  // random number generator
+  boost::random::mt19937_64 rng(seed);
+  
+  // distributions reused
+  boost::random::uniform_real_distribution<double> unif(0.0, 1.0);
+  boost::random::gamma_distribution<double> ga(5, 1.0);  // shape = 5, scale = 1
+  boost::random::gamma_distribution<double> gb(10, 1.0); // shape = 10, scale = 1
+  
   // survival function of the Weibull mixture
-  auto S = [shape1, scale1, shape2, scale2, pmix](double t)->double {
-    double a1 = pmix*exp(-pow(t/scale1,shape1));
-    double a2 = (1-pmix)*exp(-pow(t/scale2,shape2));
-    return a1+a2;
+  auto S = [shape1, scale1, shape2, scale2, pmix](double t) -> double {
+    double a1 = pmix * std::exp(-std::pow(t / scale1, shape1));
+    double a2 = (1 - pmix) * std::exp(-std::pow(t / scale2, shape2));
+    return a1 + a2;
   };
-
+  
   double simtrueconstmean, simtrueconstlb, simtrueconstub, simtrueconstse;
   double simtrueexpstmean, simtrueexpstlb, simtrueexpstub, simtrueexpstse;
   double simtrue_coxwbprog_hr, simtrue_cox_hr;
   double simtrue_aftwbprog_af, simtrue_aft_af;
-
-  IntegerVector id(n), trtrand(n), bprog(n), dead(n), progressed(n);
-  NumericVector timeOS(n), timeOS5(n);
-  NumericVector timePFS(n), timePFSobs(n, NA_REAL);
-  NumericVector probcat(n);
-  IntegerVector cat2(n, NA_INTEGER), cat3(n, NA_INTEGER);
-  IntegerVector cat4(n, NA_INTEGER), cat5(n, NA_INTEGER);
-  IntegerVector catevent(n, NA_INTEGER);
-  NumericVector catOSloss(n, NA_REAL), cattime(n, NA_REAL);
-
-  int b1 = allocation1, b2 = allocation2;
-  for (int i=0; i<n; i++) {
-    id[i] = i+1;
-
+  
+  std::vector<int> id(n), trtrand(n), bprog(n), dead(n), progressed(n);
+  std::vector<double> timeOS(n), timeOS5(n);
+  std::vector<double> timePFS(n), timePFSobs(n, NaN);
+  std::vector<double> probcat(n);
+  std::vector<int> cat2(n, INT_MIN), cat3(n, INT_MIN);
+  std::vector<int> cat4(n, INT_MIN), cat5(n, INT_MIN);
+  std::vector<int> catevent(n, INT_MIN);
+  std::vector<double> catOSloss(n, NaN), cattime(n, NaN);
+  
+  double b1 = allocation1, b2 = allocation2;
+  for (int i = 0; i < n; ++i) {
+    id[i] = i + 1; // 1-based ID
+    
     // generate treatment indicators using stratified block randomization
-    double u = R::runif(0,1);
-    if (u <= b1/(b1+b2+0.0)) {
-      trtrand[i] = 1;
-      b1--;
-    } else {
-      trtrand[i] = 0;
-      b2--;
-    }
-
+    if (unif(rng) <= b1 / (b1 + b2)) { trtrand[i] = 1; b1--; } 
+    else { trtrand[i] = 0; b2--; }
+    
     // start a new block after depleting the current block
-    if (b1+b2==0) {
-      b1 = allocation1;
-      b2 = allocation2;
-    }
-
+    if (b1 == 0 && b2 == 0) { b1 = allocation1; b2 = allocation2; }
+    
     // generate poor baseline prognosis indicators
-    bprog[i] = static_cast<int>(R::rbinom(1, pbprog));
-
+    bprog[i] = (unif(rng) <= pbprog) ? 1 : 0;
+    
     // generate survival times from Weibull mixture
-    double eta = trtlghr*trtrand[i] + bprogsl*bprog[i];
-    u = R::runif(0,1);
-    double v = pow(u, exp(-eta));
-    timeOS[i] = squantilecpp(S, v);
+    double eta = trtlghr * trtrand[i] + bprogsl * bprog[i];
+    double v = std::pow(unif(rng), std::exp(-eta));
+    timeOS[i] = squantilecpp(S, v, 1.0e-6);
     dead[i] = (timeOS[i] <= admin);
     timeOS[i] = std::min(timeOS[i], admin);
     timeOS[i] = std::round(timeOS[i]);
     if (timeOS[i] == 0) timeOS[i] = 1;
-
+    
     // generate observed time to disease progression
-    u = R::rbeta(5,10);
-    timePFS[i] = std::round(timeOS[i]*u);
-
+    double g1 = ga(rng), g2 = gb(rng);
+    double u = g1 / (g1 + g2);  // Beta(5, 10) distribution
+    timePFS[i] = std::round(timeOS[i] * u);
+    
     // scheduled visits are every 21 days
     int k = static_cast<int>(std::floor(timeOS[i] / 21));
-    for (int j=1; j<=k; j++) {
+    for (int j = 1; j <= k; ++j) {
       if (timePFS[i] < j*21 && timeOS[i] > j*21) {
         timePFSobs[i] = j*21;
         break;
       }
     }
-
+    
     if (!std::isnan(timePFSobs[i])) {
       progressed[i] = 1;
     } else {
       timePFSobs[i] = timeOS[i];
       progressed[i] = 0;
     }
-
+    
     // apply censoring to observed time to disease progression
     if (timePFSobs[i] > admin) {
       progressed[i] = 0;
       timePFSobs[i] = admin;
     }
-
+    
     // generate catastrophic event that can happen after progression
     if (trtrand[i] == 0 && bprog[i] == 1) {
       probcat[i] = pcatnotrtbprog;
@@ -276,26 +279,26 @@ List tsegestsim(const int n = 500,
     } else if (trtrand[i] == 1 && bprog[i] == 0) {
       probcat[i] = pcattrt;
     }
-
+    
     if (progressed[i] == 1 && timeOS[i] > timePFSobs[i] + 21) {
-      cat2[i] = static_cast<int>(R::rbinom(1, probcat[i]));
+      cat2[i] = (unif(rng) <= probcat[i]) ? 1 : 0;
     }
-
+    
     if (cat2[i] == 0 &&
         progressed[i] == 1 && timeOS[i] > timePFSobs[i] + 42) {
-      cat3[i] = static_cast<int>(R::rbinom(1, probcat[i]));
+      cat3[i] = (unif(rng) <= probcat[i]) ? 1 : 0;
     }
-
+    
     if (cat2[i] == 0 && cat3[i] == 0 &&
         progressed[i] == 1 && timeOS[i] > timePFSobs[i] + 63) {
-      cat4[i] = static_cast<int>(R::rbinom(1, probcat[i]));
+      cat4[i] = (unif(rng) <= probcat[i]) ? 1 : 0;
     }
-
+    
     if (cat2[i] == 0 && cat3[i] == 0 && cat4[i] == 0 &&
         progressed[i] == 1 && timeOS[i] > timePFSobs[i] + 84) {
-      cat5[i] = static_cast<int>(R::rbinom(1, probcat[i]));
+      cat5[i] = (unif(rng) <= probcat[i]) ? 1 : 0;
     }
-
+    
     if (cat2[i] == 1) {
       cattime[i] = timePFSobs[i] + 21;
     } else if (cat3[i] == 1) {
@@ -305,21 +308,21 @@ List tsegestsim(const int n = 500,
     } else if (cat5[i] == 1) {
       cattime[i] = timePFSobs[i] + 84;
     }
-
+    
     // amend survival times
     timeOS5[i] = timeOS[i]; // original survival time
     if (cat2[i] == 1 || cat3[i] == 1 || cat4[i] == 1 || cat5[i] == 1) {
       catevent[i] = 1;
       catOSloss[i] = timeOS[i] - cattime[i];
-      catOSloss[i] = std::round(catOSloss[i]*catmult);
+      catOSloss[i] = std::round(catOSloss[i] * catmult);
       timeOS[i] = catOSloss[i] + cattime[i];
     }
   }
-
+  
   // calculate HR and RMST with no switching
-  IntegerVector event(n);
-  NumericVector time(n);
-  for (int i=0; i<n; i++) {
+  std::vector<int> event(n);
+  std::vector<double> time(n);
+  for (int i = 0; i < n; ++i) {
     if (timeOS[i] > admin) {
       event[i] = 0;
       time[i] = admin;
@@ -328,20 +331,19 @@ List tsegestsim(const int n = 500,
       time[i] = timeOS[i];
     }
   }
-
-  DataFrame a1 = DataFrame::create(
-    Named("time") = time,
-    Named("event") = event,
-    Named("trtrand") = trtrand,
-    Named("bprog") = bprog);
-
+  
+  DataFrameCpp a1;
+  a1.push_back(time, "time");
+  a1.push_back(event, "event");
+  a1.push_back(trtrand, "trtrand");
+  a1.push_back(bprog, "bprog");
+  
   // RMST
-  DataFrame a2 = rmest(a1, "trtrand", "", "time", "event", milestone,
-                       0.95, 0);
-  NumericVector simtruestmean = a2["rmst"];
-  NumericVector simtruestlb = a2["lower"];
-  NumericVector simtruestub = a2["upper"];
-  NumericVector simtruestse = a2["stderr"];
+  DataFrameCpp a2 = rmestcpp(a1, {"trtrand"}, "time", "event", milestone);
+  std::vector<double> simtruestmean = a2.get<double>("rmst");
+  std::vector<double> simtruestlb = a2.get<double>("lower");
+  std::vector<double> simtruestub = a2.get<double>("upper");
+  std::vector<double> simtruestse = a2.get<double>("stderr");
   simtrueconstmean = simtruestmean[0];
   simtrueexpstmean = simtruestmean[1];
   simtrueconstlb = simtruestlb[0];
@@ -350,61 +352,55 @@ List tsegestsim(const int n = 500,
   simtrueexpstub = simtruestub[1];
   simtrueconstse = simtruestse[0];
   simtrueexpstse = simtruestse[1];
-
-  // HR with bprog
-  StringVector covariates(2);
-  covariates[0] = "trtrand";
-  covariates[1] = "bprog";
   
-  NumericVector init(1, NA_REAL);
-  List a3 = phregcpp(a1, "", "", "time", "", "event", covariates,
-                     "", "", "", "efron", init, 
-                     0, 0, 0, 0, 0, 0.05, 50, 1.0e-9);
-  DataFrame parest = DataFrame(a3["parest"]);
-  NumericVector beta = parest["beta"];
-  simtrue_coxwbprog_hr = exp(beta[0]);
-
+  // HR with bprog
+  std::vector<std::string> covariates = {"trtrand", "bprog"};
+  
+  std::vector<double> init(1, NaN);
+  ListCpp a3 = phregcpp(a1, {""}, "time", "", "event", covariates, 
+                        "", "", "", "efron", init, 0, 0, 0, 0, 0);
+  DataFrameCpp parest = a3.get<DataFrameCpp>("parest");
+  std::vector<double> beta = parest.get<double>("beta");
+  simtrue_coxwbprog_hr = std::exp(beta[0]);
+  
   // HR without bprog
-  a3 = phregcpp(a1, "", "", "time", "", "event", "trtrand",
-                "", "", "", "efron", init, 
-                0, 0, 0, 0, 0, 0.05, 50, 1.0e-9);
-  parest = DataFrame(a3["parest"]);
-  beta = parest["beta"];
-  simtrue_cox_hr = exp(beta[0]);
+  a3 = phregcpp(a1, {""}, "time", "", "event", {"trtrand"}, 
+                "", "", "", "efron", init, 0, 0, 0, 0, 0);
+  parest = a3.get<DataFrameCpp>("parest");
+  beta = parest.get<double>("beta");
+  simtrue_cox_hr = std::exp(beta[0]);
   
   // acceleration factor from AFT with bprog
-  List a4 = liferegcpp(a1, "", "", "time", "", "event", covariates,
-                       "", "", "", "weibull", init, 
-                       0, 0, 0.05, 50, 1.0e-9);
-  parest = DataFrame(a4["parest"]);
-  beta = parest["beta"];
-  simtrue_aftwbprog_af = exp(beta[1]);
-
+  ListCpp a4 = liferegcpp(a1, {""}, "time", "", "event", covariates,
+                          "", "", "", "weibull", init, 0, 0);
+  parest = a4.get<DataFrameCpp>("parest");
+  beta = parest.get<double>("beta");
+  simtrue_aftwbprog_af = std::exp(beta[1]);
+  
   // acceleration factor from AFT without bprog
-  List a5 = liferegcpp(a1, "", "", "time", "", "event", "trtrand",
-                       "", "", "", "weibull", init, 
-                       0, 0, 0.05, 50, 1.0e-9);
-  parest = DataFrame(a5["parest"]);
-  beta = parest["beta"];
-  simtrue_aft_af = exp(beta[1]);
+  ListCpp a5 = liferegcpp(a1, {""}, "time", "", "event", {"trtrand"},
+                          "", "", "", "weibull", init, 0, 0);
+  parest = a5.get<DataFrameCpp>("parest");
+  beta = parest.get<double>("beta");
+  simtrue_aft_af = std::exp(beta[1]);
   
   // apply switch and effect
-  IntegerVector xo1(n, NA_INTEGER), xo2(n, NA_INTEGER), xo3(n, NA_INTEGER);
-  IntegerVector xo4(n, NA_INTEGER), xo5(n, NA_INTEGER), xo6(n, NA_INTEGER);
-  IntegerVector xo(n, NA_INTEGER), xoprecat(n, NA_INTEGER);
-  NumericVector xotime(n, NA_REAL);
-  IntegerVector extra2v1(n), extra3v1(n), extra4v1(n), extra5v1(n);
-  IntegerVector extraobsv1(n);
-  NumericVector xoOSgainobs(n, NA_REAL), timeOS2(n);
-  IntegerVector extra2v2(n), extra3v2(n), extra4v2(n), extra5v2(n);
-  IntegerVector extraobsv2(n);
-  for (int i=0; i<n; i++) {
+  std::vector<int> xo1(n, INT_MIN), xo2(n, INT_MIN), xo3(n, INT_MIN);
+  std::vector<int> xo4(n, INT_MIN), xo5(n, INT_MIN), xo6(n, INT_MIN);
+  std::vector<int> xo(n, INT_MIN), xoprecat(n, INT_MIN);
+  std::vector<double> xotime(n, NaN);
+  std::vector<int> extra2v1(n), extra3v1(n), extra4v1(n), extra5v1(n);
+  std::vector<int> extraobsv1(n);
+  std::vector<double> xoOSgainobs(n, NaN), timeOS2(n);
+  std::vector<int> extra2v2(n), extra3v2(n), extra4v2(n), extra5v2(n);
+  std::vector<int> extraobsv2(n);
+  for (int i = 0; i < n; ++i) {
     double p1, p2, p3, p4, p5, p6;
-
+    
     // prob of switching depends on bprog for the first 2 visits after PD
     p1 = bprog[i] == 1 ? ppoor : pgood;
     p2 = p1;
-
+    
     // for subsequent visits, prob of switching depends on bprog and 
     // metastatic disease status at the previous visit
     if (bprog[i] == 1 && cat2[i] == 1) {
@@ -416,7 +412,7 @@ List tsegestsim(const int n = 500,
     } else {
       p3 = pgood;
     }
-
+    
     if (bprog[i] == 1 && (cat2[i] == 1 || cat3[i] == 1)) {
       p4 = ppoormet;
     } else if (bprog[i] == 0 && (cat2[i] == 1 || cat3[i] == 1)) {
@@ -426,7 +422,7 @@ List tsegestsim(const int n = 500,
     } else {
       p4 = pgood;
     }
-
+    
     if (bprog[i] == 1 && (cat2[i] == 1 || cat3[i] == 1 || cat4[i] == 1)) {
       p5 = ppoormet;
     } else if (bprog[i] == 0 && (cat2[i] == 1 || cat3[i] == 1 ||
@@ -438,7 +434,7 @@ List tsegestsim(const int n = 500,
     } else {
       p5 = pgood;
     }
-
+    
     if (bprog[i] == 1 && (cat2[i] == 1 || cat3[i] == 1 || cat4[i] == 1 ||
         cat5[i] == 1)) {
       p6 = ppoormet;
@@ -451,63 +447,62 @@ List tsegestsim(const int n = 500,
     } else {
       p6 = pgood;
     }
-
+    
     // generate the indicator and time of treatment switching
     if (trtrand[i] == 0 &&
         timeOS[i] > timePFSobs[i] && progressed[i] == 1) {
-      xo1[i] = static_cast<int>(R::rbinom(1, p1));
+      xo1[i] = (unif(rng) <= p1) ? 1 : 0;;
     }
     
     if (trtrand[i] == 0 && xo1[i] == 0 &&
         timeOS[i] > timePFSobs[i] + 21 && progressed[i] == 1 && 
         tdxo == 1) {
-      xo2[i] = static_cast<int>(R::rbinom(1, p2));
+      xo2[i] = (unif(rng) <= p2) ? 1 : 0;
     }
     
     if (trtrand[i] == 0 && xo1[i] == 0 && xo2[i] == 0 &&
         timeOS[i] > timePFSobs[i] + 42 && progressed[i] == 1 && 
         tdxo == 1) {
-      xo3[i] = static_cast<int>(R::rbinom(1, p3));
+      xo3[i] = (unif(rng) <= p3) ? 1 : 0;
     }
     
     if (trtrand[i] == 0 && xo1[i] == 0 && xo2[i] == 0 && xo3[i] == 0 &&
         timeOS[i] > timePFSobs[i] + 63 && progressed[i] == 1 && 
         tdxo == 1) {
-      xo4[i] = static_cast<int>(R::rbinom(1, p4));
+      xo4[i] = (unif(rng) <= p4) ? 1 : 0;
     }
     
     if (trtrand[i] == 0 && xo1[i] == 0 && xo2[i] == 0 && xo3[i] == 0 &&
         xo4[i] == 0 &&
         timeOS[i] > timePFSobs[i] + 84 && progressed[i] == 1 && 
         tdxo == 1) {
-      xo5[i] = static_cast<int>(R::rbinom(1, p5));
+      xo5[i] = (unif(rng) <= p5) ? 1 : 0;
     }
     
     if (trtrand[i] == 0 && xo1[i] == 0 && xo2[i] == 0 && xo3[i] == 0 &&
         xo4[i] == 0 && xo5[i] == 0 &&
         timeOS[i] > timePFSobs[i] + 105 && progressed[i] == 1 && 
         tdxo == 1) {
-      xo6[i] = static_cast<int>(R::rbinom(1, p6));
+      xo6[i] = (unif(rng) <= p6) ? 1 : 0;
     }
-
+    
     if (xo1[i] == 1) xotime[i] = timePFSobs[i];
     if (xo2[i] == 1) xotime[i] = timePFSobs[i] + 21;
     if (xo3[i] == 1) xotime[i] = timePFSobs[i] + 42;
     if (xo4[i] == 1) xotime[i] = timePFSobs[i] + 63;
     if (xo5[i] == 1) xotime[i] = timePFSobs[i] + 84;
     if (xo6[i] == 1) xotime[i] = timePFSobs[i] + 105;
-
+    
     if (xo1[i] == 1 || xo2[i] == 1 || xo3[i] == 1 || xo4[i] == 1 ||
         xo5[i] == 1 || xo6[i] == 1) {
       xo[i] = 1;
     }
-
+    
     // apply switch effect first through reducing prob. of catastrophic event
-    if (xo[i] == 1 && (xotime[i] < cattime[i] || 
-        catevent[i] == NA_INTEGER)) {
+    if (xo[i] == 1 && (xotime[i] < cattime[i] || catevent[i] == INT_MIN)) {
       xoprecat[i] = 1;
     }
-
+    
     // after treatment switching for control patients, prob of developing 
     // metastatic disease only depends on baseline prognosis
     if (trtrand[i] == 0 && xo[i] == 1 && bprog[i] == 1 && xoprecat[i] == 1) {
@@ -520,56 +515,54 @@ List tsegestsim(const int n = 500,
     
     // regenerate metastatic disease status after treatment switching
     if (xo[i] == 1 && xoprecat[i] == 1 && xotime[i] == timePFSobs[i]) {
-      cat2[i] = NA_INTEGER;
+      cat2[i] = INT_MIN;
     }
     
     if (xo[i] == 1 && xoprecat[i] == 1 && (xotime[i] == timePFSobs[i] ||
         xotime[i] == timePFSobs[i] + 21)) {
-      cat3[i] = NA_INTEGER;
+      cat3[i] = INT_MIN;
     }
     
     if (xo[i] == 1 && xoprecat[i] == 1 && (xotime[i] == timePFSobs[i] ||
-        xotime[i] == timePFSobs[i] + 21 ||
-        xotime[i] == timePFSobs[i] + 42)) {
-      cat4[i] = NA_INTEGER;
+        xotime[i] == timePFSobs[i] + 21 || xotime[i] == timePFSobs[i] + 42)) {
+      cat4[i] = INT_MIN;
     }
     
     if (xo[i] == 1 && xoprecat[i] == 1 && (xotime[i] == timePFSobs[i] ||
         xotime[i] == timePFSobs[i] + 21 || xotime[i] == timePFSobs[i] + 42 ||
         xotime[i] == timePFSobs[i] + 63)) {
-      cat5[i] = NA_INTEGER;
+      cat5[i] = INT_MIN;
     }
     
     if (progressed[i] == 1 && timeOS[i] > timePFSobs[i] + 21 &&
         xo[i] == 1 && xotime[i] == timePFSobs[i]) {
-      cat2[i] = static_cast<int>(R::rbinom(1, probcat[i]));
+      cat2[i] = (unif(rng) <= probcat[i]) ? 1 : 0;
     }
     
     if (cat2[i] == 0 && progressed[i] == 1 &&
         timeOS[i] > timePFSobs[i] + 42 && xo[i] == 1 &&
         (xotime[i] == timePFSobs[i] || xotime[i] == timePFSobs[i] + 21)) {
-      cat3[i] = static_cast<int>(R::rbinom(1, probcat[i]));
+      cat3[i] = (unif(rng) <= probcat[i]) ? 1 : 0;
     }
     
     if (cat2[i] == 0 && cat3[i] == 0 && progressed[i] == 1 &&
         timeOS[i] > timePFSobs[i] + 63 && xo[i] == 1 &&
         (xotime[i] == timePFSobs[i] || xotime[i] == timePFSobs[i] + 21 ||
         xotime[i] == timePFSobs[i] + 42)) {
-      cat4[i] = static_cast<int>(R::rbinom(1, probcat[i]));
+      cat4[i] = (unif(rng) <= probcat[i]) ? 1 : 0;
     }
     
     if (cat2[i] == 0 && cat3[i] == 0 && cat4[i] == 0 && progressed[i] == 1 &&
         timeOS[i] > timePFSobs[i] + 84 && xo[i] == 1 &&
         (xotime[i] == timePFSobs[i] || xotime[i] == timePFSobs[i] + 21 ||
-        xotime[i] == timePFSobs[i] + 42 ||
-        xotime[i] == timePFSobs[i] + 63)) {
-      cat5[i] = static_cast<int>(R::rbinom(1, probcat[i]));
+        xotime[i] == timePFSobs[i] + 42 || xotime[i] == timePFSobs[i] + 63)) {
+      cat5[i] = (unif(rng) <= probcat[i]) ? 1 : 0;
     }
     
     if (xo[i] == 1 && xoprecat[i] == 1) {
-      catevent[i] = NA_INTEGER;
-      cattime[i] = NA_REAL;
-      catOSloss[i] = NA_REAL;
+      catevent[i] = INT_MIN;
+      cattime[i] = NaN;
+      catOSloss[i] = NaN;
     }
     
     if (cat2[i] == 1 || cat3[i] == 1 || cat4[i] == 1 || cat5[i] == 1) {
@@ -600,7 +593,7 @@ List tsegestsim(const int n = 500,
     // modify survival time after developing metastatic disease
     if (catevent[i] == 1 && xoprecat[i] == 1) {
       catOSloss[i] = timeOS5[i] - cattime[i];
-      catOSloss[i] = std::round(catOSloss[i]*catmult);
+      catOSloss[i] = std::round(catOSloss[i] * catmult);
       timeOS[i] = catOSloss[i] + cattime[i];
     }
     
@@ -614,14 +607,14 @@ List tsegestsim(const int n = 500,
     // or have later cat event and now live past an additional observation.
     // Only replacing for extra observations - others don't change
     if (progressed[i] == 1 && timeOS[i] > timePFSobs[i] + 21 &&
-        xo[i] == 1 && xotime[i] == timePFSobs[i] && cat2[i] == NA_INTEGER) {
+        xo[i] == 1 && xotime[i] == timePFSobs[i] && cat2[i] == INT_MIN) {
       extra2v1[i] = 1;
     }
     
     if (cat2[i] == 0 && progressed[i] == 1 &&
         timeOS[i] > timePFSobs[i] + 42 &&
         xo[i] == 1 && (xotime[i] == timePFSobs[i] ||
-        xotime[i] == timePFSobs[i] + 21) && cat3[i] == NA_INTEGER) {
+        xotime[i] == timePFSobs[i] + 21) && cat3[i] == INT_MIN) {
       extra3v1[i] = 1;
     }
     
@@ -629,7 +622,7 @@ List tsegestsim(const int n = 500,
         timeOS[i] > timePFSobs[i] + 63 &&
         xo[i] == 1 && (xotime[i] == timePFSobs[i] ||
         xotime[i] == timePFSobs[i] + 21 ||
-        xotime[i] == timePFSobs[i] + 42) && cat4[i] == NA_INTEGER) {
+        xotime[i] == timePFSobs[i] + 42) && cat4[i] == INT_MIN) {
       extra4v1[i] = 1;
     }
     
@@ -637,7 +630,7 @@ List tsegestsim(const int n = 500,
         timeOS[i] > timePFSobs[i] + 84 &&
         xo[i] == 1 && (xotime[i] == timePFSobs[i] ||
         xotime[i] == timePFSobs[i] + 21 || xotime[i] == timePFSobs[i] + 42 ||
-        xotime[i] == timePFSobs[i] + 63) && cat5[i] == NA_INTEGER) {
+        xotime[i] == timePFSobs[i] + 63) && cat5[i] == INT_MIN) {
       extra5v1[i] = 1;
     }
     
@@ -647,35 +640,35 @@ List tsegestsim(const int n = 500,
     }
     
     if (progressed[i] == 1 && timeOS[i] > timePFSobs[i] + 21 && 
-        xo[i] == 1 && xotime[i] == timePFSobs[i] && cat2[i] == NA_INTEGER) {
-      cat2[i] = static_cast<int>(R::rbinom(1, probcat[i]));
+        xo[i] == 1 && xotime[i] == timePFSobs[i] && cat2[i] == INT_MIN) {
+      cat2[i] = (unif(rng) <= probcat[i]) ? 1 : 0;
     }
     
     if (cat2[i] == 0 && progressed[i] == 1 &&
         timeOS[i] > timePFSobs[i] + 42 && 
         xo[i] == 1 && (xotime[i] == timePFSobs[i] || 
-        xotime[i] == timePFSobs[i] +21) && cat3[i] == NA_INTEGER) {
-      cat3[i] = static_cast<int>(R::rbinom(1, probcat[i]));
+        xotime[i] == timePFSobs[i] +21) && cat3[i] == INT_MIN) {
+      cat3[i] = (unif(rng) <= probcat[i]) ? 1 : 0;
     }
     
     if (cat2[i] == 0 && cat3[i] == 0 && progressed[i] == 1 &&
         timeOS[i] > timePFSobs[i] + 63 && 
         xo[i] == 1 && (xotime[i] == timePFSobs[i] || 
         xotime[i] == timePFSobs[i] + 21 || 
-        xotime[i] == timePFSobs[i] + 42) && cat4[i] == NA_INTEGER) {
-      cat4[i] = static_cast<int>(R::rbinom(1, probcat[i]));
+        xotime[i] == timePFSobs[i] + 42) && cat4[i] == INT_MIN) {
+      cat4[i] = (unif(rng) <= probcat[i]) ? 1 : 0;
     }
     
     if (cat2[i] == 0 && cat3[i] == 0 && cat4[i] == 0 && progressed[i] == 1 &&
         timeOS[i] > timePFSobs[i] + 84 && 
         xo[i] == 1 && (xotime[i] == timePFSobs[i] || 
         xotime[i] == timePFSobs[i] + 21 || xotime[i] == timePFSobs[i] + 42 ||
-        xotime[i] == timePFSobs[i] + 63) && cat5[i] == NA_INTEGER) {
-      cat5[i] = static_cast<int>(R::rbinom(1, probcat[i]));
+        xotime[i] == timePFSobs[i] + 63) && cat5[i] == INT_MIN) {
+      cat5[i] = (unif(rng) <= probcat[i]) ? 1 : 0;
     }
     
     if (xo[i] == 1 && xoprecat[i] == 1 && extraobsv1[i] == 1) {
-      cattime[i] = NA_REAL;
+      cattime[i] = NaN;
     }
     
     if (cat2[i] == 1 && xo[i] == 1 && xotime[i] == timePFSobs[i] &&
@@ -701,7 +694,7 @@ List tsegestsim(const int n = 500,
     }
     
     if (xo[i] == 1 && xoprecat[i] == 1 && extraobsv1[i] == 1) {
-      catevent[i] = NA_INTEGER;
+      catevent[i] = INT_MIN;
     }
     
     if ((cat2[i] == 1 || cat3[i] == 1 || cat4[i] == 1 || cat5[i] == 1) &&
@@ -713,7 +706,7 @@ List tsegestsim(const int n = 500,
     // and now may have done in their additional observations. So survival
     // times cannot go up, this only allows for possible additional events
     if (xo[i] == 1 && xoprecat[i] == 1 && extraobsv1[i] == 1) {
-      catOSloss[i] = NA_REAL;
+      catOSloss[i] = NaN;
     }
     
     if (catevent[i] == 1 && xoprecat[i] == 1 && extraobsv1[i] == 1) {
@@ -729,7 +722,7 @@ List tsegestsim(const int n = 500,
     // Apply switch effect second through xomult
     if (trtrand[i] == 0 && xo[i] == 1) {
       xoOSgainobs[i] = timeOS[i] - xotime[i];
-      xoOSgainobs[i] = std::round(xoOSgainobs[i]*xomult);
+      xoOSgainobs[i] = std::round(xoOSgainobs[i] * xomult);
     }
     
     timeOS2[i] = xo[i] == 1 ? xoOSgainobs[i] + xotime[i] : timeOS[i];
@@ -739,14 +732,14 @@ List tsegestsim(const int n = 500,
     // switchers, so no additional chance to switch and OS can't increase
     // as currently in these observations there will zero chance of cat event
     if (progressed[i] == 1 && timeOS2[i] > timePFSobs[i] + 21 &&
-        xo[i] == 1 && xotime[i] == timePFSobs[i] && cat2[i] == NA_INTEGER) {
+        xo[i] == 1 && xotime[i] == timePFSobs[i] && cat2[i] == INT_MIN) {
       extra2v2[i] = 1;
     }
     
     if (cat2[i] == 0 && progressed[i] == 1 &&
         timeOS2[i] > timePFSobs[i] + 42 &&
         xo[i] == 1 && (xotime[i] == timePFSobs[i] ||
-        xotime[i] == timePFSobs[i] + 21) && cat3[i] == NA_INTEGER) {
+        xotime[i] == timePFSobs[i] + 21) && cat3[i] == INT_MIN) {
       extra3v2[i] = 1;
     }
     
@@ -754,7 +747,7 @@ List tsegestsim(const int n = 500,
         timeOS2[i] > timePFSobs[i] + 63 &&
         xo[i] == 1 && (xotime[i] == timePFSobs[i] ||
         xotime[i] == timePFSobs[i] + 21 ||
-        xotime[i] == timePFSobs[i] + 42) && cat4[i] == NA_INTEGER) {
+        xotime[i] == timePFSobs[i] + 42) && cat4[i] == INT_MIN) {
       extra4v2[i] = 1;
     }
     
@@ -762,7 +755,7 @@ List tsegestsim(const int n = 500,
         timeOS2[i] > timePFSobs[i] + 84 &&
         xo[i] == 1 && (xotime[i] == timePFSobs[i] ||
         xotime[i] == timePFSobs[i] + 21 || xotime[i] == timePFSobs[i] + 42 ||
-        xotime[i] == timePFSobs[i] + 63) && cat5[i] == NA_INTEGER) {
+        xotime[i] == timePFSobs[i] + 63) && cat5[i] == INT_MIN) {
       extra5v2[i] = 1;
     }
     
@@ -772,35 +765,35 @@ List tsegestsim(const int n = 500,
     }
     
     if (progressed[i] == 1 && timeOS2[i] > timePFSobs[i] + 21 &&
-        xo[i] == 1 && xotime[i] == timePFSobs[i] && cat2[i] == NA_INTEGER) {
-      cat2[i] = static_cast<int>(R::rbinom(1, probcat[i]));
+        xo[i] == 1 && xotime[i] == timePFSobs[i] && cat2[i] == INT_MIN) {
+      cat2[i] = (unif(rng) <= probcat[i]) ? 1 : 0;
     }
     
     if (cat2[i] == 0 && progressed[i] == 1 &&
         timeOS2[i] > timePFSobs[i] + 42 && 
         xo[i] == 1 && (xotime[i] == timePFSobs[i] || 
-        xotime[i] == timePFSobs[i] +21) && cat3[i] == NA_INTEGER) {
-      cat3[i] = static_cast<int>(R::rbinom(1, probcat[i]));
+        xotime[i] == timePFSobs[i] +21) && cat3[i] == INT_MIN) {
+      cat3[i] = (unif(rng) <= probcat[i]) ? 1 : 0;
     }
     
     if (cat2[i] == 0 && cat3[i] == 0 && progressed[i] == 1 &&
         timeOS2[i] > timePFSobs[i] + 63 && 
         xo[i] == 1 && (xotime[i] == timePFSobs[i] || 
         xotime[i] == timePFSobs[i] + 21 ||
-        xotime[i] == timePFSobs[i] + 42) && cat4[i] == NA_INTEGER) {
-      cat4[i] = static_cast<int>(R::rbinom(1, probcat[i]));
+        xotime[i] == timePFSobs[i] + 42) && cat4[i] == INT_MIN) {
+      cat4[i] = (unif(rng) <= probcat[i]) ? 1 : 0;
     }
     
     if (cat2[i] == 0 && cat3[i] == 0 && cat4[i] == 0 && progressed[i] == 1 &&
         timeOS2[i] > timePFSobs[i] + 84 && 
         xo[i] == 1 && (xotime[i] == timePFSobs[i] || 
         xotime[i] == timePFSobs[i] + 21 || xotime[i] == timePFSobs[i] + 42 ||
-        xotime[i] == timePFSobs[i] + 63) && cat5[i] == NA_INTEGER) {
-      cat5[i] = static_cast<int>(R::rbinom(1, probcat[i]));
+        xotime[i] == timePFSobs[i] + 63) && cat5[i] == INT_MIN) {
+      cat5[i] = (unif(rng) <= probcat[i]) ? 1 : 0;
     }
     
     if (xo[i] == 1 && xoprecat[i] == 1 && extraobsv2[i] == 1) {
-      cattime[i] = NA_REAL;
+      cattime[i] = NaN;
     }
     
     if (cat2[i] == 1 && xo[i] == 1 && xotime[i] == timePFSobs[i] &&
@@ -826,7 +819,7 @@ List tsegestsim(const int n = 500,
     }
     
     if (xo[i] == 1 && xoprecat[i] == 1 && extraobsv2[i] == 1) {
-      catevent[i] = NA_INTEGER;
+      catevent[i] = INT_MIN;
     }
     
     if ((cat2[i] == 1 || cat3[i] == 1 || cat4[i] == 1 || cat5[i] == 1) &&
@@ -840,7 +833,7 @@ List tsegestsim(const int n = 500,
     // cat time will be >OS5. Hence only makes sense to apply cat event
     // survival reduction to extended survival beyond this point, i.e., OS2
     if (xo[i] == 1 && xoprecat[i] == 1 && extraobsv2[i] == 1) {
-      catOSloss[i] = NA_REAL;
+      catOSloss[i] = NaN;
     }
     
     if (catevent[i] == 1 && xoprecat[i] == 1 && extraobsv2[i] == 1) {
@@ -854,8 +847,8 @@ List tsegestsim(const int n = 500,
   }
   
   // apply censoring
-  IntegerVector died(n);
-  for (int i=0; i<n; i++) {
+  std::vector<int> died(n);
+  for (int i = 0; i < n; ++i) {
     if (timeOS2[i] <= admin && dead[i] == 1) {
       died[i] = 1;
     } else {
@@ -865,110 +858,106 @@ List tsegestsim(const int n = 500,
     if (timeOS2[i] > admin) timeOS2[i] = admin;
     
     if (xotime[i] >= admin) {
-      xo[i] = NA_INTEGER;
-      xotime[i] = NA_REAL;
+      xo[i] = INT_MIN;
+      xotime[i] = NaN;
     }
     
     if (cattime[i] >= admin) {
-      catevent[i] = NA_INTEGER;
-      cattime[i] = NA_REAL;
+      catevent[i] = INT_MIN;
+      cattime[i] = NaN;
     }
   }
   
   // create panel
-  NumericVector zero(n);
-  int kmax = static_cast<int>(std::ceil(max(timeOS2)/21));
-  NumericVector cut(kmax);
-  for (int k=0; k<kmax; k++) {
-    cut[k] = k*21;
+  std::vector<double> zero(n);
+  double maxtime = *std::max_element(timeOS2.begin(), timeOS2.end());
+  int kmax = static_cast<int>(std::ceil(maxtime / 21));
+  std::vector<double> cut(kmax);
+  for (int k = 0; k < kmax; ++k) {
+    cut[k] = k * 21;
   }
   
-  for (int i=0; i<n; i++) {
-    if (progressed[i] == NA_INTEGER) progressed[i] = 0;
-    if (catevent[i] == NA_INTEGER) catevent[i] = 0;
-    if (xo[i] == NA_INTEGER) xo[i] = 0;
+  for (int i = 0; i < n; i++) {
+    if (progressed[i] == INT_MIN) progressed[i] = 0;
+    if (catevent[i] == INT_MIN) catevent[i] = 0;
+    if (xo[i] == INT_MIN) xo[i] = 0;
   }
   
-  DataFrame a = survsplit(zero, timeOS2, cut);
-  int n2 = a.nrow();
-  IntegerVector q2 = a["row"];
-  NumericVector tstart = a["start"];
-  NumericVector tstop = a["end"];
-  IntegerVector censor = a["censor"];
+  DataFrameCpp a = survsplitcpp(zero, timeOS2, cut);
+  int n2 = static_cast<int>(a.nrows());
+  std::vector<int> q2 = a.get<int>("row");
+  std::vector<double> tstart = a.get<double>("start");
+  std::vector<double> tstop = a.get<double>("end");
+  std::vector<int> censor = a.get<int>("censor");
   
-  IntegerVector id2 = id[q2];
-  IntegerVector trtrand2 = trtrand[q2];
-  IntegerVector bprog2 = bprog[q2];
-  IntegerVector died2 = died[q2];
-  died2[censor == 1] = 0;
+  std::vector<int> id2 = subset(id, q2);
+  std::vector<int> trtrand2 = subset(trtrand, q2);
+  std::vector<int> bprog2 = subset(bprog, q2);
+  std::vector<int> died2 = subset(died, q2);
+  for (int i = 0; i < n2; ++i) if (censor[i] == 1) died2[i] = 0;
   
-  NumericVector timeOS8 = timeOS2[q2];
-  IntegerVector died8 = died[q2];
-  IntegerVector progressed2 = progressed[q2];
-  NumericVector timePFSobs2 = timePFSobs[q2];
-  IntegerVector catevent2 = catevent[q2];
-  NumericVector cattime2 = cattime[q2];
-  IntegerVector xoo2 = xo[q2];
-  NumericVector xotime2 = xotime[q2];
-
+  std::vector<double> timeOS8 = subset(timeOS2, q2);
+  std::vector<int> died8 = subset(died, q2);
+  std::vector<int> progressed2 = subset(progressed, q2);
+  std::vector<double> timePFSobs2 = subset(timePFSobs, q2);
+  std::vector<int> catevent2 = subset(catevent, q2);
+  std::vector<double> cattime2 = subset(cattime, q2);
+  std::vector<int> xoo2 = subset(xo, q2);
+  std::vector<double> xotime2 = subset(xotime, q2);
+  
   // make time-dependent covariates for progression, cat event, and switch
-  IntegerVector progtdc(n2), cattdc(n2), xotdc(n2);
-  for (int i=0; i<n2; i++) {
+  std::vector<int> progtdc(n2), cattdc(n2), xotdc(n2);
+  for (int i = 0; i < n2; ++i) {
     if (progressed2[i] == 1 && tstart[i] >= timePFSobs2[i]) progtdc[i] = 1;
     if (catevent2[i] == 1 && tstart[i] >= cattime2[i]) cattdc[i] = 1;
     if (xoo2[i] == 1 && tstart[i] >= xotime2[i]) xotdc[i] = 1;
   }
   
   // create the lagged value of cattdc
-  IntegerVector idx(1,0); // first observation within an id
-  for (int i=1; i<n2; i++) {
+  std::vector<int> idx(1, 0); // first observation within an id
+  for (int i = 1; i < n2; ++i) {
     if (id2[i] != id2[i-1]) {
       idx.push_back(i);
     }
   }
   
-  List result;
+  ListCpp result;
   
-  DataFrame sumstat = DataFrame::create(
-    Named("simtrueconstmean") = simtrueconstmean,
-    Named("simtrueconstlb") = simtrueconstlb,
-    Named("simtrueconstub") = simtrueconstub,
-    Named("simtrueconstse") = simtrueconstse,
-    Named("simtrueexpstmean") = simtrueexpstmean,
-    Named("simtrueexpstlb") = simtrueexpstlb,
-    Named("simtrueexpstub") = simtrueexpstub,
-    Named("simtrueexpstse") = simtrueexpstse,
-    Named("simtrue_coxwbprog_hr") = simtrue_coxwbprog_hr,
-    Named("simtrue_cox_hr") = simtrue_cox_hr,
-    Named("simtrue_aftwbprog_af") = simtrue_aftwbprog_af,
-    Named("simtrue_aft_af") = simtrue_aft_af);
+  DataFrameCpp sumstat;
+  sumstat.push_back(simtrueconstmean, "simtrueconstmean");
+  sumstat.push_back(simtrueconstlb, "simtrueconstlb");
+  sumstat.push_back(simtrueconstub, "simtrueconstub");
+  sumstat.push_back(simtrueconstse, "simtrueconstse");
+  sumstat.push_back(simtrueexpstmean, "simtrueexpstmean");
+  sumstat.push_back(simtrueexpstlb, "simtrueexpstlb");
+  sumstat.push_back(simtrueexpstub, "simtrueexpstub");
+  sumstat.push_back(simtrueexpstse, "simtrueexpstse");
+  sumstat.push_back(simtrue_coxwbprog_hr, "simtrue_coxwbprog_hr");
+  sumstat.push_back(simtrue_cox_hr, "simtrue_cox_hr");
+  sumstat.push_back(simtrue_aftwbprog_af, "simtrue_aftwbprog_af");
+  sumstat.push_back(simtrue_aft_af, "simtrue_aft_af");
   
-  if (outputRawDataset) {
-    DataFrame paneldata = DataFrame::create(
-      Named("id") = id2,
-      Named("trtrand") = trtrand2,
-      Named("bprog") = bprog2,
-      Named("tstart") = tstart,
-      Named("tstop") = tstop,
-      Named("event") = died2,
-      Named("timeOS") = timeOS8,
-      Named("died") = died8,
-      Named("progressed") = progressed2,
-      Named("timePFSobs") = timePFSobs2,
-      Named("progtdc") = progtdc,
-      Named("catevent") = catevent2,
-      Named("cattime") = cattime2,
-      Named("cattdc") = cattdc,
-      Named("xo") = xoo2,
-      Named("xotime") = xotime2,
-      Named("xotdc") = xotdc,
-      Named("censor_time") = admin);
-    
-    result = List::create(Named("sumstat") = sumstat,
-                          Named("paneldata") = paneldata);
-  } else {
-    result = List::create(Named("sumstat") = sumstat);
-  }
+  DataFrameCpp paneldata;
+  paneldata.push_back(id2, "id");
+  paneldata.push_back(trtrand2, "trtrand");
+  paneldata.push_back(bprog2, "bprog");
+  paneldata.push_back(tstart, "tstart");
+  paneldata.push_back(tstop, "tstop");
+  paneldata.push_back(died2, "event");
+  paneldata.push_back(timeOS8, "timeOS");
+  paneldata.push_back(died8, "died");
+  paneldata.push_back(progressed2, "progressed");
+  paneldata.push_back(timePFSobs2, "timePFSobs");
+  paneldata.push_back(progtdc, "progtdc");
+  paneldata.push_back(catevent2, "catevent");
+  paneldata.push_back(cattime2, "cattime");
+  paneldata.push_back(cattdc, "cattdc");
+  paneldata.push_back(xoo2, "xo");
+  paneldata.push_back(xotime2, "xotime");
+  paneldata.push_back(xotdc, "xotdc");
+  paneldata.push_back(admin, "censor_time");
   
-  return result;
+  result.push_back(sumstat, "sumstat");
+  result.push_back(paneldata, "paneldata");
+  return Rcpp::wrap(result);
 }

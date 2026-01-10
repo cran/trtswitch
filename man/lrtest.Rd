@@ -6,7 +6,6 @@
 \usage{
 lrtest(
   data,
-  rep = "",
   stratum = "",
   treat = "treat",
   time = "time",
@@ -19,9 +18,9 @@ lrtest(
 )
 }
 \arguments{
-\item{data}{The input data frame that contains the following variables:
+\item{data}{The input data frame or list of data frames that contains
+the following variables:
 \itemize{
-\item \code{rep}: The replication for by-group processing.
 \item \code{stratum}: The stratum.
 \item \code{treat}: The treatment.
 \item \code{time}: The follow-up time for right censored data, or
@@ -33,8 +32,6 @@ occurred at the right end of each interval.
 \item \code{event}: The event indicator, 1=event, 0=no event.
 \item \code{weight}: The weight for each observation.
 }}
-
-\item{rep}{The name(s) of the replication variable(s) in the input data.}
 
 \item{stratum}{The name(s) of the stratum variable(s) in the input data.}
 
@@ -70,7 +67,6 @@ A data frame with the following variables:
 \item \code{weight_readj}: Whether the weight variable will be readjusted.
 \item \code{rho1}: The first parameter of the Fleming-Harrington weights.
 \item \code{rho2}: The second parameter of the Fleming-Harrington weights.
-\item \code{rep}: The replication.
 }
 }
 \description{
@@ -79,12 +75,11 @@ family of weights.
 }
 \examples{
 
-df <- lrtest(data = rawdata, rep = "iterationNumber",
-             stratum = "stratum", treat = "treatmentGroup",
-             time = "timeUnderObservation", event = "event",
-             rho1 = 0.5, rho2 = 0)
-head(df)
-
+lrtest(rawdata[rawdata$iterationNumber == 1, ], 
+       stratum = "stratum", treat = "treatmentGroup", 
+       time = "timeUnderObservation", event = "event", 
+       rho1 = 0.5, rho2 = 0)
+             
 }
 \author{
 Kaifeng Lu, \email{kaifenglu@gmail.com}

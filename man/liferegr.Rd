@@ -6,7 +6,6 @@
 \usage{
 liferegr(
   data,
-  rep = "",
   stratum = "",
   time = "time",
   time2 = "",
@@ -27,7 +26,6 @@ liferegr(
 \arguments{
 \item{data}{The input data frame that contains the following variables:
 \itemize{
-\item \code{rep}: The replication for by-group processing.
 \item \code{stratum}: The stratum.
 \item \code{time}: The follow-up time for right censored data, or
 the left end of each interval for interval censored data.
@@ -40,8 +38,6 @@ censored data.
 \item \code{id}: The optional subject ID to group the score residuals
 in computing the robust sandwich variance.
 }}
-
-\item{rep}{The name(s) of the replication variable(s) in the input data.}
 
 \item{stratum}{The name(s) of the stratum variable(s) in the input data.}
 
@@ -107,7 +103,6 @@ with the covariates (excluding the intercept).
 \item \code{robust}: Whether the robust sandwich variance estimate
 is requested.
 \item \code{fail}: Whether the model fails to converge.
-\item \code{rep}: The replication.
 }
 \item \code{parest}: The data frame of parameter estimates with the
 following variables:
@@ -117,7 +112,6 @@ following variables:
 \item \code{sebeta}: The standard error of parameter estimate.
 \item \code{z}: The Wald test statistic for the parameter.
 \item \code{expbeta}: The exponentiated parameter estimate.
-\item \code{vbeta}: The covariance matrix for parameter estimates.
 \item \code{lower}: The lower limit of confidence interval.
 \item \code{upper}: The upper limit of confidence interval.
 \item \code{p}: The p-value from the chi-square test.
@@ -125,10 +119,8 @@ following variables:
 p-value.
 \item \code{sebeta_naive}: The naive standard error of parameter estimate
 if robust variance is requested.
-\item \code{vbeta_naive}: The naive covariance matrix for parameter
-estimates if robust variance is requested.
-\item \code{rep}: The replication.
 }
+\item \code{linear_predictors}: The vector of linear predictors.
 \item \code{p}: The number of parameters.
 \item \code{nvar}: The number of columns of the design matrix excluding
 the intercept.
@@ -172,8 +164,9 @@ library(dplyr)
 
 # right censored data
 (fit1 <- liferegr(
-  data = rawdata \%>\% mutate(treat = 1*(treatmentGroup == 1)),
-  rep = "iterationNumber", stratum = "stratum",
+  data = rawdata \%>\% filter(iterationNumber == 1) \%>\% 
+         mutate(treat = (treatmentGroup == 1)),
+  stratum = "stratum",
   time = "timeUnderObservation", event = "event",
   covariates = "treat", dist = "weibull"))
 

@@ -6,7 +6,6 @@
 \usage{
 logisregr(
   data,
-  rep = "",
   event = "event",
   covariates = "",
   freq = "",
@@ -27,7 +26,6 @@ logisregr(
 \arguments{
 \item{data}{The input data frame that contains the following variables:
 \itemize{
-\item \code{rep}: The replication for by-group processing.
 \item \code{event}: The event indicator, 1=event, 0=no event.
 \item \code{covariates}: The values of baseline covariates.
 \item \code{freq}: The frequency for each observation.
@@ -36,8 +34,6 @@ logisregr(
 \item \code{id}: The optional subject ID to group the score residuals
 in computing the robust sandwich variance.
 }}
-
-\item{rep}{The name(s) of the replication variable(s) in the input data.}
 
 \item{event}{The name of the event variable in the input data.}
 
@@ -101,7 +97,6 @@ be computed.
 \item \code{fail}: Whether the model fails to converge.
 \item \code{loglik0_unpenalized}: The unpenalized log-likelihood under null.
 \item \code{loglik1_unpenalized}: The maximum unpenalized log-likelihood.
-\item \code{rep}: The replication.
 }
 \item \code{parest}: The data frame of parameter estimates with the
 following variables:
@@ -111,16 +106,12 @@ following variables:
 \item \code{sebeta}: The standard error of parameter estimate.
 \item \code{z}: The Wald test statistic for the parameter.
 \item \code{expbeta}: The exponentiated parameter estimate.
-\item \code{vbeta}: The covariance matrix for parameter estimates.
 \item \code{lower}: The lower limit of confidence interval.
 \item \code{upper}: The upper limit of confidence interval.
 \item \code{p}: The p-value from the chi-square test.
 \item \code{method}: The method to compute the confidence interval and
 p-value.
 \item \code{sebeta_naive}: The naive standard error of parameter estimate.
-\item \code{vbeta_naive}: The naive covariance matrix of parameter
-estimates.
-\item \code{rep}: The replication.
 }
 \item \code{fitted}: The data frame with the following variables:
 \itemize{
@@ -128,7 +119,6 @@ estimates.
 \item \code{fitted_values}: The fitted probabilities of having an event,
 obtained by transforming the linear predictors by the inverse of
 the link function.
-\item \code{rep}: The replication.
 }
 \item \code{p}: The number of parameters.
 \item \code{link}: The link function.

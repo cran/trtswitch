@@ -409,8 +409,8 @@ simulated data based on the randomized Concorde trial.</p>
 <span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="at">boot =</span> <span class="cn">FALSE</span>)</span></code></pre></div>
 <p>The log-rank test for an ITT analysis, which ignores treatment
 changes, yields a borderline significant p-value of <span class="math inline">\(0.056\)</span>.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>fit1<span class="sc">$</span>logrank_pvalue</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co">#&gt; [1] 0.05563532</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">paste0</span>(<span class="st">&quot;P-value&quot;</span>, <span class="st">&quot; (&quot;</span>, fit1<span class="sc">$</span>pvalue_type, <span class="st">&quot;): &quot;</span>, <span class="fu">formatC</span>(fit1<span class="sc">$</span>pvalue, <span class="at">format =</span> <span class="st">&quot;f&quot;</span>, <span class="at">digits =</span> <span class="dv">4</span>))</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="co">#&gt; [1] &quot;P-value (log-rank): 0.0556&quot;</span></span></code></pre></div>
 <p>Using the IPE method with a Weibull AFT model, we estimate <span class="math inline">\(\hat{\psi} = -0.183\)</span>, which is similar to
 the estimate obtained from the RPSFTM analysis.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>fit1<span class="sc">$</span>psi</span>

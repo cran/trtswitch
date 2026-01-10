@@ -20,7 +20,7 @@ fit1 <- rpsftm(
   rx = "rx", censor_time = "censyrs", gridsearch = FALSE, boot = FALSE)
 
 ## ----logrank------------------------------------------------------------------
-fit1$logrank_pvalue
+paste0("P-value", " (", fit1$pvalue_type, "): ", formatC(fit1$pvalue, format = "f", digits = 4))
 
 ## ----psi----------------------------------------------------------------------
 c(fit1$psi, fit1$psi_CI)

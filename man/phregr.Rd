@@ -6,7 +6,6 @@
 \usage{
 phregr(
   data,
-  rep = "",
   stratum = "",
   time = "time",
   time2 = "",
@@ -30,7 +29,6 @@ phregr(
 \arguments{
 \item{data}{The input data frame that contains the following variables:
 \itemize{
-\item \code{rep}: The replication for by-group processing.
 \item \code{stratum}: The stratum.
 \item \code{time}: The follow-up time for right censored data, or
 the left end of each interval for counting process data.
@@ -47,8 +45,6 @@ process data).
 \item \code{id}: The optional subject ID for counting process data
 with time-dependent covariates.
 }}
-
-\item{rep}{The name(s) of the replication variable(s) in the input data.}
 
 \item{stratum}{The name(s) of the stratum variable(s) in the input data.}
 
@@ -117,7 +113,6 @@ with the following variables:
 \item \code{fail}: Whether the model fails to converge.
 \item \code{loglik0_unpenalized}: The unpenalized log-likelihood under null.
 \item \code{loglik1_unpenalized}: The maximum unpenalized log-likelihood.
-\item \code{rep}: The replication.
 }
 \item \code{parest}: The data frame of parameter estimates with the
 following variables:
@@ -127,7 +122,6 @@ following variables:
 \item \code{sebeta}: The standard error of log hazard ratio estimate.
 \item \code{z}: The Wald test statistic for log hazard ratio.
 \item \code{expbeta}: The hazard ratio estimate.
-\item \code{vbeta}: The covariance matrix for parameter estimates.
 \item \code{lower}: The lower limit of confidence interval.
 \item \code{upper}: The upper limit of confidence interval.
 \item \code{p}: The p-value from the chi-square test.
@@ -135,9 +129,6 @@ following variables:
 p-value.
 \item \code{sebeta_naive}: The naive standard error of log hazard ratio
 estimate if robust variance is requested.
-\item \code{vbeta_naive}: The naive covariance matrix for parameter
-estimates if robust variance is requested.
-\item \code{rep}: The replication.
 }
 \item \code{basehaz}: The data frame of baseline hazards with the following
 variables (if est_basehaz is TRUE):
@@ -151,9 +142,9 @@ assuming the parameter beta is known.
 \item \code{gradhaz}: The gradient of the baseline hazard with respect to
 beta at the time point (in the presence of covariates).
 \item \code{stratum}: The stratum.
-\item \code{rep}: The replication.
 }
 \item \code{residuals}: The martingale residuals.
+\item \code{linear_predictors}: The vector of linear predictors.
 \item \code{p}: The number of parameters.
 \item \code{param}: The parameter names.
 \item \code{beta}: The parameter estimate.
@@ -174,8 +165,9 @@ library(dplyr)
 
 # Example 1 with right-censored data
 (fit1 <- phregr(
-  data = rawdata \%>\% mutate(treat = 1*(treatmentGroup == 1)),
-  rep = "iterationNumber", stratum = "stratum",
+  data = rawdata \%>\% filter(iterationNumber == 1) \%>\% 
+    mutate(treat = 1*(treatmentGroup == 1)),
+  stratum = "stratum",
   time = "timeUnderObservation", event = "event",
   covariates = "treat", est_basehaz = FALSE, est_resid = FALSE))
 

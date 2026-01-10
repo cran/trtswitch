@@ -6,11 +6,11 @@
 Right-Censored Time-to-Event Data}
 \usage{
 survQuantile(
-  time = NA_real_,
-  event = NA_integer_,
+  time,
+  event,
   cilevel = 0.95,
   transform = "loglog",
-  probs = NA_real_
+  probs = as.numeric(c(0.25, 0.5, 0.75))
 )
 }
 \arguments{

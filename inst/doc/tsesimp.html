@@ -472,22 +472,20 @@ ratio estimate with the reported.</p>
 <p>Finally, to ensure the uncertainty is accurately represented, the
 entire adjustment process and subsequent survival modeling can be
 bootstrapped.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode default"><code class="sourceCode default"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>```{r boot}</span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>fit2 &lt;- tsesimp(</span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  data = shilong3, id = &quot;id&quot;, time = &quot;tstop&quot;, event = &quot;event&quot;,</span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  treat = &quot;bras.f&quot;, censor_time = &quot;dcut&quot;, pd = &quot;pd&quot;,</span>
-<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>  pd_time = &quot;dpd&quot;, swtrt = &quot;co&quot;, swtrt_time = &quot;dco&quot;,</span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  base_cov = c(&quot;agerand&quot;, &quot;sex.f&quot;, &quot;tt_Lnum&quot;, &quot;rmh_alea.c&quot;,</span>
-<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>                &quot;pathway.f&quot;),</span>
-<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>  base2_cov = c(&quot;agerand&quot;, &quot;sex.f&quot;, &quot;tt_Lnum&quot;, &quot;rmh_alea.c&quot;,</span>
-<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>                &quot;pathway.f&quot;, &quot;ps&quot;, &quot;ttc&quot;, &quot;tran&quot;),</span>
-<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>  aft_dist = &quot;weibull&quot;, alpha = 0.05,</span>
-<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>  recensor = TRUE, swtrt_control_only = FALSE, offset = 1,</span>
-<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>  boot = TRUE, n_boot = 1000, seed = 12345)</span>
-<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a></span>
-<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a>c(fit2$hr, fit2$hr_CI)</span>
-<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a>```</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>fit2 <span class="ot">&lt;-</span> <span class="fu">tsesimp</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="at">data =</span> shilong3, <span class="at">id =</span> <span class="st">&quot;id&quot;</span>, <span class="at">time =</span> <span class="st">&quot;tstop&quot;</span>, <span class="at">event =</span> <span class="st">&quot;event&quot;</span>,</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">treat =</span> <span class="st">&quot;bras.f&quot;</span>, <span class="at">censor_time =</span> <span class="st">&quot;dcut&quot;</span>, <span class="at">pd =</span> <span class="st">&quot;pd&quot;</span>,</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="at">pd_time =</span> <span class="st">&quot;dpd&quot;</span>, <span class="at">swtrt =</span> <span class="st">&quot;co&quot;</span>, <span class="at">swtrt_time =</span> <span class="st">&quot;dco&quot;</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="at">base_cov =</span> <span class="fu">c</span>(<span class="st">&quot;agerand&quot;</span>, <span class="st">&quot;sex.f&quot;</span>, <span class="st">&quot;tt_Lnum&quot;</span>, <span class="st">&quot;rmh_alea.c&quot;</span>,</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>                <span class="st">&quot;pathway.f&quot;</span>),</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  <span class="at">base2_cov =</span> <span class="fu">c</span>(<span class="st">&quot;agerand&quot;</span>, <span class="st">&quot;sex.f&quot;</span>, <span class="st">&quot;tt_Lnum&quot;</span>, <span class="st">&quot;rmh_alea.c&quot;</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>                <span class="st">&quot;pathway.f&quot;</span>, <span class="st">&quot;ps&quot;</span>, <span class="st">&quot;ttc&quot;</span>, <span class="st">&quot;tran&quot;</span>),</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>  <span class="at">aft_dist =</span> <span class="st">&quot;weibull&quot;</span>, <span class="at">alpha =</span> <span class="fl">0.05</span>,</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>  <span class="at">recensor =</span> <span class="cn">TRUE</span>, <span class="at">swtrt_control_only =</span> <span class="cn">FALSE</span>, <span class="at">offset =</span> <span class="dv">1</span>,</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>  <span class="at">boot =</span> <span class="cn">TRUE</span>, <span class="at">n_boot =</span> <span class="dv">1000</span>, <span class="at">seed =</span> <span class="dv">12345</span>)</span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="fu">c</span>(fit2<span class="sc">$</span>hr, fit2<span class="sc">$</span>hr_CI)</span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co">#&gt; [1] 0.9125816 0.5570529 1.4950198</span></span></code></pre></div>
 </div>
 
 

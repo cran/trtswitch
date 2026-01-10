@@ -34,28 +34,29 @@ plot.tsegest <- function(x, time_unit = "day",
   arm <- x$settings$data[[treat_var]]
   
   df_arm <- data.frame(arm = c(x$eval_z[[1]][[treat_var]], 
-                               x$eval_z[[2]][[treat_var]]))
+                               x$eval_z[[2]][[treat_var]])) 
   
-  if (!is.factor(arm) && is.numeric(arm) && all(arm %in% c(0, 1))) {
+  if (is.factor(arm)) {
+    df_arm$arm <- factor(df_arm$arm, labels = levels(arm))
+  } else if (is.numeric(arm) && all(arm %in% c(0, 1))) {
     df_arm$arm <- factor(df_arm$arm, levels = c(1, 0),
                          labels = c("Treatment", "Control"))
   } else {
-    df_arm$arm <- factor(df_arm$arm, labels = levels(arm))
+    df_arm$arm <- factor(df_arm$arm)
   }
   
-  
   if (x$settings$swtrt_control_only) {
-    linetype = c("solid", "dashed", "dashed")
-    limits = range(x$eval_z[[1]]$data$Z)
-    yintercept = c(0, qnorm(alpha/2), qnorm(1-alpha/2))
-    yindex = yintercept >= limits[1] & yintercept <= limits[2]
+    linetype <- c("solid", "dashed", "dashed")
+    limits <- range(x$eval_z[[1]]$data$Z)
+    yintercept <- c(0, qnorm(alpha/2), qnorm(1-alpha/2))
+    yindex <- yintercept >= limits[1] & yintercept <= limits[2]
     
-    xintercept = c(x$psi, x$psi_CI)
-    xindex = !is.na(xintercept) & xintercept >= x$settings$low_psi & 
+    xintercept <- c(x$psi, x$psi_CI)
+    xindex <- !is.na(xintercept) & xintercept >= x$settings$low_psi & 
       xintercept <= x$settings$hi_psi
     
-    p_z <- ggplot2::ggplot(x$eval_z[[1]]$data, 
-                           ggplot2::aes(x = .data$psi, y = .data$Z)) +
+    p_z <- ggplot2::ggplot(
+      x$eval_z[[1]]$data, ggplot2::aes(x = .data$psi, y = .data$Z)) +
       ggplot2::geom_line() +
       ggplot2::geom_hline(
         yintercept = yintercept[yindex], 
@@ -75,17 +76,17 @@ plot.tsegest <- function(x, time_unit = "day",
       ggplot2::theme_bw() +
       ggplot2::theme(plot.caption = ggplot2::element_text(hjust = 0))
   } else {
-    linetype = c("solid", "dashed", "dashed")
-    limits = range(c(x$eval_z[[1]]$data$Z, x$eval_z[[2]]$data$Z))
-    yintercept = c(0, qnorm(alpha/2), qnorm(1-alpha/2))
-    yindex = yintercept >= limits[1] & yintercept <= limits[2]
+    linetype <- c("solid", "dashed", "dashed")
+    limits <- range(c(x$eval_z[[1]]$data$Z, x$eval_z[[2]]$data$Z))
+    yintercept <- c(0, qnorm(alpha/2), qnorm(1-alpha/2))
+    yindex <- yintercept >= limits[1] & yintercept <= limits[2]
     
-    xintercept1 = c(x$psi, x$psi_CI)
-    xindex1 = !is.na(xintercept1) & xintercept1 >= x$settings$low_psi & 
+    xintercept1 <- c(x$psi, x$psi_CI)
+    xindex1 <- !is.na(xintercept1) & xintercept1 >= x$settings$low_psi & 
       xintercept1 <= x$settings$hi_psi
     
-    xintercept2 = c(x$psi_trt, x$psi_trt_CI)
-    xindex2 = !is.na(xintercept2) & xintercept2 >= x$settings$low_psi & 
+    xintercept2 <- c(x$psi_trt, x$psi_trt_CI)
+    xindex2 <- !is.na(xintercept2) & xintercept2 >= x$settings$low_psi & 
       xintercept2 <= x$settings$hi_psi
     
     p_z1 <- ggplot2::ggplot(x$eval_z[[1]]$data, 
@@ -160,19 +161,17 @@ plot.tsegest <- function(x, time_unit = "day",
       }
     }
     
-    min_surv <- data.table::data.table(df)[
-      , min(get("surv")), by = treat_var][, get("V1")]
+    min_surv <- data.table::data.table(df)[, min(get("surv")), 
+                                           by = treat_var][, get("V1")]
     
-    p_km <- ggplot2::ggplot(df, ggplot2::aes(x = .data$month, 
-                                             y = .data$surv, 
-                                             group = .data[[treat_var]],
-                                             colour = .data[[treat_var]])) +
+    p_km <- ggplot2::ggplot(df, ggplot2::aes(
+      x = .data$month, y = .data$surv, 
+      group = .data[[treat_var]], colour = .data[[treat_var]])) +
       ggplot2::geom_step() +
       ggplot2::scale_x_continuous(n.breaks = 11) +
       ggplot2::scale_y_continuous(limits = c(0, 1)) +
       ggplot2::labs(
-        x = "Months", 
-        y = "Survival Probability",
+        x = "Months", y = "Survival Probability",
         title = "Kaplan-Meier Curves for Counterfactual Outcomes") + 
       ggplot2::theme_bw() + 
       ggplot2::theme(
@@ -182,11 +181,9 @@ plot.tsegest <- function(x, time_unit = "day",
         plot.margin = ggplot2::margin(t = 2, r = 5, b = 0, l = 20))
     
     if (max(min_surv) < 0.5) {
-      p_km <- p_km +
-        ggplot2::theme(legend.position = c(0.7, 0.85))
+      p_km <- p_km + ggplot2::theme(legend.position = c(0.7, 0.85))
     } else{
-      p_km <- p_km +
-        ggplot2::theme(legend.position = c(0.15, 0.25))
+      p_km <- p_km + ggplot2::theme(legend.position = c(0.15, 0.25))
     }
     
     # add hazard ratio to plot
@@ -196,8 +193,7 @@ plot.tsegest <- function(x, time_unit = "day",
           ggplot2::annotate(
             "text", x = 0.6*max(df$month), y = 0.7, hjust = 0,
             label = sprintf("HR = %.3f (%.0f%% CI: %.3f, %.3f)", 
-                            x$hr, conflev, 
-                            x$hr_CI[1], x$hr_CI[2]),
+                            x$hr, conflev, x$hr_CI[1], x$hr_CI[2]),
             size = 3.5, color = "black"
           )
       } else {
@@ -205,8 +201,7 @@ plot.tsegest <- function(x, time_unit = "day",
           ggplot2::annotate(
             "text", x = 0, y = 0, hjust = 0,
             label = sprintf("HR = %.3f (%.0f%% CI: %.3f, %.3f)", 
-                            x$hr, conflev, 
-                            x$hr_CI[1], x$hr_CI[2]),
+                            x$hr, conflev, x$hr_CI[1], x$hr_CI[2]),
             size = 3.5, color = "black"
           )
       }
@@ -236,16 +231,12 @@ plot.tsegest <- function(x, time_unit = "day",
                                      levels = levels(df[[treat_var]]))
       
       # --- Create number at risk plot ---
-      p_risk <- ggplot2::ggplot(df_risk, 
-                                ggplot2::aes(x = .data$time, 
-                                             y = .data[[treat_var]], 
-                                             label = .data$atrisk, 
-                                             colour = .data[[treat_var]])) +
+      p_risk <- ggplot2::ggplot(
+        df_risk, ggplot2::aes(x = .data$time, y = .data[[treat_var]],
+                              label = .data$atrisk, colour = .data[[treat_var]])) +
         ggplot2::geom_text(size = 3.2, na.rm = TRUE) +
-        ggplot2::scale_x_continuous(
-          breaks = xbreaks, limits = range(xbreaks)) +
-        ggplot2::scale_y_discrete(
-          limits = rev(levels(df_risk[[treat_var]]))) +
+        ggplot2::scale_x_continuous(breaks = xbreaks, limits = range(xbreaks)) +
+        ggplot2::scale_y_discrete(limits = rev(levels(df_risk[[treat_var]]))) +
         ggplot2::coord_cartesian(clip = "off") + 
         ggplot2::theme_minimal() +
         ggplot2::theme(
@@ -257,8 +248,7 @@ plot.tsegest <- function(x, time_unit = "day",
           plot.margin = ggplot2::margin(t = 6, r = 5, b = 0, l = 20)) + 
         ggplot2::annotate(
           "text", x = min(xbreaks), y = 3,
-          label = "No. of Subjects at Risk",
-          size = 4, hjust = 0.5)
+          label = "No. of Subjects at Risk", size = 4, hjust = 0.5)
       
       suppressMessages({ 
         p_km <- p_km +

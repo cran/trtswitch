@@ -6,11 +6,10 @@
 \usage{
 rmest(
   data,
-  rep = "",
   stratum = "",
   time = "time",
   event = "event",
-  milestone = NA_real_,
+  milestone = 0,
   conflev = 0.95,
   biascorrection = FALSE
 )
@@ -18,13 +17,10 @@ rmest(
 \arguments{
 \item{data}{The input data frame that contains the following variables:
 \itemize{
-\item \code{rep}: The replication for by-group processing.
 \item \code{stratum}: The stratum.
 \item \code{time}: The possibly right-censored survival time.
 \item \code{event}: The event indicator.
 }}
-
-\item{rep}{The name of the replication variable in the input data.}
 
 \item{stratum}{The name of the stratum variable in the input data.}
 
@@ -44,7 +40,6 @@ variance estimate. Defaults to no bias correction.}
 \value{
 A data frame with the following variables:
 \itemize{
-\item \code{rep}: The replication.
 \item \code{stratum}: The stratum variable.
 \item \code{size}: The number of subjects in the stratum.
 \item \code{milestone}: The milestone time relative to randomization.

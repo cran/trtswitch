@@ -77,11 +77,15 @@
 #'
 #' @useDynLib trtswitch, .registration = TRUE
 #' @importFrom Rcpp evalCpp
-#' @importFrom stats formula makepredictcall model.frame model.matrix 
-#' na.omit na.pass pchisq plogis qnorm rbinom rexp terms
+#' @importFrom RcppParallel setThreadOptions
+#' @importFrom parallel clusterEvalQ clusterExport detectCores makeCluster 
+#' parLapply stopCluster
+#' @importFrom stats as.formula complete.cases formula model.frame 
+#' model.matrix na.omit na.pass pchisq plogis qnorm rbinom rexp 
+#' setNames terms
 #' @importFrom rlang .data
-#' @importFrom data.table data.table dcast  fifelse nafill
-#'   setDT setnames setorderv shift .N .SD :=
+#' @importFrom data.table data.table dcast fifelse nafill rbindlist rleidv
+#'   setDT setnames setorderv shift .I .N .SD :=
 #' @importFrom ggplot2 aes annotate coord_cartesian element_blank 
 #'  element_text facet_wrap geom_step geom_text geom_histogram geom_line
 #'  geom_hline geom_vline ggplot ggplot_build labs margin 

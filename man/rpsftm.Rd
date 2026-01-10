@@ -32,7 +32,8 @@ rpsftm(
   tol = 1e-06,
   boot = FALSE,
   n_boot = 1000,
-  seed = NA
+  seed = 0,
+  nthreads = 0
 )
 }
 \arguments{
@@ -125,8 +126,10 @@ test p-value.}
 
 \item{n_boot}{The number of bootstrap samples.}
 
-\item{seed}{The seed to reproduce the bootstrap results. The default is
-\code{NA}, in which case, the seed from the environment will be used.}
+\item{seed}{The seed to reproduce the bootstrap results.}
+
+\item{nthreads}{The number of threads to use in bootstrapping (0 means
+the default RcppParallel behavior)}
 }
 \value{
 A list with the following components:
@@ -137,12 +140,9 @@ is zero, identified using grid search and linear interpolation.
 \item \code{psi_CI}: The confidence interval for \code{psi}.
 \item \code{psi_CI_type}: The type of confidence interval for \code{psi},
 i.e., "grid search", "root finding", or "bootstrap".
-\item \code{logrank_pvalue}: The two-sided p-value of the log-rank test
-for the ITT analysis.
-\item \code{cox_pvalue}: The two-sided p-value for treatment effect based on
-the Cox model applied to counterfactual unswitched survival times.
-If \code{boot} is \code{TRUE}, this value represents the
-bootstrap p-value.
+\item \code{pvalue}: The two-sided p-value.
+\item \code{pvalue_type}: The type of two-sided p-value for treatment effect,
+i.e., "log-rank" or "bootstrap".
 \item \code{hr}: The estimated hazard ratio from the Cox model.
 \item \code{hr_CI}: The confidence interval for hazard ratio.
 \item \code{hr_CI_type}: The type of confidence interval for hazard ratio,

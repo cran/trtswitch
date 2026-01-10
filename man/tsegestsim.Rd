@@ -30,8 +30,7 @@ tsegestsim(
   pgoodmet = 0.2,
   xomult = 1.4188308,
   milestone = 546,
-  outputRawDataset = TRUE,
-  seed = NA_integer_
+  seed = 0L
 )
 }
 \arguments{
@@ -102,10 +101,7 @@ survival time.}
 \item{milestone}{The milestone to calculate restricted mean survival
 time.}
 
-\item{outputRawDataset}{Whether to output the raw data set.}
-
-\item{seed}{The seed to reproduce the simulation results.
-The seed from the environment will be used if left unspecified.}
+\item{seed}{The seed to reproduce the simulation results.}
 }
 \value{
 A list with two data frames.
@@ -173,7 +169,7 @@ sim1 <- tsegestsim(
   pcattrtbprog = 0.25, pcatnotrt = 0.2, pcattrt = 0.1, 
   catmult = 0.5, tdxo = 1, ppoor = 0.1, pgood = 0.04, 
   ppoormet = 0.4, pgoodmet = 0.2, xomult = 1.4188308, 
-  milestone = 546, outputRawDataset = 1, seed = 2000)
+  milestone = 546, seed = 2000)
 
 }
 \references{

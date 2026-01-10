@@ -101,8 +101,9 @@
 #' @param boot Whether to use bootstrap to obtain the confidence
 #'   interval for hazard ratio. Defaults to \code{TRUE}.
 #' @param n_boot The number of bootstrap samples.
-#' @param seed The seed to reproduce the bootstrap results. The default is 
-#'   `NA`, in which case, the seed from the environment will be used.
+#' @param seed The seed to reproduce the bootstrap results.
+#' @param nthreads The number of threads to use in bootstrapping (0 means 
+#'   the default RcppParallel behavior)
 #'
 #' @details Assuming one-way switching from control to treatment, the 
 #' hazard ratio and confidence interval under a no-switching scenario 
@@ -284,7 +285,7 @@
 #'   pcattrtbprog = 0.25, pcatnotrt = 0.2, pcattrt = 0.1, 
 #'   catmult = 0.5, tdxo = 1, ppoor = 0.1, pgood = 0.04, 
 #'   ppoormet = 0.4, pgoodmet = 0.2, xomult = 1.4188308, 
-#'   milestone = 546, outputRawDataset = 1, seed = 2000)
+#'   milestone = 546, seed = 2000)
 #'   
 #' data1 <- sim1$paneldata %>%
 #'   mutate(visit7on = ifelse(progressed, tstop > timePFSobs + 105, 0))
@@ -318,69 +319,59 @@ tsegest <- function(data, id = "id", stratum = "",
                     swtrt_control_only = TRUE, 
                     gridsearch = TRUE, root_finding = "brent",
                     alpha = 0.05, ties = "efron", tol = 1.0e-6, offset = 1, 
-                    boot = TRUE, n_boot = 1000, seed = NA) {
+                    boot = TRUE, n_boot = 1000, seed = 0,
+                    nthreads = 0) {
 
-  rownames(data) = NULL
-
-  elements = c(id, stratum, tstart, tstop, event, treat, censor_time, 
-               pd, swtrt)
-  elements = unique(elements[elements != "" & elements != "none"])
-  fml = formula(paste("~", paste(elements, collapse = "+")))
-  mf = model.frame(fml, data = data, na.action = na.omit)
+  # validate input
+  if (!inherits(data, "data.frame")) {
+    stop("Input 'data' must be a data frame");
+  }
   
-  rownum = as.integer(rownames(mf))
-  df = data[rownum,]
-
-  nvar = length(base_cov)
-  if (missing(base_cov) || is.null(base_cov) || (nvar == 1 && (
-    base_cov[1] == "" || tolower(base_cov[1]) == "none"))) {
-    p = 0
+  if (inherits(data, "data.table") || inherits(data, "tbl") || 
+      inherits(data, "tbl_df")) {
+    df <- as.data.frame(data)
   } else {
-    fml1 = formula(paste("~", paste(base_cov, collapse = "+")))
-    vnames = rownames(attr(terms(fml1), "factors"))
-    p = length(vnames)
+    df <- data
   }
-
-  if (p >= 1) {
-    mf1 <- model.frame(fml1, data = df, na.action = na.pass)
-    mm <- model.matrix(fml1, mf1)
-    colnames(mm) = make.names(colnames(mm))
-    varnames = colnames(mm)[-1]
-    for (i in 1:length(varnames)) {
-      if (!(varnames[i] %in% names(df))) {
-        df[,varnames[i]] = mm[,varnames[i]]
-      }
+  
+  for (nm in c(id, tstart, tstop, event, treat, censor_time, pd, pd_time, 
+               swtrt, swtrt_time)) {
+    if (!is.character(nm) || length(nm) != 1) {
+      stop(paste(nm, "must be a single character string."));
     }
-  } else {
-    varnames = ""
   }
-
-  nvar2 = length(conf_cov)
-  if (missing(conf_cov) || is.null(conf_cov) || (nvar2 == 1 && (
-    conf_cov[1] == "" || tolower(conf_cov[1]) == "none"))) {
-    p2 = 0
-  } else {
-    fml2 = formula(paste("~", paste(conf_cov, collapse = "+")))
-    vnames2 = rownames(attr(terms(fml2), "factors"))
-    p2 = length(vnames2)
+  
+  # Respect user-requested number of threads (best effort)
+  if (nthreads > 0) {
+    n_physical_cores <- parallel::detectCores(logical = FALSE)
+    RcppParallel::setThreadOptions(min(nthreads, n_physical_cores))
   }
-
-  if (p2 >= 1) {
-    mf2 <- model.frame(fml2, data = df, na.action = na.pass)
-    mm2 <- model.matrix(fml2, mf2)
-    colnames(mm2) = make.names(colnames(mm2))
-    varnames2 = colnames(mm2)[-1]
-    for (i in 1:length(varnames2)) {
-      if (!(varnames2[i] %in% names(df))) {
-        df[,varnames2[i]] = mm2[,varnames2[i]]
-      }
-    }
-  } else {
-    varnames2 = ""
-  }
-
+  
+  # select complete cases for the relevant variables
+  elements = unique(c(id, stratum, tstart, tstop, event, treat, 
+                      censor_time, pd, swtrt))
+  elements = elements[elements != ""]
+  fml_all <- formula(paste("~", paste(elements, collapse = "+")))
+  var_all <- all.vars(fml_all)
+  rows_ok <- which(complete.cases(df[, var_all, drop = FALSE]))
+  if (length(rows_ok) == 0) 
+    stop("No complete cases found for the specified variables.")
+  df <- df[rows_ok, , drop = FALSE]
+  
+  # process covariate specifications
+  res1 <- process_cov(base_cov, df)
+  df <- res1$df
+  vnames    <- res1$vnames
+  varnames  <- res1$varnames
+  
+  res2 <- process_cov(conf_cov, df)
+  df <- res2$df
+  vnames2    <- res2$vnames
+  varnames2  <- res2$varnames
+  
+  # call the core cpp function
   out <- tsegestcpp(
-    data = df, id = id, stratum = stratum, 
+    df = df, id = id, stratum = stratum, 
     tstart = tstart, tstop = tstop, event = event,
     treat = treat, censor_time = censor_time, 
     pd = pd, pd_time = pd_time, 
@@ -408,11 +399,13 @@ tsegest <- function(data, id = "id", stratum = "",
     df[, "tstart"] = df[, tstart]
     df[, "tstop"] = df[, tstop]
     
-    if (p >= 1) {
+    if (length(vnames) > 0) {
       add_vars <- setdiff(vnames, varnames)
       if (length(add_vars) > 0) {
-        out$data_outcome <- merge(out$data_outcome, df[, c(id, add_vars)], 
-                                  by = id, all.x = TRUE, sort = FALSE)
+        out$data_outcome <- merge_append(
+          A = out$data_outcome, B = df, 
+          by_vars = id, new_vars = avars, 
+          overwrite = FALSE, first_match = FALSE)
       }
       
       del_vars <- setdiff(varnames, vnames)
@@ -421,16 +414,16 @@ tsegest <- function(data, id = "id", stratum = "",
       }
     }
     
-    if (p2 >= 1) {
+    if (length(vnames2) > 0) {
       tem_vars <- c(pd_time, swtrt, swtrt_time)
       add_vars <- c(setdiff(vnames2, varnames2), tem_vars)
       avars <- setdiff(add_vars, names(out$data_logis[[1]]$data))
       if (length(avars) > 0) {
         for (h in 1:K) {
-          out$data_logis[[h]]$data <- 
-            merge(out$data_logis[[h]]$data, 
-                  df[, c(id, "tstart", "tstop", avars)], 
-                  by = c(id, "tstart", "tstop"), all.x = TRUE, sort = FALSE)
+          out$data_logis[[h]]$data <- merge_append(
+            A = out$data_logis[[h]]$data, B = df, 
+            by_vars = c(id, "tstart", "tstop"), new_vars = avars, 
+            overwrite = FALSE, first_match = FALSE)
         }
       }
       
@@ -443,35 +436,26 @@ tsegest <- function(data, id = "id", stratum = "",
     }
   }
   
-  
   # convert treatment back to a factor variable if needed
   if (is.factor(data[[treat]])) {
     levs = levels(data[[treat]])
+    mf <- function(x) factor(x, levels = c(1,2), labels = levs)
     
-    out$event_summary[[treat]] <- factor(out$event_summary[[treat]], 
-                                         levels = c(1,2), labels = levs)
-    
-    for (h in 1:2) {
-      out$data_switch[[h]][[treat]] <- factor(
-        out$data_switch[[h]][[treat]], levels = c(1,2), labels = levs)
-      
-      out$km_switch[[h]][[treat]] <- factor(
-        out$km_switch[[h]][[treat]], levels = c(1,2), labels = levs)
-      
-      out$data_logis[[h]]$data[[treat]] <- factor(
-        out$data_logis[[h]]$data[[treat]], levels = c(1,2), labels = levs)
-      
-      out$data_nullcox[[h]]$data[[treat]] <- factor(
-        out$data_nullcox[[h]]$data[[treat]], levels = c(1,2), labels = levs)
+    # apply mf to a set of named containers that are data.frames with a column `treat`
+    for (nm in c("event_summary", "data_outcome", "km_outcome")) {
+      out[[nm]][[treat]] <- mf(out[[nm]][[treat]])
     }
     
-    out$data_outcome[[treat]] <- factor(out$data_outcome[[treat]], 
-                                        levels = c(1,2), labels = levs)
-    
-    out$km_outcome[[treat]] <- factor(out$km_outcome[[treat]], 
-                                      levels = c(1,2), labels = levs)
+    # and for the list-of-lists
+    out$data_switch <- lapply(out$data_switch, function(x) { 
+      x[[treat]] <- mf(x[[treat]]); x })
+    out$km_switch <- lapply(out$km_switch, function(x) { 
+      x[[treat]] <- mf(x[[treat]]); x })
+    out$data_logis <- lapply(out$data_logis, function(x) { 
+      x$data[[treat]] <- mf(x$data[[treat]]); x })
+    out$data_nullcox <- lapply(out$data_nullcox, function(x) { 
+      x$data[[treat]] <- mf(x$data[[treat]]); x })
   }
-  
   
   out$settings <- list(
     data = data, id = id, stratum = stratum, tstart = tstart, 

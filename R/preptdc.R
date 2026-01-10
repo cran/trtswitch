@@ -11,8 +11,8 @@
 #' @param adsl A data set containing baseline subject-level information. 
 #'   It should include, at a minimum, subject ID (`id`), 
 #'   randomization date (`randdt`), treatment start date (`trtsdt`),
-#'   survival outcome (`osdt`, `died`), progression date (`pddt`), 
-#'   treatment switch date (`xodt`), and data cut-off date (`dcutdt`).
+#'   progression date (`pddt`), treatment switch date (`xodt`), 
+#'   survival outcome (`osdt`, `died`), and data cut-off date (`dcutdt`).
 #' @param adtdc A data set containing longitudinal
 #'   time-dependent covariate data, with subject ID (`id`),
 #'   parameter code (`paramcd`), analysis date (`adt`), and covariate
@@ -32,10 +32,10 @@
 #'   indicator (0 = alive/censored, 1 = died).
 #' @param dcutdt Character string specifying the column name for data
 #'   cut-off date.
-#' @param adt Character string specifying the column name for analysis
-#'   date in the time-dependent covariate dataset.
 #' @param paramcd Character string specifying the column name for parameter
 #'   code (identifying different covariates).
+#' @param adt Character string specifying the column name for analysis
+#'   date in the time-dependent covariate dataset.
 #' @param aval Character string specifying the column name for analysis
 #'   value (covariate values).
 #' @param nodup Logical; if `TRUE` (default), only rows where at least
@@ -54,7 +54,9 @@
 #'         This ensures that the baseline covariate value is the last 
 #'         non-missing value at or before the treatment start date.
 #'         Post-baseline covariate values are anchored at their actual
-#'         analysis dates.
+#'         analysis dates. The first record per subject corresponds to 
+#'         survival time zero at randomization and ensures availability 
+#'         of baseline covariates at randomization.
 #'   \item Keep the last record per subject, `adt2`, and `paramcd`.
 #'   \item Construct a complete skeleton so all covariates are present
 #'         for each subject and time point.
@@ -85,9 +87,8 @@
 #' @export
 preptdc <- function(adsl, adtdc, id = "SUBJID", randdt = "RANDDT", 
                     trtsdt = "TRTSDT", pddt = "PDDT", xodt = "XODT", 
-                    osdt = "OSDT", died = "DIED", 
-                    dcutdt = "DCUTDT", adt = "ADT", 
-                    paramcd = "PARAMCD", aval = "AVAL",
+                    osdt = "OSDT", died = "DIED", dcutdt = "DCUTDT", 
+                    paramcd = "PARAMCD", adt = "ADT", aval = "AVAL", 
                     nodup = TRUE, offset = TRUE) {
   
   # convert input data into data.table
@@ -96,20 +97,20 @@ preptdc <- function(adsl, adtdc, id = "SUBJID", randdt = "RANDDT",
   
   # verify whether the input data have required columns
   cols <- colnames(adsl)
-  req_cols <- c(id, randdt, osdt, died, pddt, xodt, dcutdt)
+  req_cols <- c(id, randdt, trtsdt, pddt, xodt, osdt, died, dcutdt)
   if (!all(req_cols %in% cols)) {
     stop(paste("The following columns are missing from adsl:", 
                paste(req_cols[!(req_cols %in% cols)], collapse = ", ")))
   }
   
   cols <- colnames(adtdc)
-  req_cols <- c(id, adt, paramcd, aval)
+  req_cols <- c(id, paramcd, adt, aval)
   if (!all(req_cols %in% cols)) {
     stop(paste("The following columns are missing from adtdc:", 
                paste(req_cols[!(req_cols %in% cols)], collapse = ", ")))
   }
   
-  # obtain randdt and trtsdt
+  # obtain randdt and trtsdt for each record in adtdc
   cols <- c(id, randdt, trtsdt)
   data1 <- merge(adtdc, adsl[, mget(cols)], by = id)
   
@@ -121,8 +122,8 @@ preptdc <- function(adsl, adtdc, id = "SUBJID", randdt = "RANDDT",
   data.table::setorderv(data1, c(id, "adt2", paramcd, adt))
   data1 <- data1[, .SD[.N], by = c(id, "adt2", paramcd)]
   
-  # build skeleton
-  cols <- c(id, randdt, "adt2")
+  # build skeleton for id, randdt, trtsdt, adt2, and paramcd
+  cols <- c(id, randdt, trtsdt, "adt2")
   pars <- unique(data1[[paramcd]])
   data2 <- merge(
     unique(data1[, mget(cols)])[, `:=`(dummy = 1)],
@@ -133,15 +134,19 @@ preptdc <- function(adsl, adtdc, id = "SUBJID", randdt = "RANDDT",
   
   # right join
   data3 <- merge(data1, data2, 
-                 by = c(id, randdt, "adt2", paramcd), 
+                 by = c(id, randdt, trtsdt, "adt2", paramcd), 
                  all.y = TRUE)
   
-  # LOCF
   data.table::setorderv(data3, c(id, paramcd, "adt2"))
-  data3[, `:=`(temp_col = data.table::nafill(get(aval), type = "locf")), 
-        by = c(id, paramcd)]
-  data3[[aval]] <- NULL
-  data.table::setnames(data3, "temp_col", aval)
+  
+  
+  data_list <- split(data3, by = c(id, paramcd))
+  data_list <- lapply(data_list, function(sub) {
+    # Perform assignment in standard R context
+    sub[[aval]] = data.table::nafill(sub[[aval]], type = "locf")
+    return(sub)
+  })
+  data3 <- data.table::rbindlist(data_list)
   
   # wide format
   fml <- paste(paste(c(id, randdt, "adt2"), collapse = " + "), "~", paramcd)
@@ -149,15 +154,10 @@ preptdc <- function(adsl, adtdc, id = "SUBJID", randdt = "RANDDT",
   
   # de-dup
   if (nodup) {
-    # only keep rows where at least one paramcd changes value
-    data4[, `:=`(change = rowSums(
-      .SD != data.table::shift(.SD, type = "lag"), na.rm = TRUE) > 0),
-      by = id, .SDcols = pars]
-    
-    # keep only change rows (plus the very first row per subject 
-    # to establish baseline)
-    data4 <- data4[get("change") | !duplicated(get(id))]
-    data4[, `:=`(change = NULL)]   # drop helper column if not needed
+    # keep only change rows (plus the very first row per subject for baseline)
+    idx <- data.table::rleidv(data4, c(id, pars))
+    idxprev <- data.table::shift(idx, type = "lag", fill = 0L)
+    data4 <- data4[which(idx != idxprev), ]
   }
   
   # merge survival info
@@ -171,14 +171,20 @@ preptdc <- function(adsl, adtdc, id = "SUBJID", randdt = "RANDDT",
   # time-dependent covariate values at tstart
   # last interval ends with osdt     
   data5[, `:=`(tstart = get("ady"))]
-  data5[, `:=`(tstop = data.table::shift(get("ady"), type = "lead")), 
-        by = id]
-  data5[, `:=`(tstop = data.table::fifelse(is.na(get("tstop")), 
-                                           get("osdy"), get("tstop")))]
+  
+  data_list <- split(data5, by = id)
+  data_list <- lapply(data_list, function(sub) {
+    # Perform assignment in standard R context
+    tstop <- data.table::shift(sub$ady, type = "lead")
+    sub$tstop <- data.table::fifelse(is.na(tstop), sub$osdy, tstop)
+    return(sub)
+  })
+  data5 <- data.table::rbindlist(data_list)
   
   # create event
-  data5[, `:=`(event = data.table::fifelse(
-    seq_len(.N) == .N, get(died), 0L)), by = id]
+  last_rows <- data5[, .I[.N], by = id]$V1
+  data5[, `:=`(event = 0L)]
+  data5[last_rows, `:=`(event = as.integer(get(died)))]
   
   # set up pd, swtrt, and censoring time
   data5[, `:=`(pd = !is.na(get(pddt)), 

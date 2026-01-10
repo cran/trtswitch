@@ -5,20 +5,20 @@
 \title{Simulation Study to Evaluate Recensoring Rules in RPSFTM}
 \usage{
 recensor_sim_rpsftm(
-  nsim = NA_integer_,
-  n = NA_integer_,
-  shape = NA_real_,
-  scale = NA_real_,
-  gamma = NA_real_,
-  tfmin = NA_real_,
-  tfmax = NA_real_,
-  psi = NA_real_,
-  omega = NA_real_,
-  pswitch = NA_real_,
-  a = NA_real_,
-  b = NA_real_,
-  low_psi = -1,
-  hi_psi = 1,
+  nsim = 100L,
+  n = 400L,
+  shape = 1.5,
+  scale = 553.9,
+  gamma = 0.001,
+  tfmin = 407.5,
+  tfmax = 407.5,
+  psi = -0.4621,
+  omega = 0,
+  pswitch = 0.7,
+  a = 2,
+  b = 4,
+  low_psi = -5,
+  hi_psi = 5,
   treat_modifier = 1,
   recensor_type = 1L,
   admin_recensor_only = TRUE,
@@ -27,8 +27,8 @@ recensor_sim_rpsftm(
   ties = "efron",
   tol = 1e-06,
   boot = TRUE,
-  n_boot = 1000L,
-  seed = NA_integer_
+  n_boot = 100L,
+  seed = 0L
 )
 }
 \arguments{
@@ -104,8 +104,7 @@ the confidence interval is matched to the log-rank p-value.}
 \item{n_boot}{Number of bootstrap samples, used only if
 \code{boot = TRUE}.}
 
-\item{seed}{Optional. Random seed for reproducibility. If not provided,
-the global seed is used.}
+\item{seed}{Optional. Random seed for reproducibility.}
 }
 \value{
 A data frame summarizing the simulation results, including:

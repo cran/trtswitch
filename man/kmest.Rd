@@ -6,7 +6,6 @@
 \usage{
 kmest(
   data,
-  rep = "",
   stratum = "",
   time = "time",
   time2 = "",
@@ -20,7 +19,6 @@ kmest(
 \arguments{
 \item{data}{The input data frame that contains the following variables:
 \itemize{
-\item \code{rep}: The replication for by-group processing.
 \item \code{stratum}: The stratum.
 \item \code{time}: The follow-up time for right censored data, or
 the left end of each interval for counting process data.
@@ -31,8 +29,6 @@ occurred at the right end of each interval.
 \item \code{event}: The event indicator, 1=event, 0=no event.
 \item \code{weight}: The weight for each observation.
 }}
-
-\item{rep}{The name(s) of the replication variable(s) in the input data.}
 
 \item{stratum}{The name(s) of the stratum variable(s) in the input data.}
 
@@ -72,7 +68,6 @@ probability based on the Greendwood formula.
 \item \code{conflev}: The level of confidence interval if requested.
 \item \code{conftype}: The type of confidence interval if requested.
 \item \code{stratum}: The stratum.
-\item \code{rep}: The replication.
 }
 }
 \description{

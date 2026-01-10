@@ -63,3 +63,18 @@ fit1$fit_outcome$parest[, c("param", "beta", "sebeta", "z")]
 
 c(fit1$hr, fit1$hr_CI)
 
+## ----boot---------------------------------------------------------------------
+fit2 <- tsesimp(
+  data = shilong3, id = "id", time = "tstop", event = "event",
+  treat = "bras.f", censor_time = "dcut", pd = "pd",
+  pd_time = "dpd", swtrt = "co", swtrt_time = "dco",
+  base_cov = c("agerand", "sex.f", "tt_Lnum", "rmh_alea.c",
+                "pathway.f"),
+  base2_cov = c("agerand", "sex.f", "tt_Lnum", "rmh_alea.c",
+                "pathway.f", "ps", "ttc", "tran"),
+  aft_dist = "weibull", alpha = 0.05,
+  recensor = TRUE, swtrt_control_only = FALSE, offset = 1,
+  boot = TRUE, n_boot = 1000, seed = 12345)
+
+c(fit2$hr, fit2$hr_CI)
+

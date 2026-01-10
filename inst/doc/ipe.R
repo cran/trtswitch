@@ -19,7 +19,7 @@ fit1 <- ipe(
   boot = FALSE)
 
 ## ----logrank------------------------------------------------------------------
-fit1$logrank_pvalue
+paste0("P-value", " (", fit1$pvalue_type, "): ", formatC(fit1$pvalue, format = "f", digits = 4))
 
 ## ----psi----------------------------------------------------------------------
 fit1$psi
