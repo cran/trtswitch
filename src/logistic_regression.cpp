@@ -1,17 +1,14 @@
-#include <RcppThread.h>
-#include <Rcpp.h>
-
 #include "logistic_regression.h"
 #include "utilities.h"
 #include "dataframe_list.h"
 #include "thread_utils.h"
 
+#include <Rcpp.h>
+
 #include <algorithm> // any_of, fill, for_each, none_of, sort
 #include <cctype>    // tolower
 #include <climits>   // INT_MIN
 #include <cmath>     // exp, fabs, isinf, isnan, log, pow
-#include <cstdio>
-#include <cstdlib>
 #include <numeric>   // accumulate, inner_product, iota
 #include <stdexcept> // invalid_argument, runtime_error
 #include <string>    // string
@@ -342,7 +339,8 @@ ListCpp logisregloop(int p, const std::vector<double>& par, void *ex,
   std::vector<double> newbeta(p);
   double loglik = 0.0, newlk = 0.0;
   std::vector<double> u(p);
-  std::vector<double> u1(ncolfit);
+  std::vector<double> uu1(ncolfit);
+  double* u1 = uu1.data();
   FlatMatrix imat(p, p);
   FlatMatrix imat1(ncolfit, ncolfit);
   
@@ -613,9 +611,9 @@ ListCpp logisregcpp(const DataFrameCpp& data,
   
   // link code mapping
   std::string link1 = link;
-  std::for_each(link1.begin(), link1.end(), [](char & c) { 
-    c = static_cast<char>(std::tolower(static_cast<unsigned char>(c))); 
-  });
+  for (char &c : link1) {
+    c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+  }
   
   if (link1 == "log-log" || link1 == "loglog") link1 = "cloglog";
   

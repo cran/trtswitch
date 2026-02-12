@@ -475,17 +475,17 @@ a subject, a robust sandwich variance estimator is employed, clustering
 on the subject level for the logistic regression model.</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>parest <span class="ot">&lt;-</span> fit1<span class="sc">$</span>fit_logis[[<span class="dv">1</span>]]<span class="sc">$</span>fit<span class="sc">$</span>parest</span>
 <span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>parest[, <span class="fu">c</span>(<span class="st">&quot;param&quot;</span>, <span class="st">&quot;beta&quot;</span>, <span class="st">&quot;sebeta&quot;</span>, <span class="st">&quot;z&quot;</span>)]</span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt;             param          beta      sebeta            z</span></span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt; 1     (Intercept) -2.773781e+00 0.674924005 -4.109767420</span></span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt; 2  counterfactual -2.108783e-04 0.196743237 -0.001071845</span></span>
-<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt; 3           bprog  6.417353e-01 0.402260575  1.595322328</span></span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt; 4          cattdc  2.242257e+00 0.517333352  4.334258862</span></span>
-<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt; 5      timePFSobs  5.976563e-04 0.005564973  0.107396075</span></span>
-<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt; 6        visit7on -1.735870e+01 0.000000000          NaN</span></span>
-<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co">#&gt; 7    bprog.cattdc  1.255630e-01 0.555627612  0.225984072</span></span>
-<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt; 8             ns1 -1.146042e+00 1.325412650 -0.864667704</span></span>
-<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt; 9             ns2 -1.385858e+00 2.578798352 -0.537404435</span></span>
-<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt; 10            ns3 -1.598949e+00 2.538037123 -0.629994491</span></span></code></pre></div>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt;             param          beta       sebeta             z</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt; 1     (Intercept) -2.773781e+00 6.749240e-01 -4.109767e+00</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt; 2  counterfactual -2.108783e-04 1.967432e-01 -1.071845e-03</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt; 3           bprog  6.417353e-01 4.022606e-01  1.595322e+00</span></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt; 4          cattdc  2.242257e+00 5.173334e-01  4.334259e+00</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt; 5      timePFSobs  5.976563e-04 5.564973e-03  1.073961e-01</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt; 6        visit7on -1.735870e+01 7.530624e-07 -2.305081e+07</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co">#&gt; 7    bprog.cattdc  1.255630e-01 5.556276e-01  2.259841e-01</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt; 8             ns1 -1.146042e+00 1.325413e+00 -8.646677e-01</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt; 9             ns2 -1.385858e+00 2.578798e+00 -5.374044e-01</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt; 10            ns3 -1.598949e+00 2.538037e+00 -6.299945e-01</span></span></code></pre></div>
 <p>The plot of <span class="math inline">\(Z(\psi)\)</span> versus <span class="math inline">\(\psi\)</span> shows that the estimation process
 worked well.</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">c</span>(fit1<span class="sc">$</span>psi, fit1<span class="sc">$</span>psi_CI)</span>

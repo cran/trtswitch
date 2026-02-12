@@ -2,6 +2,8 @@
 #define __UTILITIES_H__
 
 struct FlatMatrix;
+struct IntMatrix;
+struct BoolMatrix;
 struct DataFrameCpp;
 struct ListCpp;
 
@@ -24,6 +26,21 @@ struct ListCpp;
 
 inline constexpr double NaN = std::numeric_limits<double>::quiet_NaN();
 inline constexpr double POS_INF = std::numeric_limits<double>::infinity();
+
+// Constants for numerical stability
+// Machine epsilon for double precision
+inline constexpr double EPSILON = 2.2204460492503131e-16;
+inline constexpr double MIN_PROB = EPSILON;           // ~2.22e-16
+inline constexpr double MAX_PROB = 1.0 - EPSILON;     // ~1.0 - 2.22e-16
+
+// Maximum safe quantile value (corresponds to p ≈ 1 - 1e-16)
+// qnorm(1 - 2.22e-16) ≈ 8.1258906647
+inline constexpr double MAX_NORMAL_QUANTILE = 8.125890664701906;
+inline constexpr double MIN_NORMAL_QUANTILE = -8.125890664701906;
+
+// Extreme z-score threshold for pnorm
+// For |z| > EXTREME_Z, pnorm returns 0 or 1 within machine precision
+inline constexpr double EXTREME_Z = 37.5;
 
 // --------------------------- Distribution helpers --------------------------
 double boost_pnorm(double q, double mean = 0.0, double sd = 1.0, 
@@ -304,13 +321,16 @@ ListCpp bygroup(const DataFrameCpp& data, const std::vector<std::string>& variab
 // --------------------------- Matrix utilities (FlatMatrix) ------------------
 std::vector<double> mat_vec_mult(const FlatMatrix& A, const std::vector<double>& x);
 FlatMatrix mat_mat_mult(const FlatMatrix& A, const FlatMatrix& B);
-FlatMatrix transpose(const FlatMatrix& A);
+
+FlatMatrix transpose(const FlatMatrix& M);
+IntMatrix transpose(const IntMatrix& M);
+BoolMatrix transpose(const BoolMatrix& M);
+
 double quadsym(const std::vector<double>& u, const FlatMatrix& v);
 
 // --------------------------- Linear algebra helpers (FlatMatrix-backed) ----
 int cholesky2(FlatMatrix& matrix, int n, double toler = 1e-12);
-void chsolve2(FlatMatrix& matrix, int n, std::vector<double>& y);
-void chinv2(FlatMatrix& matrix, int n);
+void chsolve2(FlatMatrix& matrix, int n, double* y);
 FlatMatrix invsympd(const FlatMatrix& matrix, int n, double toler = 1e-12);
 
 // Survival helpers
@@ -368,13 +388,6 @@ ListCpp getpsiest(double target,
 double getpsiend(const std::function<double(double)>& f,
                  bool lowerend, double initialend);
 
-
-
-
-#include <iostream>
-#include <iomanip>
-#include <sstream>
-#include <type_traits>
 
 // Print a std::vector<T> to std::cout.
 // Requirements: T must be streamable via operator<< to std::ostream.
@@ -452,6 +465,5 @@ void print_vector(const std::vector<T>& v,
   
   std::cout << ss.str();
 }
-
 
 #endif // __UTILITIES_H__

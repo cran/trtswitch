@@ -1,10 +1,9 @@
-#include <Rcpp.h>
-
-#include <boost/random.hpp>
-
 #include "survival_analysis.h"
 #include "utilities.h"
 #include "dataframe_list.h"
+
+#include <Rcpp.h>
+#include <boost/random.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -199,7 +198,7 @@ Rcpp::List tsegestsim(const int n = 500,
   boost::random::gamma_distribution<double> gb(10, 1.0); // shape = 10, scale = 1
   
   // survival function of the Weibull mixture
-  auto S = [shape1, scale1, shape2, scale2, pmix](double t) -> double {
+  auto S = [&](double t) -> double {
     double a1 = pmix * std::exp(-std::pow(t / scale1, shape1));
     double a2 = (1 - pmix) * std::exp(-std::pow(t / scale2, shape2));
     return a1 + a2;

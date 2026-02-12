@@ -1,12 +1,10 @@
-#include <RcppThread.h>
-#include <Rcpp.h>
-
-#include <boost/random.hpp>
-
 #include "survival_analysis.h"
 #include "utilities.h"
 #include "dataframe_list.h"
 #include "thread_utils.h"
+
+#include <Rcpp.h>
+#include <boost/random.hpp>
 
 #include <algorithm> // accumulate, any_of, max_element, min_element, none_of, sort
 #include <cctype>    // isalnum, isalpha, tolower, toupper
@@ -89,10 +87,10 @@ DataFrameCpp survQuantilecpp(const std::vector<double>& time,
   }
   
   std::string ct = transform;
-  std::for_each(ct.begin(), ct.end(), [](char & c) {
+  for (char &c : ct) {
     c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-  });
-  
+  }
+
   if (!(ct == "linear" || ct == "plain" || ct == "log" ||
       ct == "loglog" || ct == "log-log" || ct == "cloglog" ||
       ct == "asinsqrt" || ct == "arcsin"|| ct == "asin" ||
@@ -342,16 +340,14 @@ Rcpp::DataFrame survQuantile(
     const Rcpp::NumericVector& event,
     const double cilevel = 0.95,
     const std::string& transform = "loglog",
-    const Rcpp::NumericVector& probs = 
-      Rcpp::NumericVector::create(0.25, 0.5, 0.75)) {
+    const Rcpp::NumericVector& probs = Rcpp::NumericVector::create(0.25, 0.5, 0.75)) {
   
-  std::vector<double> timev = Rcpp::as<std::vector<double>>(time);
-  std::vector<int> eventv = Rcpp::as<std::vector<int>>(event);
-  std::vector<double> probsv = Rcpp::as<std::vector<double>>(probs);
+  auto timev = Rcpp::as<std::vector<double>>(time);
+  auto eventv = Rcpp::as<std::vector<int>>(event);
+  auto probsv = Rcpp::as<std::vector<double>>(probs);
   
-  DataFrameCpp result = survQuantilecpp(timev, eventv, cilevel, transform, probsv);
-  
-  return Rcpp::wrap(result);
+  auto cpp_result = survQuantilecpp(timev, eventv, cilevel, transform, probsv);
+  return Rcpp::wrap(cpp_result);
 }
 
 
@@ -454,10 +450,10 @@ DataFrameCpp kmestcpp(const DataFrameCpp& data,
   }
   
   std::string ct = conftype;
-  std::for_each(ct.begin(), ct.end(), [](char & c) {
+  for (char &c : ct) {
     c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-  });
-  
+  }
+
   if (!(ct == "none" || ct == "plain" || ct == "log" || ct == "log-log" || 
       ct == "logit" || ct == "arcsin")) {
     throw std::invalid_argument(
@@ -752,10 +748,10 @@ Rcpp::DataFrame kmest(const Rcpp::DataFrame& data,
                       const double conflev = 0.95,
                       const bool keep_censor = false) {
   
-  DataFrameCpp dfcpp = convertRDataFrameToCpp(data);
-  std::vector<std::string> stratumcpp = Rcpp::as<std::vector<std::string>>(stratum);
+  auto dfcpp = convertRDataFrameToCpp(data);
+  auto stratumcpp = Rcpp::as<std::vector<std::string>>(stratum);
   
-  DataFrameCpp cpp_result = kmestcpp(
+  auto cpp_result = kmestcpp(
     dfcpp, stratumcpp, time, time2, event, weight, 
     conftype, conflev, keep_censor
   );
@@ -1274,12 +1270,13 @@ Rcpp::DataFrame kmdiff(const Rcpp::DataFrame& data,
                        const double survDiffH0 = 0,
                        const double conflev = 0.95) {
   
-  DataFrameCpp dfcpp = convertRDataFrameToCpp(data);
-  std::vector<std::string> stratumcpp = Rcpp::as<std::vector<std::string>>(stratum);
+  auto dfcpp = convertRDataFrameToCpp(data);
+  auto stratumcpp = Rcpp::as<std::vector<std::string>>(stratum);
   
-  DataFrameCpp cpp_result = kmdiffcpp(
+  auto cpp_result = kmdiffcpp(
     dfcpp, stratumcpp, treat, time, time2, event, weight, 
-    milestone, survDiffH0, conflev);
+    milestone, survDiffH0, conflev
+  );
   
   thread_utils::drain_thread_warnings_to_R();
   return Rcpp::wrap(cpp_result);
@@ -1765,12 +1762,13 @@ Rcpp::DataFrame lrtest(const Rcpp::DataFrame data,
                        const double rho1 = 0,
                        const double rho2 = 0) {
   
-  DataFrameCpp dfcpp = convertRDataFrameToCpp(data);
-  std::vector<std::string> stratumcpp = Rcpp::as<std::vector<std::string>>(stratum);
+  auto dfcpp = convertRDataFrameToCpp(data);
+  auto stratumcpp = Rcpp::as<std::vector<std::string>>(stratum);
   
-  DataFrameCpp cpp_result = lrtestcpp(
+  auto cpp_result = lrtestcpp(
     dfcpp, stratumcpp, treat, time, time2, event, weight, 
-    weight_readj, rho1, rho2);
+    weight_readj, rho1, rho2
+  );
   
   return Rcpp::wrap(cpp_result);
 }
@@ -2159,10 +2157,10 @@ Rcpp::DataFrame rmest(const Rcpp::DataFrame& data,
                       const double conflev = 0.95,
                       const bool biascorrection = false) {
   
-  DataFrameCpp dfcpp = convertRDataFrameToCpp(data);
-  std::vector<std::string> stratumcpp = Rcpp::as<std::vector<std::string>>(stratum);
+  auto dfcpp = convertRDataFrameToCpp(data);
+  auto stratumcpp = Rcpp::as<std::vector<std::string>>(stratum);
   
-  DataFrameCpp cpp_result = rmestcpp(
+  auto cpp_result = rmestcpp(
     dfcpp, stratumcpp, time, event, milestone, conflev, biascorrection
   );
   
@@ -2501,10 +2499,10 @@ Rcpp::DataFrame rmdiff(const Rcpp::DataFrame& data,
                        const double conflev = 0.95,
                        const bool biascorrection = false) {
   
-  DataFrameCpp dfcpp = convertRDataFrameToCpp(data);
-  std::vector<std::string> stratumcpp = Rcpp::as<std::vector<std::string>>(stratum);
+  auto dfcpp = convertRDataFrameToCpp(data);
+  auto stratumcpp = Rcpp::as<std::vector<std::string>>(stratum);
   
-  DataFrameCpp cpp_result = rmdiffcpp(
+  auto cpp_result = rmdiffcpp(
     dfcpp, stratumcpp, treat, time, event, milestone,
     rmstDiffH0, conflev,  biascorrection
   );
@@ -3347,7 +3345,8 @@ ListCpp liferegloop(int p, const std::vector<double>& par, void *ex,
   std::vector<double> u = der.get<std::vector<double>>("score");
   FlatMatrix imat = der.get<FlatMatrix>("imat");
   FlatMatrix jj; // will be used if needed
-  std::vector<double> u1(ncolfit);
+  std::vector<double> uu1(ncolfit);
+  double* u1 = uu1.data();
   FlatMatrix imat1(ncolfit, ncolfit);
   FlatMatrix jj1(ncolfit, ncolfit);
   
@@ -3593,9 +3592,9 @@ ListCpp liferegcpp(const DataFrameCpp& data,
   if (nvar == 2 && covariates[0] == "") nvar = 1;
   
   std::string dist1 = dist;
-  std::for_each(dist1.begin(), dist1.end(), [](char &c){ 
-    c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-  });
+  for (char &c : dist1) {
+    c = static_cast<char>(std::tolower(static_cast<unsigned char>(c))); 
+  }
   if (dist1 == "log-logistic" || dist1 == "llogistic") dist1 = "loglogistic";
   else if (dist1 == "log-normal" || dist1 == "lnormal") dist1 = "lognormal";
   else if (dist1 == "gaussian") dist1 = "normal";
@@ -3973,7 +3972,8 @@ ListCpp liferegcpp(const DataFrameCpp& data,
           }
         }
         
-        std::vector<double> u1(nvar, 0.0); // X'Wy
+        std::vector<double> uu1(nvar);               // X'Wy
+        double* u1 = uu1.data();
         for (int j = 0; j < nvar; ++j) {
           const double* zj = zptr + j * n1;          // pointer to Z(:,j)
           double sum = 0.0;
@@ -4240,9 +4240,9 @@ Rcpp::List liferegRcpp(const Rcpp::DataFrame& data,
                        const int maxiter,
                        const double eps) {
   
-  DataFrameCpp dfcpp = convertRDataFrameToCpp(data);
+  auto dfcpp = convertRDataFrameToCpp(data);
   
-  ListCpp cpp_result = liferegcpp(
+  auto cpp_result = liferegcpp(
     dfcpp, stratum, time, time2, event, covariates, weight, offset, id, 
     dist, init, robust, plci, alpha, maxiter, eps
   );
@@ -4545,9 +4545,9 @@ FlatMatrix residuals_liferegcpp(const std::vector<double>& beta,
   if (nvar == 2 && covariates[0] == "") nvar = 1;
   
   std::string dist1 = dist;
-  std::for_each(dist1.begin(), dist1.end(), [](char &c){
+  for (char &c : dist1) {
     c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-  });
+  }
   if (dist1 == "log-logistic" || dist1 == "llogistic") dist1 = "loglogistic";
   else if (dist1 == "log-normal" || dist1 == "lnormal") dist1 = "lognormal";
   else if (dist1 == "gaussian") dist1 = "normal";
@@ -5066,12 +5066,13 @@ Rcpp::NumericMatrix residuals_liferegRcpp(
     const bool collapse,
     const bool weighted) {
   
-  DataFrameCpp dfcpp = convertRDataFrameToCpp(data);
-  FlatMatrix vbetacpp = flatmatrix_from_Rmatrix(vbeta);
+  auto dfcpp = convertRDataFrameToCpp(data);
+  auto vbetacpp = flatmatrix_from_Rmatrix(vbeta);
   
-  FlatMatrix rrcpp = residuals_liferegcpp(
+  auto rrcpp = residuals_liferegcpp(
     beta, vbetacpp, dfcpp, stratum, time, time2, event, covariates, 
-    weight, offset, id, dist, type, collapse, weighted);
+    weight, offset, id, dist, type, collapse, weighted
+  );
   
   return Rcpp::wrap(rrcpp);
 }
@@ -5398,6 +5399,7 @@ ListCpp f_der_2(int p, const std::vector<double>& par, void* ex, bool firth) {
     // obtain the determinant of information matrix
     FlatMatrix imat0 = imat;
     cholesky2(imat0, p);
+    double* base = imat0.data_ptr();
     
     double v = 0.0;
     for (int i = 0; i < p; ++i) {
@@ -5410,6 +5412,7 @@ ListCpp f_der_2(int p, const std::vector<double>& par, void* ex, bool firth) {
     // compute the bias adjustment to the score function
     FlatMatrix y(p,p);
     std::vector<double> g(p);
+    double* yptr = y.data_ptr();
     
     for (int k = 0; k < p; ++k) {
       // partial derivative of the information matrix w.r.t. beta[k]
@@ -5421,20 +5424,25 @@ ListCpp f_der_2(int p, const std::vector<double>& par, void* ex, bool firth) {
       
       // solve(imat, y)
       for (int h = 0; h < p; ++h) {
-        for (int i = 0; i < p; ++i) {
-          double temp = y(i,h);
-          for (int j = 0; j < i; ++j)
-            temp -= y(j,h) * imat0(j,i);
-          y(i,h) = temp;
-        }
+        double* yh = yptr + h * p;
         
+        for (int j = 0; j < p - 1; ++j) {
+          double yjh = yh[j];
+          if (yjh == 0.0) continue;
+          double* col_j = base + j * p;
+          for (int i = j + 1; i < p; ++i) {
+            yh[i] -= yjh * col_j[i];
+          }
+        }
         for (int i = p - 1; i >= 0; --i) {
-          if (imat0(i,i) == 0) y(i,h) = 0;
+          double* col_i = base + i * p;
+          double diag = col_i[i];
+          if (diag == 0.0) yh[i] = 0.0;
           else {
-            double temp = y(i,h) / imat0(i,i);
+            double temp = yh[i] / diag;
             for (int j = i + 1; j < p; ++j)
-              temp -= y(j,h) * imat0(i,j);
-            y(i,h) = temp;
+              temp -= yh[j] * col_i[j];
+            yh[i] = temp;
           }
         }
       }
@@ -5475,7 +5483,8 @@ ListCpp phregloop(int p, const std::vector<double>& par, void *ex,
   std::vector<double> newbeta(p);
   double loglik = 0.0, newlk = 0.0;
   std::vector<double> u(p);
-  std::vector<double> u1(ncolfit);
+  std::vector<double> uu1(ncolfit);
+  double* u1 = uu1.data();
   FlatMatrix imat(p,p);
   FlatMatrix imat1(ncolfit, ncolfit);
   
@@ -6285,10 +6294,10 @@ ListCpp phregcpp(const DataFrameCpp& data,
   }
   
   std::string meth = ties;
-  std::for_each(meth.begin(), meth.end(), [](char & c) {
+  for (char &c : meth) {
     c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-  });
-  
+  }
+
   int method = meth == "efron" ? 1 : 0;
   
   // unify right censored data with counting process data
@@ -6879,12 +6888,13 @@ Rcpp::List phregRcpp(const Rcpp::DataFrame& data,
                      const int maxiter,
                      const double eps) {
   
-  DataFrameCpp dfcpp = convertRDataFrameToCpp(data);
+  auto dfcpp = convertRDataFrameToCpp(data);
   
-  ListCpp cpp_result = phregcpp(
+  auto cpp_result = phregcpp(
     dfcpp, stratum, time, time2, event, covariates, weight, offset, id, 
     ties, init, robust, est_basehaz, est_resid, firth, plci, alpha, 
-    maxiter, eps);
+    maxiter, eps
+  );
   
   thread_utils::drain_thread_warnings_to_R();
   return Rcpp::wrap(cpp_result);
@@ -6912,10 +6922,10 @@ DataFrameCpp survfit_phregcpp(const int p,
   int nvar = static_cast<int>(covariates.size());
   
   std::string ct = conftype;
-  std::for_each(ct.begin(), ct.end(), [](char & c) {
+  for (char &c : ct) {
     c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-  });
-  
+  }
+
   if (!(ct=="none" || ct=="plain" || ct=="log" || ct=="log-log" || 
       ct=="logit" || ct=="arcsin")) {
     throw std::invalid_argument(
@@ -7396,13 +7406,14 @@ Rcpp::DataFrame survfit_phregRcpp(const int p,
                                   const std::string& conftype,
                                   const double conflev) {
   
-  FlatMatrix vbetacpp = flatmatrix_from_Rmatrix(vbeta);
-  DataFrameCpp basehcpp = convertRDataFrameToCpp(basehaz);
-  DataFrameCpp newdfcpp = convertRDataFrameToCpp(newdata);
+  auto vbetacpp = flatmatrix_from_Rmatrix(vbeta);
+  auto basehcpp = convertRDataFrameToCpp(basehaz);
+  auto newdfcpp = convertRDataFrameToCpp(newdata);
   
-  DataFrameCpp cpp_result = survfit_phregcpp(
+  auto cpp_result = survfit_phregcpp(
     p, beta, vbetacpp, basehcpp, newdfcpp, covariates, stratum, 
-    offset, id, tstart, tstop, sefit, conftype, conflev);
+    offset, id, tstart, tstop, sefit, conftype, conflev
+  );
   
   return Rcpp::wrap(cpp_result);
 }
@@ -7721,9 +7732,9 @@ ListCpp residuals_phregcpp(const int p,
   }
   
   std::string meth = ties;
-  std::for_each(meth.begin(), meth.end(), [](char & c) {
+  for (char &c : meth) {
     c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-  });
+  }
   int method = meth == "efron" ? 1 : 0;
   
   // unify right censored data with counting process data
@@ -8081,12 +8092,13 @@ Rcpp::List residuals_phregRcpp(const int p,
                                const bool collapse,
                                const bool weighted) {
   
-  FlatMatrix vbetacpp = flatmatrix_from_Rmatrix(vbeta);
-  DataFrameCpp dfcpp = convertRDataFrameToCpp(data);
+  auto vbetacpp = flatmatrix_from_Rmatrix(vbeta);
+  auto dfcpp = convertRDataFrameToCpp(data);
   
-  ListCpp cpp_result = residuals_phregcpp(
+  auto cpp_result = residuals_phregcpp(
     p, beta, vbetacpp, resmart, dfcpp, stratum, time, time2, event, 
-    covariates, weight, offset, id, ties, type, collapse, weighted);
+    covariates, weight, offset, id, ties, type, collapse, weighted
+  );
   
   return Rcpp::wrap(cpp_result);
 }
@@ -8440,9 +8452,9 @@ ListCpp assess_phregcpp(const int p,
   }
   
   std::string meth = ties;
-  std::for_each(meth.begin(), meth.end(), [](char & c) {
+  for (char &c : meth) {
     c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-  });
+  }
   
   int method = meth == "efron" ? 1 : 0;
   
@@ -8787,13 +8799,13 @@ Rcpp::List assess_phregRcpp(const int p,
                             const int resample,
                             const std::uint32_t seed) {
   
+  auto vbetacpp = flatmatrix_from_Rmatrix(vbeta);
+  auto dfcpp = convertRDataFrameToCpp(data);
   
-  FlatMatrix vbetacpp = flatmatrix_from_Rmatrix(vbeta);
-  DataFrameCpp dfcpp = convertRDataFrameToCpp(data);
-  
-  ListCpp cpp_result = assess_phregcpp(
+  auto cpp_result = assess_phregcpp(
     p, beta, vbetacpp, dfcpp, stratum, time, time2, event,
-    covariates, weight, offset, ties, resample, seed);
+    covariates, weight, offset, ties, resample, seed
+  );
   
   return Rcpp::wrap(cpp_result);
 }
@@ -8941,10 +8953,10 @@ ListCpp zph_phregcpp(int p,
   }
   
   std::string meth = ties;
-  std::for_each(meth.begin(), meth.end(), [](char & c) {
+  for (char &c : meth) {
     c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-  });
-  
+  }
+
   int method = meth == "efron" ? 1 : 0;
   
   // unify right censored data with counting process data
@@ -9279,12 +9291,13 @@ Rcpp::List zph_phregRcpp(int p,
                          const std::string& ties,
                          const std::string& transform) {
   
-  FlatMatrix vbetacpp = flatmatrix_from_Rmatrix(vbeta);
-  DataFrameCpp dfcpp = convertRDataFrameToCpp(data);
+  auto vbetacpp = flatmatrix_from_Rmatrix(vbeta);
+  auto dfcpp = convertRDataFrameToCpp(data);
   
-  ListCpp cpp_result = zph_phregcpp(
+  auto cpp_result = zph_phregcpp(
     p, beta, vbetacpp, resmart, dfcpp, stratum, time, time2, event,
-    covariates, weight, offset, ties, transform);
+    covariates, weight, offset, ties, transform
+  );
   
   return Rcpp::wrap(cpp_result);
 }
