@@ -5,8 +5,12 @@ struct FlatMatrix;
 struct DataFrameCpp;
 struct ListCpp;
 
+#include <cstddef>
 #include <string>
 #include <vector>
+
+using std::size_t;
+
 
 DataFrameCpp survQuantilecpp(const std::vector<double>& time,
                              const std::vector<int>& event,
@@ -117,7 +121,7 @@ ListCpp phregcpp(const DataFrameCpp& data,
                  const int maxiter = 50,
                  const double eps = 1.0e-9);
 
-DataFrameCpp survfit_phregcpp(const int p,
+DataFrameCpp survfit_phregcpp(const size_t p,
                               const std::vector<double>& beta,
                               const FlatMatrix& vbeta,
                               const DataFrameCpp& basehaz,
@@ -150,7 +154,7 @@ ListCpp residuals_phregcpp(const int p,
                            const bool collapse = false,
                            const bool weighted = false);
 
-ListCpp assess_phregcpp(const int p,
+ListCpp assess_phregcpp(const size_t p,
                         const std::vector<double>& beta,
                         const FlatMatrix& vbeta,
                         const DataFrameCpp& data,
@@ -165,7 +169,7 @@ ListCpp assess_phregcpp(const int p,
                         const int resample = 1000,
                         const int seed = 0);
 
-ListCpp zph_phregcpp(int p,
+ListCpp zph_phregcpp(const size_t p,
                      const std::vector<double>& beta,
                      const FlatMatrix& vbeta,
                      const std::vector<double>& resmart,

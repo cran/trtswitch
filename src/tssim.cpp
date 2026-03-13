@@ -3,6 +3,7 @@
 
 #include <Rcpp.h>
 #include <boost/random.hpp>
+#include <boost/math/distributions/gamma.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -12,6 +13,7 @@
 #include <stdexcept>
 #include <vector>
 
+using std::size_t;
 
 //' @title Simulate Data for Treatment Switching
 //' @description Simulates data for studies involving treatment switching, 
@@ -287,61 +289,33 @@ Rcpp::List tssim(const bool tdxo = false,
                  const bool fixedFollowup = false,
                  const double plannedTime = 1350.0,
                  const double days = 30.0,
-                 const int n = 500,
-                 const int NSim = 1000, 
+                 const size_t n = 500,
+                 const size_t NSim = 1000, 
                  const int seed = 0) {
   
   std::vector<double> accTime = Rcpp::as<std::vector<double>>(accrualTime);
   std::vector<double> accRate = Rcpp::as<std::vector<double>>(accrualIntensity);
   
-  if (allocation1 < 1) 
-    throw std::invalid_argument("allocation1 must be a positive integer");
-  if (allocation2 < 1) 
-    throw std::invalid_argument("allocation2 must be a positive integer");
-  
-  if (p_X_1 <= 0 || p_X_1 >= 1) 
-    throw std::invalid_argument("p_X_1 must lie between 0 and 1");
-  if (p_X_0 <= 0 || p_X_0 >= 1) 
-    throw std::invalid_argument("p_X_0 must lie between 0 and 1");
+  if (allocation1 < 1 || allocation2 < 1)
+    throw std::invalid_argument("allocations must be a positive integer");
+
+  if (p_X_1 <= 0 || p_X_1 >= 1 || p_X_0 <= 0 || p_X_0 >= 1) 
+    throw std::invalid_argument("p_X must lie between 0 and 1");
   
   if (rate_T <= 0) throw std::invalid_argument("rate_T must be positive");
   if (rate_C < 0) throw std::invalid_argument("rate_C must be nonnegative");
   
-  if (accTime[0] != 0) 
+  if (accTime[0] != 0.0)
     throw std::invalid_argument("accrualTime must start with 0");
-  if (accTime.size() > 1) {
-    for (std::size_t i = 1; i < accTime.size(); ++i) {
-      double prev = accTime[i - 1];
-      double cur  = accTime[i];
-      // If either element is NaN, skip the comparison
-      if (std::isnan(prev) || std::isnan(cur)) continue;
-      if (cur <= prev) {
-        throw std::invalid_argument("accrualTime should be increasing");
-      }
-    }
-  }
+  if (any_nonincreasing(accTime))
+    throw std::invalid_argument("accrualTime should be increasing");
   
-  // Check accrualIntensity has no missing values (NaN)
-  if (std::any_of(accRate.begin(), accRate.end(),
-                  [](double x){ return std::isnan(x); })) {
+  if (!none_na(accRate))
     throw std::invalid_argument("accrualIntensity must be provided");
-  }
-  
-  // length check
-  if (accTime.size() != accRate.size()) {
-    throw std::invalid_argument(
-        "accrualTime must have the same length as accrualIntensity");
-  }
-  
-  // accrualIntensity: must be provided (no NaN) and non-negative
-  for (std::size_t i = 0; i < accRate.size(); ++i) {
-    double v = accRate[i];
-    if (std::isnan(v)) {
-      throw std::invalid_argument("accrualIntensity must be provided");
-    }
-    if (v < 0.0) {
-      throw std::invalid_argument("accrualIntensity must be non-negative");
-    }
+  if (accRate.size() != accTime.size())
+    throw std::invalid_argument("Invalid length for accrualIntensity");
+  for (double v : accRate) {
+    if (v < 0.0) throw std::invalid_argument("accrualIntensity must be non-negative");
   }
   
   // fixed follow-up checks
@@ -358,7 +332,14 @@ Rcpp::List tssim(const bool tdxo = false,
   if (std::isnan(plannedTime)) 
     throw std::invalid_argument("plannedTime must be provided");
   if (plannedTime <= 0.0) throw std::invalid_argument("plannedTime must be positive");
-
+  
+  boost::math::gamma_distribution<> my_gamma(static_cast<double>(n), 1.0);
+  double q = boost::math::quantile(my_gamma, 0.9999);
+  if (plannedTime <= getAccrualDurationFromN1(q, accTime, accRate)) {
+    throw std::invalid_argument(
+        "plannedTime must ensure enrollment completion with 99.99% confidence");
+  }
+  
   // days, n, NSim checks
   if (days <= 0.0) throw std::invalid_argument("days must be positive");
   if (n <= 0) throw std::invalid_argument("n must be positive");
@@ -371,11 +352,11 @@ Rcpp::List tssim(const bool tdxo = false,
   boost::random::uniform_real_distribution<double> unif(0.0, 1.0);
   boost::random::exponential_distribution<double> expo(1.0);
   
-  int maxFollowup = static_cast<int>(std::ceil(plannedTime / days));
-  int K = n * maxFollowup;
+  size_t maxFollowup = static_cast<size_t>(std::ceil(plannedTime / days));
+  size_t K = n * maxFollowup;
   std::vector<DataFrameCpp> sims(NSim);
   
-  for (int iter = 0; iter < NSim; ++iter) {
+  for (size_t iter = 0; iter < NSim; ++iter) {
     std::vector<int> idx(K), trtrandx(K), tpointx(K);
     std::vector<int> bprogx(K), Lx(K), Llagx(K), Zx(K), Zlagx(K);
     std::vector<int> Ax(K), Alagx(K), Alag2x(K), eventx(K);
@@ -386,8 +367,8 @@ Rcpp::List tssim(const bool tdxo = false,
     
     double b1 = allocation1, b2 = allocation2;
     double enrollt = 0;
-    int k = 0;
-    for (int i = 1; i <= n; ++i) { // subject index (1..n)
+    size_t k = 0;
+    for (size_t i = 1; i <= n; ++i) { // subject index (1..n)
       int id = i;
       
       // generate accrual time
@@ -497,9 +478,9 @@ Rcpp::List tssim(const bool tdxo = false,
       if (C == 0.0) C = 1.0;
       double time = std::min({T, C, fu});
       
-      int J;  // J is the number of treatment cycles
+      size_t J;  // J is the number of treatment cycles
       if (time <= days*followup) {
-        J = static_cast<int>(std::ceil(time / days));
+        J = static_cast<size_t>(std::ceil(time / days));
         k = k - tpoint + J; // discard treatment cycles after censoring
         tstopx[k-1] = time; // update the ending time and event indicator
         eventx[k-1] = (T == time) ? 1 : 0;
@@ -529,7 +510,7 @@ Rcpp::List tssim(const bool tdxo = false,
       }
       
       // create subject-level survival time and death indicator
-      for (int j = k - J; j < k; j++) {
+      for (size_t j = k - J; j < k; j++) {
         timeOSx[j] = tstopx[k-1];
         diedx[j] = eventx[k-1];
         censor_timex[j] = fu;
@@ -538,18 +519,18 @@ Rcpp::List tssim(const bool tdxo = false,
       // progression and time to progression (if applicable)
       int pd = 0;
       double pd_time = NaN;
-      for (int j = k - J; j < k; j++) {
+      for (size_t j = k - J; j < k; j++) {
         if (Zx[j] == 1) { pd = 1; pd_time = tstopx[j]; break; }
       }
 
       // switching and time to switching (if applicable)
       int xo = 0;
       double xo_time = NaN;
-      for (int j = k - J; j < k; j++) {
+      for (size_t j = k - J; j < k; j++) {
         if (Ax[j] == 1) { xo = 1; xo_time = tstopx[j]; break; }
       }
       
-      for (int j = k - J; j < k; j++) {
+      for (size_t j = k - J; j < k; j++) {
         progressedx[j] = pd;
         timePDx[j] = pd_time;
         xox[j] = xo;
@@ -557,14 +538,14 @@ Rcpp::List tssim(const bool tdxo = false,
       }
       
       // shift disease progression and alternative therapy status downward
-      for (int j = k - J; j < k; j++) {
+      for (size_t j = k - J; j < k; j++) {
         Zx[j] = Zlagx[j];
         Ax[j] = Alagx[j];
         Alagx[j] = Alag2x[j];
       }
     }
     
-    std::vector<int> sub = seqcpp(0, k - 1);
+    std::vector<size_t> sub = seqcpp(0, k - 1);
     subset_in_place(idx, sub);
     subset_in_place(arrivalTimex, sub);
     subset_in_place( trtrandx, sub);
