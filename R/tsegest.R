@@ -146,11 +146,26 @@
 #' progression, the patient is considered to have progressed at the time of 
 #' treatment switching. 
 #' 
-#' If grid search is used to estimate \eqn{\psi}, the estimated \eqn{\psi} 
-#' is the one with the smallest absolute value among those at which 
-#' the Z-statistic is zero based on linear interpolation. 
-#' If root finding is used, the estimated \eqn{\psi} is
-#' the solution to the equation where the Z-statistic is zero.
+#' If grid search is used to estimate \eqn{\psi}, roots are identified by 
+#' linear interpolation between adjacent grid points where the Z-statistic 
+#' crosses the target level. When multiple roots exist, the estimated 
+#' \eqn{\psi} is the root closest to zero (smallest absolute value). 
+#' For the confidence interval, the lower bound uses the leftmost (minimum) 
+#' root where the Z-statistic equals \eqn{z_{\alpha/2}}, and the upper bound 
+#' uses the rightmost (maximum) root where the Z-statistic equals 
+#' \eqn{-z_{\alpha/2}}, ensuring conservative interval coverage in the 
+#' presence of multiple roots.
+#' 
+#' If root finding is used, Brent's method (or bisection) is applied to a 
+#' bracketed interval \eqn{[\psi_{lo}, \psi_{hi}]}, where the Z-statistic 
+#' is positive at \eqn{\psi_{lo}} and negative at \eqn{\psi_{hi}}. When 
+#' multiple roots exist in the bracket, Brent's method converges to one root 
+#' without guaranteeing it is the root closest to zero. For the confidence 
+#' interval, the lower bound restricts the search to 
+#' \eqn{[\psi_{lo}, \hat{\psi}]} and the upper bound to 
+#' \eqn{[\hat{\psi}, \psi_{hi}]}, ensuring the bounds lie on opposite sides 
+#' of the point estimate and providing conservative coverage when multiple 
+#' roots are present.
 #'
 #' @return A list with the following components:
 #'
@@ -349,6 +364,10 @@ tsegest <- function(data, id = "id", stratum = "",
     on.exit(RcppParallel::setThreadOptions(numThreads = old_nthreads), add = TRUE)
   }
   
+  if (length(ns_df) != 1 || is.na(ns_df) || ns_df < 0 || ns_df != floor(ns_df)) {
+    stop("'ns_df' must be a nonnegative integer.")
+  }
+  
   # select complete cases for the relevant variables
   elements = unique(c(id, stratum, tstart, tstop, event, treat, 
                       censor_time, pd, swtrt))
@@ -401,12 +420,15 @@ tsegest <- function(data, id = "id", stratum = "",
     df[, "tstart"] = df[, tstart]
     df[, "tstop"] = df[, tstop]
     
+    df <- df[order(df[[id]]), ]          # Sort by id
+    dfu <- df[!duplicated(df[[id]]), ]   # Keep the first row for each id
+    
     if (length(vnames) > 0) {
       add_vars <- setdiff(vnames, varnames)
       if (length(add_vars) > 0) {
         out$data_outcome <- merge_append(
-          A = out$data_outcome, B = df, 
-          by_vars = id, new_vars = avars, 
+          A = out$data_outcome, B = dfu, 
+          by_vars = id, new_vars = add_vars, 
           overwrite = FALSE, first_match = FALSE)
       }
       
