@@ -26,3 +26,15 @@ testthat::test_that("kmest: confidence interval", {
 })
 
 
+testthat::test_that("kmest: subjects remain at risk at time zero", {
+  df <- data.frame(time = c(0, 1, 2), event = c(1, 0, 0))
+
+  result <- kmest(df, time = "time", event = "event", conftype = "none")
+
+  testthat::expect_equal(result$nrisk[1], 3)
+  testthat::expect_equal(result$nevent[1], 1)
+  testthat::expect_equal(result$surv[1], 2 / 3)
+  testthat::expect_true(all(is.finite(result$surv)))
+})
+
+

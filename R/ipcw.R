@@ -77,7 +77,8 @@
 #'   the distribution.
 #' @param swtrt_control_only Whether treatment switching occurred only in
 #'   the control group. The default is \code{TRUE}.
-#' @param alpha The significance level to calculate confidence intervals. 
+#' @param alpha The two-sided significance level to calculate confidence 
+#'   intervals. 
 #' @param ties The method for handling ties in the Cox model, either
 #'   "breslow" or "efron" (default).
 #' @param boot Whether to use bootstrap to obtain the confidence
@@ -122,6 +123,8 @@
 #'
 #' @return A list with the following components:
 #'
+#' * \code{call}: The matched function call.
+#'
 #' * \code{pvalue}: The two-sided p-value.
 #'
 #' * \code{pvalue_type}: The type of two-sided p-value for treatment effect, 
@@ -147,6 +150,10 @@
 #'
 #' * \code{fit_switch}: A list of fitted switching models for the
 #'   denominator and numerator by treatment group.
+#'
+#' * \code{switch_missing_summary}: A data frame summarizing missing
+#'   denominator and numerator switching-model covariates before complete-case
+#'   filtering, by treatment arm and switching model.
 #'
 #' * \code{data_outcome}: The input data for the outcome Cox model 
 #'   including the inverse probability of censoring weights.
@@ -187,6 +194,11 @@
 #' Correcting for noncompliance and dependent censoring in an AIDS clinical
 #' trial with inverse probability of censoring weighted (IPCW) log-rank tests.
 #' Biometrics. 2000;56(3):779-788.
+#'
+#' Helen Bell Gorrod, Nicholas R. Latimer, and Keith R. Abrams.
+#' NICE DSU Technical Support Document 24: Adjusting survival time estimates
+#' in the presence of treatment switching: An update to TSD 16. 2024.
+#' Available from https://sheffield.ac.uk/nice-dsu.
 #'
 #' @examples
 #'
@@ -405,8 +417,8 @@ ipcw <- function(data, id = "id", stratum = "", tstart = "tstart",
     mf <- function(x) factor(x, levels = c(1,2), labels = levs)
     
     # apply mf to a set of data.frames with a column named `treat`
-    for (nm in c("event_summary", "weight_summary", "data_outcome", 
-                 "km_outcome")) {
+    for (nm in c("event_summary", "weight_summary", "data_outcome",
+           "km_outcome", "switch_missing_summary")) {
       out[[nm]][[treat]] <- mf(out[[nm]][[treat]])
     }
     
@@ -431,6 +443,7 @@ ipcw <- function(data, id = "id", stratum = "", tstart = "tstart",
     n_boot = n_boot, seed = seed
   )
   
+  out$call <- match.call()
   class(out) <- "ipcw"
   out
 }

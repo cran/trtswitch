@@ -1,6 +1,6 @@
 #' @title Plot method for rpsftm objects
-#' @description Generate Z-plot and Kaplan-Meier (KM) plot of a 
-#' rpsftm object.
+#' @description Generate a Z-plot and Kaplan-Meier (KM) plots of the
+#' counterfactual untreated and unswitched outcomes of a rpsftm object.
 #'
 #' @param x An object of class \code{rpsftm}.
 #' @param time_unit The time unit used in the input data.
@@ -11,8 +11,10 @@
 #'   below the KM plot. Default is TRUE.
 #' @param ... Ensures that all arguments starting from "..." are named.
 #'
-#' @return A list of two ggplot2 objects, one for Z-plot and the other for 
-#' KM plot.
+#' @return A list of ggplot2 objects: \code{p_z} for the Z-plot,
+#' \code{p_kmstar} for counterfactual untreated outcomes, and \code{p_km}
+#' for counterfactual unswitched outcomes. KM plots are omitted when their
+#' corresponding estimates are unavailable.
 #'
 #' @keywords internal
 #'
@@ -58,9 +60,61 @@ plot.rpsftm <- function(x, time_unit = "day",
           .(sprintf("%.3f", x$psi_CI[2])) * ")")) + 
     ggplot2::theme_bw() +
     ggplot2::theme(plot.caption = ggplot2::element_text(hjust = 0))
-  
-  
-  # --- Kaplan-Meier plot for counterfactual outcomes ---
+
+  # --- Kaplan-Meier plot for counterfactual untreated outcomes ---
+  p_kmstar <- NULL
+  if (!is.null(x$kmstar) && nrow(x$kmstar) > 0) {
+    treatment_labels <- c("Treatment", "Control")
+    if (!is.null(x$km_outcome) && nrow(x$km_outcome) > 0) {
+      treatment_values <- x$km_outcome[[treat_var]]
+      if (is.factor(treatment_values)) {
+        treatment_labels <- levels(treatment_values)
+      } else if (!(is.numeric(treatment_values) &&
+                   all(treatment_values %in% c(0, 1)))) {
+        treatment_labels <- levels(factor(treatment_values))
+      }
+    }
+
+    df_star <- x$kmstar
+    if (time_unit == "day") {
+      df_star$month <- df_star$time / 30.4375
+    } else if (time_unit == "week") {
+      df_star$month <- df_star$time / 4.3482
+    } else if (time_unit == "month") {
+      df_star$month <- df_star$time
+    } else if (time_unit == "year") {
+      df_star$month <- df_star$time * 12
+    } else {
+      stop("time_unit must be one of 'day', 'week', 'month', or 'year'")
+    }
+
+    df_star$randomized_arm <- factor(
+      df_star$treated, levels = c(1, 0), labels = treatment_labels)
+
+    p_kmstar <- ggplot2::ggplot(
+      df_star,
+      ggplot2::aes(
+        x = .data$month, y = .data$surv,
+        group = .data$randomized_arm, colour = .data$randomized_arm
+      )) +
+      ggplot2::geom_step() +
+      ggplot2::scale_x_continuous(n.breaks = 11) +
+      ggplot2::scale_y_continuous(limits = c(0, 1)) +
+      ggplot2::labs(
+        x = "Months", y = "Survival Probability",
+        title = "Kaplan-Meier Curves for Counterfactual Untreated Outcomes"
+      ) +
+      ggplot2::theme_bw() +
+      ggplot2::theme(
+        plot.title = ggplot2::element_text(hjust = 0.5),
+        legend.title = ggplot2::element_blank(),
+        panel.grid.minor.x = ggplot2::element_blank(),
+        plot.margin = ggplot2::margin(t = 2, r = 5, b = 0, l = 20)
+      )
+
+  }
+
+  # --- Kaplan-Meier plot for counterfactual unswitched outcomes ---
   if (!is.null(x$km_outcome) && nrow(x$km_outcome) > 0) {
     df <- x$km_outcome
     if (time_unit == "day") {
@@ -89,13 +143,14 @@ plot.rpsftm <- function(x, time_unit = "day",
     
     p_km <- ggplot2::ggplot(
       df, ggplot2::aes(x = .data$month, y = .data$surv, 
-                       group = .data[[treat_var]], colour = .data[[treat_var]])) +
+                       group = .data[[treat_var]], 
+                       colour = .data[[treat_var]])) +
       ggplot2::geom_step() +
       ggplot2::scale_x_continuous(n.breaks = 11) +
       ggplot2::scale_y_continuous(limits = c(0, 1)) +
       ggplot2::labs(
         x = "Months", y = "Survival Probability",
-        title = "Kaplan-Meier Curves for Counterfactual Outcomes") + 
+        title = "Kaplan-Meier Curves for Counterfactual Unswitched Outcomes") + 
       ggplot2::theme_bw() + 
       ggplot2::theme(
         plot.title = ggplot2::element_text(hjust = 0.5),
@@ -103,10 +158,15 @@ plot.rpsftm <- function(x, time_unit = "day",
         panel.grid.minor.x = ggplot2::element_blank(),
         plot.margin = ggplot2::margin(t = 2, r = 5, b = 0, l = 20))
     
-    if (max(min_surv) < 0.5) {
-      p_km <- p_km + ggplot2::theme(legend.position = c(0.7, 0.85))
-    } else{
-      p_km <- p_km + ggplot2::theme(legend.position = c(0.15, 0.25))
+    legend_position <- if (max(min_surv) < 0.5) {
+      c(0.7, 0.85)
+    } else {
+      c(0.15, 0.25)
+    }
+    p_km <- p_km + ggplot2::theme(legend.position = legend_position)
+    if (!is.null(p_kmstar)) {
+      p_kmstar <- p_kmstar +
+        ggplot2::theme(legend.position = legend_position)
     }
     
     # add hazard ratio to plot
@@ -157,7 +217,8 @@ plot.rpsftm <- function(x, time_unit = "day",
       # --- Create number at risk plot ---
       p_risk <- ggplot2::ggplot(
         df_risk, ggplot2::aes(x = .data$time, y = .data[[treat_var]], 
-                              label = .data$atrisk, colour = .data[[treat_var]])) +
+                              label = .data$atrisk, 
+                              colour = .data[[treat_var]])) +
         ggplot2::geom_text(size = 3.2, na.rm = TRUE) +
         ggplot2::scale_x_continuous(breaks = xbreaks, limits = range(xbreaks)) +
         ggplot2::scale_y_discrete(limits = rev(levels(df_risk[[treat_var]]))) +
@@ -192,7 +253,9 @@ plot.rpsftm <- function(x, time_unit = "day",
                                  rel_heights = c(4, 0.6))    
     }
     
-    list(p_z = p_z, p_km = p_km)
+    list(p_z = p_z, p_kmstar = p_kmstar, p_km = p_km)
+  } else if (!is.null(p_kmstar)) {
+    list(p_z = p_z, p_kmstar = p_kmstar)
   } else {
     p_z
   }

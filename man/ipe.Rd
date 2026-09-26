@@ -94,7 +94,8 @@ with no switching. Defaults to \code{TRUE}.}
 root-finding algorithm to use. Options are \code{"brent"} (default)
 for Brent's method, or \code{"bisection"} for the bisection method.}
 
-\item{alpha}{The significance level to calculate confidence intervals.}
+\item{alpha}{The two-sided significance level to calculate confidence
+intervals.}
 
 \item{ties}{The method for handling ties in the Cox model, either
 "breslow" or "efron" (default).}
@@ -117,6 +118,7 @@ the default RcppParallel behavior).}
 \value{
 A list with the following components:
 \itemize{
+\item \code{call}: The matched function call.
 \item \code{psi}: The estimated causal parameter.
 \item \code{psi_CI}: The confidence interval for \code{psi}.
 \item \code{psi_CI_type}: The type of confidence interval for \code{psi},
@@ -251,6 +253,11 @@ Ian R White.
 Letter to the Editor: Estimating treatment effects in randomized
 trials with treatment switching.
 Statistics in Medicine. 2006;25(9):1619-1622.
+
+Helen Bell Gorrod, Nicholas R. Latimer, and Keith R. Abrams.
+NICE DSU Technical Support Document 24: Adjusting survival time estimates
+in the presence of treatment switching: An update to TSD 16. 2024.
+Available from https://sheffield.ac.uk/nice-dsu.
 }
 \author{
 Kaifeng Lu, \email{kaifenglu@gmail.com}

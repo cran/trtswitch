@@ -118,7 +118,8 @@ the control group. The default is \code{TRUE}.}
 randomized and alternative treatments in the outcome model
 when both randomized arms can switch to alternative treatment.}
 
-\item{alpha}{The significance level to calculate confidence intervals.}
+\item{alpha}{The two-sided significance level to calculate confidence
+intervals.}
 
 \item{ties}{The method for handling ties in the Cox model, either
 "breslow" or "efron" (default).}
@@ -136,6 +137,7 @@ the default RcppParallel behavior).}
 \value{
 A list with the following components:
 \itemize{
+\item \code{call}: The matched function call.
 \item \code{pvalue}: The two-sided p-value.
 \item \code{pvalue_type}: The type of two-sided p-value for treatment effect,
 i.e., "Cox model" or "bootstrap".
@@ -154,6 +156,9 @@ natural cubic spline basis variables are created for the visit-specific
 intercepts.
 \item \code{fit_switch}: A list of fitted switching models for the
 denominator and numerator by treatment group.
+\item \code{switch_missing_summary}: A data frame summarizing missing
+denominator and numerator switching-model covariates before complete-case
+filtering, by treatment arm and switching model.
 \item \code{data_outcome}: The input data for the outcome Cox model
 including the inverse probability of censoring weights.
 The variables include \code{id}, \code{stratum}, \code{"tstart"},
@@ -256,6 +261,11 @@ Bias and Type I error control in correcting treatment effect for
 treatment switching using marginal structural models in Phase III
 oncology trials.
 Journal of Biopharmaceutical Statistics. 2022;32(6):897-914.
+
+Helen Bell Gorrod, Nicholas R. Latimer, and Keith R. Abrams.
+NICE DSU Technical Support Document 24: Adjusting survival time estimates
+in the presence of treatment switching: An update to TSD 16. 2024.
+Available from https://sheffield.ac.uk/nice-dsu.
 }
 \author{
 Kaifeng Lu, \email{kaifenglu@gmail.com}

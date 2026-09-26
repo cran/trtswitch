@@ -81,7 +81,7 @@
 #' @importFrom parallel detectCores
 #' @importFrom stats as.formula complete.cases formula model.frame 
 #' @importFrom stats model.matrix na.omit na.pass pchisq plogis qnorm 
-#' @importFrom stats rbinom rexp setNames terms
+#' @importFrom stats rbinom rexp sd setNames terms
 #' @importFrom rlang .data
 #' @importFrom data.table data.table dcast fifelse nafill rbindlist rleidv
 #' @importFrom data.table setDT setnames setorderv shift .I .N .SD :=

@@ -67,7 +67,8 @@
 #' @param root_finding Character string specifying the univariate 
 #'   root-finding algorithm to use. Options are \code{"brent"} (default)
 #'   for Brent's method, or \code{"bisection"} for the bisection method.
-#' @param alpha The significance level to calculate confidence intervals.
+#' @param alpha The two-sided significance level to calculate confidence 
+#'   intervals.
 #' @param ties The method for handling ties in the Cox model, either
 #'   "breslow" or "efron" (default).
 #' @param tol The desired accuracy (convergence tolerance) for \code{psi} 
@@ -125,6 +126,8 @@
 #' roots are present.
 #'
 #' @return A list with the following components:
+#'
+#' * \code{call}: The matched function call.
 #'
 #' * \code{psi}: The estimated causal parameter.
 #' 
@@ -210,6 +213,11 @@
 #' Examples from the CONCORDE trial.
 #' Statistics in Medicine. 1999;18(19):2617-2634.
 #'
+#' Helen Bell Gorrod, Nicholas R. Latimer, and Keith R. Abrams.
+#' NICE DSU Technical Support Document 24: Adjusting survival time estimates
+#' in the presence of treatment switching: An update to TSD 16. 2024.
+#' Available from https://sheffield.ac.uk/nice-dsu.
+#' 
 #' @examples
 #'
 #' library(dplyr)
@@ -288,12 +296,13 @@ rpsftm <- function(data, id = "id", stratum = "", time = "time",
   }
   
   # select complete cases for the relevant variables
-  elements <- unique(c(id, stratum, time, event, treat, rx, censor_time, base_cov))
+  elements <- unique(c(id, stratum, time, event, treat, rx, censor_time))
   elements <- elements[elements != ""]
   fml_all <- formula(paste("~", paste(elements, collapse = "+")))
   var_all <- all.vars(fml_all)
   rows_ok <- which(complete.cases(df[, var_all, drop = FALSE]))
-  if (length(rows_ok) == 0) stop("No complete cases found for the specified variables.")
+  if (length(rows_ok) == 0) 
+    stop("No complete cases found for the specified variables.")
   df <- df[rows_ok, , drop = FALSE]
   
   # process covariate specifications
@@ -364,7 +373,8 @@ rpsftm <- function(data, id = "id", stratum = "", time = "time",
     alpha = alpha, ties = ties, tol = tol, 
     boot = boot, n_boot = n_boot, seed = seed
   )
-  
+
+  out$call <- match.call()
   class(out) <- "rpsftm"
   out
 }

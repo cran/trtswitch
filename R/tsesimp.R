@@ -62,7 +62,8 @@
 #'   recensoring will be applied to the actual censoring times for dropouts.
 #' @param swtrt_control_only Whether treatment switching occurred only in
 #'   the control group. The default is \code{TRUE}.
-#' @param alpha The significance level to calculate confidence intervals. 
+#' @param alpha The two-sided significance level to calculate confidence 
+#'   intervals.  
 #' @param ties The method for handling ties in the Cox model, either
 #'   "breslow" or "efron" (default).
 #' @param offset The offset to calculate the time disease progression to 
@@ -101,6 +102,8 @@
 #'
 #' @return A list with the following components:
 #'
+#' * \code{call}: The matched function call.
+#'
 #' * \code{psi}: The estimated causal parameter for the control group.
 #'
 #' * \code{psi_CI}: The confidence interval for \code{psi}.
@@ -123,6 +126,9 @@
 #' * \code{event_summary}: A data frame containing the count and percentage
 #'   of deaths, disease progressions, and switches by treatment arm.
 #'   
+#' * \code{aft_missing_summary}: A data frame summarizing missing AFT-model
+#'   covariates before complete-case filtering, by treatment arm.
+#'   
 #' * \code{data_aft}: A list of input data for the AFT model by treatment 
 #'   group. The variables include \code{id}, \code{stratum}, \code{"pps"}, 
 #'   \code{"event"}, \code{"swtrt"}, \code{base2_cov}, \code{pd_time}, 
@@ -132,6 +138,15 @@
 #' 
 #' * \code{res_aft}: A list of deviance residuals from the AFT models 
 #'   by treatment group.
+#'
+#' * \code{data_switch}: A list of input data for time from disease
+#'   progression to switching by treatment group. The variables include
+#'   \code{id}, \code{stratum}, \code{"swtrt"}, and \code{"swtrt_time"}.
+#'   Patients who do not switch are censored at the time from disease
+#'   progression to death or censoring.
+#'
+#' * \code{km_switch}: A list of Kaplan-Meier estimates for time from disease
+#'   progression to switching by treatment group.
 #'   
 #' * \code{data_outcome}: The input data for the outcome Cox model 
 #'   of counterfactual unswitched survival times.
@@ -184,6 +199,11 @@
 #' simulation study and a simplified two-stage method.
 #' Statistical Methods in Medical Research. 2017;26(2):724-751.
 #'
+#' Helen Bell Gorrod, Nicholas R. Latimer, and Keith R. Abrams.
+#' NICE DSU Technical Support Document 24: Adjusting survival time estimates
+#' in the presence of treatment switching: An update to TSD 16. 2024.
+#' Available from https://sheffield.ac.uk/nice-dsu.
+#'  
 #' @examples
 #'
 #' library(dplyr)
@@ -352,12 +372,18 @@ tsesimp <- function(data, id = "id", stratum = "", time = "time",
     mf <- function(x) factor(x, levels = c(1,2), labels = levs)
     
     # apply mf to a set of data.frames with a column named `treat`
-    for (nm in c("event_summary", "data_outcome", "km_outcome")) {
+    for (nm in c("event_summary", "data_outcome", "km_outcome",
+                 "aft_missing_summary")) {
       out[[nm]][[treat]] <- mf(out[[nm]][[treat]])
     }
     
     # and for the list-of-lists
     out$data_aft <- lapply(out$data_aft, function(x) { 
+      x[[treat]] <- mf(x[[treat]]); x })
+
+    out$data_switch <- lapply(out$data_switch, function(x) {
+      x[[treat]] <- mf(x[[treat]]); x })
+    out$km_switch <- lapply(out$km_switch, function(x) {
       x[[treat]] <- mf(x[[treat]]); x })
   }
   
@@ -375,6 +401,7 @@ tsesimp <- function(data, id = "id", stratum = "", time = "time",
     boot = boot, n_boot = n_boot, seed = seed
   )
   
+  out$call <- match.call()
   class(out) <- "tsesimp"
   out
 }

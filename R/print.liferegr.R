@@ -63,7 +63,6 @@ print.liferegr <- function(x, ...) {
                          upper = x$parest$upper,
                          p = x$parest$p,
                          method = x$parest$method)
-        
         colnames(df) <- c("param", "coef", "exp(coef)", "se(coef)",
                           "robust se", "z", 
                           paste("lower", 1-x$settings$alpha),

@@ -74,7 +74,7 @@ testthat::test_that("ipcw: pooled logistic regression switching model", {
   
   fit <- coxph(Surv(tstart, tstop, event) ~ trtrand + bprog, 
                data = data4, weight = stabilized_weight,
-                id = id, ties = "efron", robust = TRUE)
+               id = id, ties = "efron", robust = TRUE)
   
   hr1 <- as.numeric(exp(cbind(fit$coefficients, confint(fit)))["trtrand",])
   
@@ -82,6 +82,136 @@ testthat::test_that("ipcw: pooled logistic regression switching model", {
                          fit1$data_outcome$stabilized_weight)
   
   testthat::expect_equal(hr1, c(fit1$hr, fit1$hr_CI))
+  testthat::expect_true("switch_missing_summary" %in% names(fit1))
+  
+  summary_fit <- summary(fit1)
+  testthat::expect_s3_class(summary_fit, "summary.ipcw")
+  testthat::expect_true(all(c(
+    "covariate_balance", "positivity_flags", "switch_estimates",
+    "missing_predictors", "weight_summary", "outcome_estimates", "reporting"
+  ) %in% names(summary_fit)))
+  testthat::expect_identical(
+    names(summary_fit$covariate_balance),
+    c("trtrand", "variable", "statistic/level", "No switch", "Switch")
+  )
+  testthat::expect_identical(unique(summary_fit$covariate_balance$trtrand), "0")
+  testthat::expect_identical(
+    order(
+      summary_fit$covariate_balance$trtrand,
+      summary_fit$covariate_balance$variable,
+      summary_fit$covariate_balance[["statistic/level"]]
+    ),
+    seq_len(nrow(summary_fit$covariate_balance))
+  )
+  testthat::expect_identical(
+    names(summary_fit$missing_predictors),
+    c("trtrand", "model", "predictor", "missing", "total", "missing_pct")
+  )
+  testthat::expect_identical(summary_fit$reporting$item, paste0("IPCW", 1:10))
+  testthat::expect_match(
+    summary_fit$reporting$information[10],
+    "and categorical-variable definitions\\.$"
+  )
+  truncated_fit <- fit1
+  truncated_fit$settings$trunc <- 0.01
+  testthat::expect_match(
+    summary(truncated_fit)$reporting$information[10],
+    paste0("categorical-variable definitions, and truncation percentiles ",
+           "including no truncation\\.$")
+  )
+  testthat::expect_match(
+    summary_fit$reporting$information[8],
+    paste0("Inspect p_w from plot\\(object\\) for weight distribution ", 
+           "by treatment group\\.")
+  )
+  testthat::expect_match(
+    summary_fit$reporting$information[5],
+    "time-varying predictors: Detected: L\\."
+  )
+  testthat::expect_identical(
+    names(summary_fit$switch_estimates),
+    c("trtrand", "model", "param", "coef", "exp(coef)", "se(coef)", "z", "p")
+  )
+  testthat::expect_identical(
+    names(summary_fit$outcome_estimates),
+    c("param", "coef", "exp(coef)", "se(coef)", "robust se", "z", "p")
+  )
+  testthat::expect_equal(
+    summary_fit$outcome_estimates[["se(coef)"]],
+    fit1$fit_outcome$parest$sebeta_naive
+  )
+  testthat::expect_equal(
+    summary_fit$outcome_estimates[["robust se"]],
+    fit1$fit_outcome$parest$sebeta
+  )
+  printed <- capture.output(print(summary_fit))
+  population_output <- printed[
+    seq_len(match(TRUE, grepl("IPCW reporting checklist", printed)) - 1L)
+  ]
+  population_pct <- unlist(lapply(
+    summary_fit$population[grep("_pct$", names(summary_fit$population))],
+    formatC, format = "f", digits = 1
+  ))
+  testthat::expect_true(all(vapply(
+    population_pct,
+    function(value) any(grepl(value, population_output, fixed = TRUE)),
+    logical(1)
+  )))
+  fixed_precision <- capture.output(print(summary_fit, digits = 1))
+  formatted_pvalue <- ifelse(
+    summary_fit$pvalue < 1e-4, "<.0001",
+    ifelse(summary_fit$pvalue > 0.9999, ">.9999",
+           formatC(summary_fit$pvalue, format = "f", digits = 4))
+  )
+  testthat::expect_true(any(grepl(
+    paste0("P-value (", summary_fit$pvalue_type, "): ", formatted_pvalue),
+    fixed_precision, fixed = TRUE
+  )))
+  hr_ci <- paste0(
+    formatC(fit1$hr, format = "f", digits = 3), " (",
+    formatC(fit1$hr_CI[1], format = "f", digits = 3), ", ",
+    formatC(fit1$hr_CI[2], format = "f", digits = 3), ")"
+  )
+  testthat::expect_true(any(grepl(hr_ci, printed, fixed = TRUE)))
+  testthat::expect_true(any(grepl("IPCW reporting checklist", printed)))
+  testthat::expect_true(any(grepl(
+    "Missing switching-model predictors by model", printed, fixed = TRUE
+  )))
+  testthat::expect_false(grepl(
+    "before intervals are split at distinct event times",
+    summary_fit$reporting$information[6], fixed = TRUE
+  ))
+  heading_positions <- c(
+    match("Analysis population", printed),
+    match(TRUE, grepl("^IPCW1:", printed)),
+    match(TRUE, grepl("^IPCW2:", printed)),
+    match("Covariate summary by treatment arm and switch status", printed),
+    match(TRUE, grepl("^IPCW7:", printed)),
+    match("Switching model parameter estimates", printed),
+    match(TRUE, grepl("^IPCW8:", printed)),
+    match("Weight distribution", printed),
+    match(TRUE, grepl("^IPCW9:", printed)),
+    match("Outcome model parameter estimates", printed)
+  )
+  testthat::expect_true(all(diff(heading_positions) > 0L))
+  for (estimates in list(summary_fit$switch_estimates,
+                         summary_fit$outcome_estimates)) {
+    value_columns <- if ("coef" %in% names(estimates)) {
+      c("coef", "exp(coef)", "se(coef)")
+    } else {
+      c("beta", "expbeta", "sebeta")
+    }
+    testthat::expect_true(all(vapply(
+      unlist(estimates[value_columns]), function(value) {
+        any(grepl(formatC(value, format = "f", digits = 4), printed,
+                  fixed = TRUE))
+      }, logical(1)
+    )))
+    testthat::expect_true(all(vapply(estimates$z, function(value) {
+      any(grepl(formatC(value, format = "f", digits = 3), printed,
+                fixed = TRUE))
+    }, logical(1))))
+  }
 })
 
 
@@ -95,6 +225,25 @@ testthat::test_that("ipcw: time-dependent covariates Cox switching model", {
     denominator = c("agerand", "sex.f", "tt_Lnum", "rmh_alea.c", "pathway.f",
                     "ps", "ttc", "tran"),
     swtrt_control_only = FALSE, boot = FALSE)
+  
+  eligible <- with(shilong, co == 0 | tstart < dco)
+  expected_totals <- table(shilong$bras.f[eligible])
+  missing_totals <- vapply(names(expected_totals), function(arm) {
+    unique(fit2$switch_missing_summary$total[
+      fit2$switch_missing_summary$bras.f == arm
+    ])
+  }, integer(1))
+  testthat::expect_equal(unname(missing_totals), as.integer(expected_totals))
+  summary_fit2 <- summary(fit2)
+  testthat::expect_match(
+    summary_fit2$reporting$information[4],
+    "cox model with time-dependent covariates"
+  )
+  testthat::expect_match(
+    summary_fit2$reporting$information[6],
+    paste0("This summary is based on records before intervals are split at ",
+           "distinct event times\\.")
+  )
   
   # exclude observations after treatment switch
   data1 <- shilong %>%
@@ -122,10 +271,10 @@ testthat::test_that("ipcw: time-dependent covariates Cox switching model", {
       filter(treated == h)
     fit_den <- coxph(Surv(tstart, tstop, cross) ~ agerand + sex.f + 
                        tt_Lnum + rmh_alea.c + pathway.f + ps + ttc + tran, 
-                     data = df1, id = id, ties = "efron", robust = TRUE)
+                     data = df1, id = id, ties = "efron")
     fit_num <- coxph(Surv(tstart, tstop, cross) ~ agerand + sex.f + 
                        tt_Lnum + rmh_alea.c + pathway.f, 
-                     data = df1, id = id, ties = "efron", robust = TRUE)
+                     data = df1, id = id, ties = "efron")
     
     km_den <- survfit(fit_den, newdata = df1, id = id)
     km_num <- survfit(fit_num, newdata = df1, id = id)

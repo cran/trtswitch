@@ -75,7 +75,7 @@ testthat::test_that("msm: pooled logistic regression switching model", {
   
   fit <- coxph(Surv(tstart, tstop, event) ~ trtrand + bprog + cross, 
                data = data4, weight = stabilized_weight,
-                id = id, ties = "efron", robust = TRUE)
+               id = id, ties = "efron", robust = TRUE)
   
   hr1 <- as.numeric(exp(cbind(fit$coefficients, confint(fit)))["trtrand",])
   
@@ -83,5 +83,139 @@ testthat::test_that("msm: pooled logistic regression switching model", {
                          fit1$data_outcome$stabilized_weight)
   
   testthat::expect_equal(hr1, c(fit1$hr, fit1$hr_CI))
+  
+  testthat::expect_true(is.call(fit1$call))
+  testthat::expect_true("switch_missing_summary" %in% names(fit1))
+  printed_fit <- capture.output(print(fit1))
+  testthat::expect_true(any(grepl("Call:", printed_fit, fixed = TRUE)))
+  
+  summary_fit <- summary(fit1)
+  testthat::expect_s3_class(summary_fit, "summary.msm")
+  testthat::expect_identical(summary_fit$call, fit1$call)
+  testthat::expect_true(all(c(
+    "covariate_summary", "switching_estimates", "weight_summary",
+    "missing_predictors", "outcome_estimates", "reporting"
+  ) %in% names(summary_fit)))
+  testthat::expect_identical(
+    names(summary_fit$missing_predictors),
+    c("trtrand", "model", "predictor", "missing", "total", "missing_pct")
+  )
+  testthat::expect_identical(summary_fit$reporting$item, paste0("MSM", 1:10))
+  testthat::expect_match(
+    summary_fit$reporting$information[10],
+    "and categorical-variable definitions\\.$"
+  )
+  truncated_fit <- fit1
+  truncated_fit$settings$trunc <- 0.01
+  testthat::expect_match(
+    summary(truncated_fit)$reporting$information[10],
+    paste0("categorical-variable definitions, and truncation percentiles ",
+           "including no truncation\\.$")
+  )
+  testthat::expect_match(
+    summary_fit$reporting$information[8],
+    paste0("Inspect p_w from plot\\(object\\) for weight distribution by ", 
+           "treatment group\\.")
+  )
+  testthat::expect_identical(
+    names(summary_fit$switching_estimates),
+    c("trtrand", "model", "param", "coef", "exp(coef)", "se(coef)", "z", "p")
+  )
+  testthat::expect_identical(
+    names(summary_fit$covariate_summary),
+    c("trtrand", "variable", "statistic/level", "No switch", "Switch")
+  )
+  testthat::expect_identical(unique(summary_fit$covariate_summary$trtrand), "0")
+  testthat::expect_identical(
+    order(
+      summary_fit$covariate_summary$trtrand,
+      summary_fit$covariate_summary$variable,
+      summary_fit$covariate_summary[["statistic/level"]]
+    ),
+    seq_len(nrow(summary_fit$covariate_summary))
+  )
+  testthat::expect_true(
+    "Range" %in% summary_fit$covariate_summary[["statistic/level"]]
+  )
+  testthat::expect_identical(
+    names(summary_fit$outcome_estimates),
+    c("param", "coef", "exp(coef)", "se(coef)", "robust se", "z", "p")
+  )
+  testthat::expect_equal(
+    summary_fit$outcome_estimates[["se(coef)"]],
+    fit1$fit_outcome$parest$sebeta_naive
+  )
+  testthat::expect_equal(
+    summary_fit$outcome_estimates[["robust se"]],
+    fit1$fit_outcome$parest$sebeta
+  )
+  testthat::expect_match(summary_fit$reporting$information[5],
+                         "includes post-switching data")
+  testthat::expect_match(
+    summary_fit$reporting$information[5],
+    "time-varying predictors: Detected: L;"
+  )
+  testthat::expect_match(summary_fit$reporting$information[9],
+                         "includes post-switching data")
+  
+  printed_summary <- capture.output(print(summary_fit))
+  population_output <- printed_summary[
+    seq_len(match(TRUE, grepl("MSM reporting checklist", printed_summary)) - 1L)
+  ]
+  population_pct <- unlist(lapply(
+    summary_fit$population[grep("_pct$", names(summary_fit$population))],
+    formatC, format = "f", digits = 1
+  ))
+  testthat::expect_true(all(vapply(
+    population_pct,
+    function(value) any(grepl(value, population_output, fixed = TRUE)),
+    logical(1)
+  )))
+  fixed_precision <- capture.output(print(summary_fit, digits = 1))
+  formatted_pvalue <- ifelse(
+    summary_fit$pvalue < 1e-4, "<.0001",
+    ifelse(summary_fit$pvalue > 0.9999, ">.9999",
+           formatC(summary_fit$pvalue, format = "f", digits = 4))
+  )
+  testthat::expect_true(any(grepl(
+    paste0("P-value (", summary_fit$pvalue_type, "): ", formatted_pvalue),
+    fixed_precision, fixed = TRUE
+  )))
+  hr_ci <- paste0(
+    formatC(fit1$hr, format = "f", digits = 3), " (",
+    formatC(fit1$hr_CI[1], format = "f", digits = 3), ", ",
+    formatC(fit1$hr_CI[2], format = "f", digits = 3), ")"
+  )
+  testthat::expect_true(any(grepl(hr_ci, printed_summary, fixed = TRUE)))
+  for (estimates in list(summary_fit$switching_estimates,
+                         summary_fit$outcome_estimates)) {
+    testthat::expect_true(all(vapply(
+      unlist(estimates[c("coef", "exp(coef)", "se(coef)")]),
+      function(value) any(grepl(
+        formatC(value, format = "f", digits = 4), printed_summary,
+        fixed = TRUE
+      )), logical(1)
+    )))
+  }
+  testthat::expect_true(any(grepl("MSM reporting checklist", printed_summary)))
+  testthat::expect_true(any(grepl("Positivity diagnostics", printed_summary)))
+  testthat::expect_true(any(grepl(
+    "Missing switching-model predictors by model", printed_summary,
+    fixed = TRUE
+  )))
+  heading_positions <- c(
+    match("Analysis population", printed_summary),
+    match(TRUE, grepl("^MSM1:", printed_summary)),
+    match(TRUE, grepl("^MSM2:", printed_summary)),
+    match("Covariate summary by treatment arm and switch status", 
+          printed_summary),
+    match(TRUE, grepl("^MSM7:", printed_summary)),
+    match("Switching model parameter estimates", printed_summary),
+    match(TRUE, grepl("^MSM8:", printed_summary)),
+    match("Weight distribution", printed_summary),
+    match(TRUE, grepl("^MSM9:", printed_summary)),
+    match("Outcome model parameter estimates", printed_summary)
+  )
+  testthat::expect_true(all(diff(heading_positions) > 0L))
 })
 

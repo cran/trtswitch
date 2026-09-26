@@ -11,8 +11,9 @@
 #'   below the KM plot. Default is TRUE.
 #' @param ... Ensures that all arguments starting from "..." are named.
 #'
-#' @return A list of two ggplot2 objects, one for Z-plot and the other for 
-#' KM plot.
+#' @return A list of ggplot2 objects: \code{p_z} for Z-plot, 
+#' \code{p_km_switch} for KM plot for time to switch, and \code{p_km} for 
+#' KM plot for counterfactual unswitched survival times.
 #'
 #' @keywords internal
 #'
@@ -172,7 +173,7 @@ plot.tsegest <- function(x, time_unit = "day",
       ggplot2::scale_y_continuous(limits = c(0, 1)) +
       ggplot2::labs(
         x = "Months", y = "Survival Probability",
-        title = "Kaplan-Meier Curves for Counterfactual Outcomes") + 
+        title = "Kaplan-Meier Curves for Counterfactual Unswitched Outcomes") + 
       ggplot2::theme_bw() + 
       ggplot2::theme(
         plot.title = ggplot2::element_text(hjust = 0.5),
@@ -180,11 +181,12 @@ plot.tsegest <- function(x, time_unit = "day",
         panel.grid.minor.x = ggplot2::element_blank(),
         plot.margin = ggplot2::margin(t = 2, r = 5, b = 0, l = 20))
     
-    if (max(min_surv) < 0.5) {
-      p_km <- p_km + ggplot2::theme(legend.position = c(0.7, 0.85))
-    } else{
-      p_km <- p_km + ggplot2::theme(legend.position = c(0.15, 0.25))
+    legend_position <- if (max(min_surv) < 0.5) {
+      c(0.7, 0.85)
+    } else {
+      c(0.15, 0.25)
     }
+    p_km <- p_km + ggplot2::theme(legend.position = legend_position)
     
     # add hazard ratio to plot
     if (show_hr) {
@@ -268,8 +270,60 @@ plot.tsegest <- function(x, time_unit = "day",
       p_km <- cowplot::plot_grid(aligned[[1]], aligned[[2]], ncol = 1, 
                                  rel_heights = c(4, 0.6))    
     }
-    
-    list(p_z = p_z, p_km = p_km)
+
+    df_switch <- do.call(rbind, lapply(x$km_switch, function(km) {
+      if (is.null(km$data) || nrow(km$data) == 0) {
+        return(NULL)
+      }
+
+      df1 <- km$data
+      df1[[treat_var]] <- km[[treat_var]]
+      df1
+    }))
+
+    p_km_switch <- NULL
+    if (!is.null(df_switch) && nrow(df_switch) > 0) {
+      if (is.numeric(df_switch[[treat_var]]) &&
+          all(df_switch[[treat_var]] %in% c(0, 1))) {
+        df_switch[[treat_var]] <- factor(
+          df_switch[[treat_var]], levels = c(1, 0),
+          labels = levels(df[[treat_var]]))
+      } else {
+        df_switch[[treat_var]] <- factor(
+          df_switch[[treat_var]], levels = levels(df[[treat_var]]))
+      }
+
+      if (time_unit == "day") {
+        df_switch$month <- df_switch$time / 30.4375
+      } else if (time_unit == "week") {
+        df_switch$month <- df_switch$time / 4.3482
+      } else if (time_unit == "month") {
+        df_switch$month <- df_switch$time
+      } else if (time_unit == "year") {
+        df_switch$month <- df_switch$time * 12
+      }
+
+      p_km_switch <- ggplot2::ggplot(
+        df_switch, ggplot2::aes(
+          x = .data$month, y = .data$surv,
+          group = .data[[treat_var]], colour = .data[[treat_var]])) +
+        ggplot2::geom_step() +
+        ggplot2::scale_x_continuous(n.breaks = 11) +
+        ggplot2::scale_y_continuous(limits = c(0, 1)) +
+        ggplot2::labs(
+          x = "Months", y = "Survival Probability",
+          title = paste0("Kaplan-Meier Curves for Time from Disease ",
+                         "Progression to Switching")) +
+        ggplot2::theme_bw() +
+        ggplot2::theme(
+          plot.title = ggplot2::element_text(hjust = 0.5),
+          legend.title = ggplot2::element_blank(),
+          legend.position = legend_position,
+          panel.grid.minor.x = ggplot2::element_blank(),
+          plot.margin = ggplot2::margin(t = 2, r = 5, b = 0, l = 20))
+    }
+
+    list(p_z = p_z, p_km_switch = p_km_switch, p_km = p_km)
   } else {
     p_z
   }

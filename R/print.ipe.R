@@ -12,6 +12,12 @@
 #'
 #' @export
 print.ipe <- function(x, ...) {
+  if(!is.null(cl <- x$call)) {
+    cat("Call:\n")
+    dput(cl)
+    cat("\n")
+  }
+
   pvalue1 <- x$pvalue
   
   if (is.na(pvalue1)) {

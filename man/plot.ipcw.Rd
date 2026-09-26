@@ -21,8 +21,8 @@ below the KM plot. Default is TRUE.}
 \item{...}{Ensures that all arguments starting from "..." are named.}
 }
 \value{
-A list of two ggplot2 objects, one for histogram and the other
-for KM plot.
+A list of ggplot2 objects: \code{p_w} for histogram of weights
+and \code{p_km} for KM plot for survival time.
 }
 \description{
 Generate histogram of weights and weighted Kaplan-Meier (KM)

@@ -1,3 +1,12 @@
+# trtswitch 0.2.8
+* added summary methods for rpsftm, ipe, tsesimp, tsegest, ipcw, and msm with analysis populations, ordered TSD 24 reporting checklists, model parameter estimates, treatment effect estimates, weight summaries where applicable, and bootstrap summaries
+* added matched function calls to rpsftm, ipe, tsesimp, tsegest, ipcw, and msm output; MSM summaries distinguish exclusion of post-switching data from switching models and inclusion of post-switching data in the weighted outcome model
+* expanded rpsftm, ipe, tsesimp, tsegest, ipcw, and msm summaries with guidance to inspect relevant model diagnostics and plots, alongside reporting items requiring external justification or separately fitted sensitivity analyses
+* added pre-filter missingness summaries for AFT-model covariates in tsesimp and switching-model covariates in tsegest, ipcw, and msm, grouped by treatment arm and relevant model candidates
+* added p_kmstar to plot.ipe and added p_km_switch to plot.tsesimp and plot.tsegest
+* added data_switch and km_switch to tsesimp output
+* added a small positive value to avoid zero time in survival_analysis.cpp
+
 # trtswitch 0.2.7
 * clarified documentation for multiple-root handling of psi estimation in rpsftm, ipe, and tsegest: grid search selects the root closest to zero for point estimates and uses minimum/maximum roots for conservative confidence bounds, while root-finding (Brent or bisection) returns one bracketed root without guaranteeing selection of the root closest to zero
 * fixed a typo in tsegest.R

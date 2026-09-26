@@ -87,7 +87,8 @@
 #' @param root_finding Character string specifying the univariate 
 #'   root-finding algorithm to use. Options are \code{"brent"} (default)
 #'   for Brent's method, or \code{"bisection"} for the bisection method.
-#' @param alpha The significance level to calculate confidence intervals. 
+#' @param alpha The two-sided significance level to calculate confidence 
+#'   intervals. 
 #' @param ties The method for handling ties in the Cox model, either
 #'   "breslow" or "efron" (default).
 #' @param tol The desired accuracy (convergence tolerance) for \code{psi}
@@ -169,6 +170,8 @@
 #'
 #' @return A list with the following components:
 #'
+#' * \code{call}: The matched function call.
+#'
 #' * \code{psi}: The estimated causal parameter for the control group.
 #' 
 #' * \code{psi_roots}: Vector of \code{psi} values for the control group 
@@ -233,6 +236,10 @@
 #' * \code{fit_logis}: The list of fitted pooled logistic regression 
 #'   models for treatment switching using g-estimation.
 #' 
+#' * \code{switch_missing_summary}: A data frame summarizing missing
+#'   confounding covariates before complete-case filtering, by treatment arm
+#'   among records eligible for the switching model.
+#'
 #' * \code{data_outcome}: The input data for the outcome Cox model
 #'   of counterfactual unswitched survival times. 
 #'   The variables include \code{id}, \code{stratum}, \code{"t_star"}, 
@@ -288,6 +295,11 @@
 #' randomised trials: g-estimation to address time-dependent confounding.
 #' Statistical Methods in Medical Research. 2020;29(10):2900-2918.
 #'
+#' Helen Bell Gorrod, Nicholas R. Latimer, and Keith R. Abrams.
+#' NICE DSU Technical Support Document 24: Adjusting survival time estimates
+#' in the presence of treatment switching: An update to TSD 16. 2024.
+#' Available from https://sheffield.ac.uk/nice-dsu.
+#'  
 #' @examples
 #' 
 #' library(dplyr)
@@ -465,8 +477,10 @@ tsegest <- function(data, id = "id", stratum = "",
     levs = levels(data[[treat]])
     mf <- function(x) factor(x, levels = c(1,2), labels = levs)
     
-    # apply mf to a set of named containers that are data.frames with a column `treat`
-    for (nm in c("event_summary", "data_outcome", "km_outcome")) {
+    # apply mf to a set of named containers that are data.frames with 
+    # a column `treat`
+    for (nm in c("event_summary", "data_outcome", "km_outcome",
+                 "switch_missing_summary")) {
       out[[nm]][[treat]] <- mf(out[[nm]][[treat]])
     }
     
@@ -497,6 +511,7 @@ tsegest <- function(data, id = "id", stratum = "",
     boot = boot, n_boot = n_boot, seed = seed
   )
   
+  out$call <- match.call()
   class(out) <- "tsegest"
   out
 }

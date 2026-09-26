@@ -77,7 +77,8 @@
 #' @param treat_alt_interaction Whether to include an interaction between 
 #'   randomized and alternative treatments in the outcome model
 #'   when both randomized arms can switch to alternative treatment.
-#' @param alpha The significance level to calculate confidence intervals. 
+#' @param alpha The two-sided significance level to calculate confidence 
+#'   intervals. 
 #' @param ties The method for handling ties in the Cox model, either
 #'   "breslow" or "efron" (default).
 #' @param boot Whether to use bootstrap to obtain the confidence
@@ -122,6 +123,8 @@
 #'
 #' @return A list with the following components:
 #'
+#' * \code{call}: The matched function call.
+#'
 #' * \code{pvalue}: The two-sided p-value.
 #'
 #' * \code{pvalue_type}: The type of two-sided p-value for treatment effect, 
@@ -147,6 +150,10 @@
 #'
 #' * \code{fit_switch}: A list of fitted switching models for the
 #'   denominator and numerator by treatment group.
+#'
+#' * \code{switch_missing_summary}: A data frame summarizing missing
+#'   denominator and numerator switching-model covariates before complete-case
+#'   filtering, by treatment arm and switching model.
 #'
 #' * \code{data_outcome}: The input data for the outcome Cox model 
 #'   including the inverse probability of censoring weights.
@@ -200,6 +207,11 @@
 #' oncology trials. 
 #' Journal of Biopharmaceutical Statistics. 2022;32(6):897-914.
 #'
+#' Helen Bell Gorrod, Nicholas R. Latimer, and Keith R. Abrams.
+#' NICE DSU Technical Support Document 24: Adjusting survival time estimates
+#' in the presence of treatment switching: An update to TSD 16. 2024.
+#' Available from https://sheffield.ac.uk/nice-dsu.
+#' 
 #' @examples
 #'
 #' sim1 <- tssim(
@@ -383,8 +395,8 @@ msm <- function(data, id = "id", stratum = "", tstart = "tstart",
     mf <- function(x) factor(x, levels = c(1,2), labels = levs)
     
     # apply mf to a set of data.frames with a column named `treat`
-    for (nm in c("event_summary", "weight_summary", "data_outcome", 
-                 "km_outcome")) {
+    for (nm in c("event_summary", "weight_summary", "data_outcome",
+           "km_outcome", "switch_missing_summary")) {
       out[[nm]][[treat]] <- mf(out[[nm]][[treat]])
     }
     
@@ -408,7 +420,8 @@ msm <- function(data, id = "id", stratum = "", tstart = "tstart",
     alpha = alpha, ties = ties, boot = boot,
     n_boot = n_boot, seed = seed
   )
-  
+
+  out$call <- match.call()
   class(out) <- "msm"
   out
 }

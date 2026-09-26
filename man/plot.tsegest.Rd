@@ -21,8 +21,9 @@ below the KM plot. Default is TRUE.}
 \item{...}{Ensures that all arguments starting from "..." are named.}
 }
 \value{
-A list of two ggplot2 objects, one for Z-plot and the other for
-KM plot.
+A list of ggplot2 objects: \code{p_z} for Z-plot,
+\code{p_km_switch} for KM plot for time to switch, and \code{p_km} for
+KM plot for counterfactual unswitched survival times.
 }
 \description{
 Generate Z-plot and Kaplan-Meier (KM) plot of a

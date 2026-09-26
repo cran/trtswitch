@@ -137,7 +137,8 @@ finding algorithm will be used.}
 root-finding algorithm to use. Options are \code{"brent"} (default)
 for Brent's method, or \code{"bisection"} for the bisection method.}
 
-\item{alpha}{The significance level to calculate confidence intervals.}
+\item{alpha}{The two-sided significance level to calculate confidence
+intervals.}
 
 \item{ties}{The method for handling ties in the Cox model, either
 "breslow" or "efron" (default).}
@@ -165,6 +166,7 @@ the default RcppParallel behavior).}
 \value{
 A list with the following components:
 \itemize{
+\item \code{call}: The matched function call.
 \item \code{psi}: The estimated causal parameter for the control group.
 \item \code{psi_roots}: Vector of \code{psi} values for the control group
 at which the Z-statistic is zero, identified using grid search and
@@ -212,6 +214,9 @@ The variables include \code{id}, \code{stratum},
 \code{pd_time}, \code{swtrt}, and \code{swtrt_time}.
 \item \code{fit_logis}: The list of fitted pooled logistic regression
 models for treatment switching using g-estimation.
+\item \code{switch_missing_summary}: A data frame summarizing missing
+confounding covariates before complete-case filtering, by treatment arm
+among records eligible for the switching model.
 \item \code{data_outcome}: The input data for the outcome Cox model
 of counterfactual unswitched survival times.
 The variables include \code{id}, \code{stratum}, \code{"t_star"},
@@ -352,6 +357,11 @@ NR Latimer, IR White, K Tilling, and U Siebert.
 Improved two-stage estimation to adjust for treatment switching in
 randomised trials: g-estimation to address time-dependent confounding.
 Statistical Methods in Medical Research. 2020;29(10):2900-2918.
+
+Helen Bell Gorrod, Nicholas R. Latimer, and Keith R. Abrams.
+NICE DSU Technical Support Document 24: Adjusting survival time estimates
+in the presence of treatment switching: An update to TSD 16. 2024.
+Available from https://sheffield.ac.uk/nice-dsu.
 }
 \author{
 Kaifeng Lu, \email{kaifenglu@gmail.com}

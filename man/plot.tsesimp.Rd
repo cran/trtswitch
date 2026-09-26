@@ -21,12 +21,14 @@ below the KM plot. Default is TRUE.}
 \item{...}{Ensures that all arguments starting from "..." are named.}
 }
 \value{
-A list of two ggplot2 objects, one for box plot and the other
-for KM plot.
+A list of ggplot2 objects: \code{p_res} for box plot for AFT model
+deviance residuals, \code{p_km_switch} for KM plot for time from secondary
+baseline to switch, and \code{p_km} for KM plot for counterfactual
+unswitched survival times.
 }
 \description{
 Generate box plot for AFT model deviance residuals and
-Kaplan-Meier (KM) plot for potential outcomes of a tsesimp object.
+Kaplan-Meier (KM) plots for a tsesimp object.
 }
 \author{
 Kaifeng Lu, \email{kaifenglu@gmail.com}

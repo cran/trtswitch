@@ -111,7 +111,8 @@ finding algorithm will be used.}
 root-finding algorithm to use. Options are \code{"brent"} (default)
 for Brent's method, or \code{"bisection"} for the bisection method.}
 
-\item{alpha}{The significance level to calculate confidence intervals.}
+\item{alpha}{The two-sided significance level to calculate confidence
+intervals.}
 
 \item{ties}{The method for handling ties in the Cox model, either
 "breslow" or "efron" (default).}
@@ -134,6 +135,7 @@ the default RcppParallel behavior).}
 \value{
 A list with the following components:
 \itemize{
+\item \code{call}: The matched function call.
 \item \code{psi}: The estimated causal parameter.
 \item \code{psi_roots}: Vector of \code{psi} values at which the Z-statistic
 is zero, identified using grid search and linear interpolation.
@@ -281,6 +283,11 @@ Ian R. White, Adbel G. Babiker, Sarah Walker, and Janet H. Darbyshire.
 Randomization-based methods for correcting for treatment changes:
 Examples from the CONCORDE trial.
 Statistics in Medicine. 1999;18(19):2617-2634.
+
+Helen Bell Gorrod, Nicholas R. Latimer, and Keith R. Abrams.
+NICE DSU Technical Support Document 24: Adjusting survival time estimates
+in the presence of treatment switching: An update to TSD 16. 2024.
+Available from https://sheffield.ac.uk/nice-dsu.
 }
 \author{
 Kaifeng Lu, \email{kaifenglu@gmail.com}

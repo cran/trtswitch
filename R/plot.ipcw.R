@@ -11,8 +11,8 @@
 #'   below the KM plot. Default is TRUE.
 #' @param ... Ensures that all arguments starting from "..." are named.
 #'
-#' @return A list of two ggplot2 objects, one for histogram and the other 
-#' for KM plot.
+#' @return A list of ggplot2 objects: \code{p_w} for histogram of weights 
+#' and \code{p_km} for KM plot for survival time.
 #'
 #' @keywords internal
 #'

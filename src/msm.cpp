@@ -454,6 +454,70 @@ Rcpp::List msmcpp(const Rcpp::DataFrame df,
   for (size_t j = 0; j < ns_df; ++j) {
     covariates_lgs_num[q + p1 + j] = "ns" + std::to_string(j+1);
   }
+
+  // Summarize covariate missingness before complete-case filtering and
+  // interval splitting, restricted to records eligible for switch models.
+  std::vector<double> raw_os_time(idwi.size() + idwn.size() + idwc.size(),
+                                  -std::numeric_limits<double>::infinity());
+  for (size_t i = 0; i < n; ++i) {
+    if (idn[i] != INT_MIN && !std::isnan(tstopn[i])) {
+      raw_os_time[idn[i]] = std::max(raw_os_time[idn[i]], tstopn[i]);
+    }
+  }
+  std::vector<int> missing_treated;
+  std::vector<std::string> missing_model, missing_predictor;
+  std::vector<int> missing_count, missing_total;
+  size_t missing_arms = swtrt_control_only ? 1 : 2;
+  for (size_t h = 0; h < missing_arms; ++h) {
+    for (size_t j = 0; j < p2; ++j) {
+      int count = 0, total = 0;
+      for (size_t i = 0; i < n; ++i) {
+        bool eligible = idn[i] != INT_MIN &&
+          treatn[i] == static_cast<int>(h) &&
+          ((swtrtn[i] == 1 && tstartn[i] < swtrt_timen[i]) ||
+           (swtrtn[i] == 0 && tstopn[i] < raw_os_time[idn[i]]));
+        if (eligible) {
+          ++total;
+          if (std::isnan(z_lgs_denn(i, q + j))) ++count;
+        }
+      }
+      missing_treated.push_back(static_cast<int>(h));
+      missing_model.push_back("Denominator");
+      missing_predictor.push_back(denominator[j]);
+      missing_count.push_back(count);
+      missing_total.push_back(total);
+    }
+    if (stabilized_weights) {
+      for (size_t j = 0; j < p1; ++j) {
+        size_t denominator_index = 0;
+        while (denominator[denominator_index] != numerator[j]) {
+          ++denominator_index;
+        }
+        int count = 0, total = 0;
+        for (size_t i = 0; i < n; ++i) {
+          bool eligible = idn[i] != INT_MIN &&
+            treatn[i] == static_cast<int>(h) &&
+            ((swtrtn[i] == 1 && tstartn[i] < swtrt_timen[i]) ||
+             (swtrtn[i] == 0 && tstopn[i] < raw_os_time[idn[i]]));
+          if (eligible) {
+            ++total;
+            if (std::isnan(z_lgs_denn(i, q + denominator_index))) ++count;
+          }
+        }
+        missing_treated.push_back(static_cast<int>(h));
+        missing_model.push_back("Numerator");
+        missing_predictor.push_back(numerator[j]);
+        missing_count.push_back(count);
+        missing_total.push_back(total);
+      }
+    }
+  }
+  DataFrameCpp switch_missing_summary;
+  switch_missing_summary.push_back(std::move(missing_treated), "treated");
+  switch_missing_summary.push_back(std::move(missing_model), "model");
+  switch_missing_summary.push_back(std::move(missing_predictor), "predictor");
+  switch_missing_summary.push_back(std::move(missing_count), "missing");
+  switch_missing_summary.push_back(std::move(missing_total), "total");
   
   if (trunc < 0.0 || trunc >= 0.5) {
     throw std::invalid_argument("trunc must lie in [0, 0.5)");
@@ -1053,7 +1117,9 @@ Rcpp::List msmcpp(const Rcpp::DataFrame df,
                  
                  if (!swtrt_control_only && treat_alt_interaction) {
                    std::vector<int> treat_cross(n);
-                   for (size_t i = 0; i < n; ++i) treat_cross[i] = treatb[i] * crossb[i];
+                   for (size_t i = 0; i < n; ++i) {
+                     treat_cross[i] = treatb[i] * crossb[i]; 
+                   }
                    data_outcome.push_back(std::move(treat_cross), "treated_crossed");
                  }
                  
@@ -1234,6 +1300,18 @@ Rcpp::List msmcpp(const Rcpp::DataFrame df,
     weight_summary.push_back(subset(treatwn, nottreated), treat);
   } else if (data.string_cols.count(treat)) {
     weight_summary.push_back(subset(treatwc, nottreated), treat);
+  }
+
+  treated = switch_missing_summary.get<int>("treated");
+  nottreated.resize(treated.size());
+  std::transform(treated.begin(), treated.end(), nottreated.begin(),
+                 [](int value) { return 1 - value; });
+  if (data.bool_cols.count(treat) || data.int_cols.count(treat)) {
+    switch_missing_summary.push_back(subset(treatwi, nottreated), treat);
+  } else if (data.numeric_cols.count(treat)) {
+    switch_missing_summary.push_back(subset(treatwn, nottreated), treat);
+  } else if (data.string_cols.count(treat)) {
+    switch_missing_summary.push_back(subset(treatwc, nottreated), treat);
   }
   
   treated = km_outcome.get<int>("treated");
@@ -1692,6 +1770,7 @@ Rcpp::List msmcpp(const Rcpp::DataFrame df,
   result.push_back(std::move(fit_switch), "fit_switch");
   result.push_back(std::move(data_outcome), "data_outcome");
   result.push_back(std::move(weight_summary), "weight_summary");
+  result.push_back(std::move(switch_missing_summary), "switch_missing_summary");
   result.push_back(std::move(km_outcome), "km_outcome");
   result.push_back(std::move(lr_outcome), "lr_outcome");
   result.push_back(std::move(fit_outcome), "fit_outcome");

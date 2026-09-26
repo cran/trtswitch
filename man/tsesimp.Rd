@@ -97,7 +97,8 @@ recensoring will be applied to the actual censoring times for dropouts.}
 \item{swtrt_control_only}{Whether treatment switching occurred only in
 the control group. The default is \code{TRUE}.}
 
-\item{alpha}{The significance level to calculate confidence intervals.}
+\item{alpha}{The two-sided significance level to calculate confidence
+intervals.}
 
 \item{ties}{The method for handling ties in the Cox model, either
 "breslow" or "efron" (default).}
@@ -120,6 +121,7 @@ the default RcppParallel behavior).}
 \value{
 A list with the following components:
 \itemize{
+\item \code{call}: The matched function call.
 \item \code{psi}: The estimated causal parameter for the control group.
 \item \code{psi_CI}: The confidence interval for \code{psi}.
 \item \code{psi_CI_type}: The type of confidence interval for \code{psi},
@@ -133,6 +135,8 @@ i.e., "Cox model" or "bootstrap".
 either "Cox model" or "bootstrap".
 \item \code{event_summary}: A data frame containing the count and percentage
 of deaths, disease progressions, and switches by treatment arm.
+\item \code{aft_missing_summary}: A data frame summarizing missing AFT-model
+covariates before complete-case filtering, by treatment arm.
 \item \code{data_aft}: A list of input data for the AFT model by treatment
 group. The variables include \code{id}, \code{stratum}, \code{"pps"},
 \code{"event"}, \code{"swtrt"}, \code{base2_cov}, \code{pd_time},
@@ -140,6 +144,13 @@ group. The variables include \code{id}, \code{stratum}, \code{"pps"},
 \item \code{fit_aft}: A list of fitted AFT models by treatment group.
 \item \code{res_aft}: A list of deviance residuals from the AFT models
 by treatment group.
+\item \code{data_switch}: A list of input data for time from disease
+progression to switching by treatment group. The variables include
+\code{id}, \code{stratum}, \code{"swtrt"}, and \code{"swtrt_time"}.
+Patients who do not switch are censored at the time from disease
+progression to death or censoring.
+\item \code{km_switch}: A list of Kaplan-Meier estimates for time from disease
+progression to switching by treatment group.
 \item \code{data_outcome}: The input data for the outcome Cox model
 of counterfactual unswitched survival times.
 The variables include \code{id}, \code{stratum}, \code{"t_star"},
@@ -250,6 +261,11 @@ JP Morden, RL Akehurst, and MJ Campbell.
 Adjusting for treatment switching in randomised controlled trials - A
 simulation study and a simplified two-stage method.
 Statistical Methods in Medical Research. 2017;26(2):724-751.
+
+Helen Bell Gorrod, Nicholas R. Latimer, and Keith R. Abrams.
+NICE DSU Technical Support Document 24: Adjusting survival time estimates
+in the presence of treatment switching: An update to TSD 16. 2024.
+Available from https://sheffield.ac.uk/nice-dsu.
 }
 \author{
 Kaifeng Lu, \email{kaifenglu@gmail.com}

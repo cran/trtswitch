@@ -21,8 +21,11 @@ below the KM plot. Default is TRUE.}
 \item{...}{Ensures that all arguments starting from "..." are named.}
 }
 \value{
-A list of two ggplot2 objects, one for box plot and the other
-for KM plot.
+A list of ggplot2 objects: \code{p_res} for box plot for AFT model
+deviance residuals, \code{p_kmstar} for KM plot for counterfactual
+untreated survival times (i.e., potential outcomes if all subjects
+were untreated), and \code{p_km} for KM plot for counterfactual unswitched
+survival times.
 }
 \description{
 Generate box plot for AFT model deviance residuals and

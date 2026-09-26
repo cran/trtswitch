@@ -648,6 +648,47 @@ Rcpp::List tsegestcpp(const Rcpp::DataFrame& df,
   if (offset < 0.0) throw std::invalid_argument("offset must be nonnegative");
   if (n_boot < 100)
     throw std::invalid_argument("n_boot must be greater than or equal to 100");
+
+  // Summarize conf_cov missingness before complete-case filtering and interval
+  // splitting among post-progression records eligible for switch models.
+  std::vector<double> raw_os_time(idwi.size() + idwn.size() + idwc.size(),
+                                  -std::numeric_limits<double>::infinity());
+  for (size_t i = 0; i < n; ++i) {
+    if (idn[i] != INT_MIN && !std::isnan(tstopn[i])) {
+      raw_os_time[idn[i]] = std::max(raw_os_time[idn[i]], tstopn[i]);
+    }
+  }
+  std::vector<int> missing_treated, missing_count, missing_total;
+  std::vector<std::string> missing_predictor;
+  size_t missing_arms = swtrt_control_only ? 1 : 2;
+  for (size_t h = 0; h < missing_arms; ++h) {
+    for (size_t j = 0; j < p2; ++j) {
+      int count = 0, total = 0;
+      for (size_t i = 0; i < n; ++i) {
+        bool valid = idn[i] != INT_MIN && treatn[i] != INT_MIN &&
+          pdn[i] == 1 && swtrtn[i] != INT_MIN &&
+          !std::isnan(tstartn[i]) && !std::isnan(tstopn[i]) &&
+          !std::isnan(pd_timen[i]);
+        bool before_switch_or_end =
+          (swtrtn[i] == 1 && tstartn[i] < swtrt_timen[i]) ||
+          (swtrtn[i] == 0 && tstopn[i] < raw_os_time[idn[i]]);
+        if (valid && treatn[i] == static_cast<int>(h) &&
+            tstopn[i] >= pd_timen[i] && before_switch_or_end) {
+          ++total;
+          if (std::isnan(z_lgsn(i, q + j))) ++count;
+        }
+      }
+      missing_treated.push_back(static_cast<int>(h));
+      missing_predictor.push_back(conf_cov[j]);
+      missing_count.push_back(count);
+      missing_total.push_back(total);
+    }
+  }
+  DataFrameCpp switch_missing_summary;
+  switch_missing_summary.push_back(std::move(missing_treated), "treated");
+  switch_missing_summary.push_back(std::move(missing_predictor), "predictor");
+  switch_missing_summary.push_back(std::move(missing_count), "missing");
+  switch_missing_summary.push_back(std::move(missing_total), "total");
   
   // exclude observations with missing values
   std::vector<unsigned char> sub(n,1);
@@ -2015,6 +2056,18 @@ Rcpp::List tsegestcpp(const Rcpp::DataFrame& df,
     }
   }
   
+  std::vector<int> treated_missing = switch_missing_summary.get<int>("treated");
+  std::vector<int> nottreated_missing(treated_missing.size());
+  std::transform(treated_missing.begin(), treated_missing.end(),
+                 nottreated_missing.begin(), [](int value) { return 1 - value; });
+  if (data.bool_cols.count(treat) || data.int_cols.count(treat)) {
+    switch_missing_summary.push_back(subset(treatwi, nottreated_missing), treat);
+  } else if (data.numeric_cols.count(treat)) {
+    switch_missing_summary.push_back(subset(treatwn, nottreated_missing), treat);
+  } else if (data.string_cols.count(treat)) {
+    switch_missing_summary.push_back(subset(treatwc, nottreated_missing), treat);
+  }
+
   ListCpp result;
   std::string pvalue_type = boot ? "bootstrap" : "Cox model";
   std::vector<double> psi_CI = {psilower, psiupper};
@@ -2029,6 +2082,7 @@ Rcpp::List tsegestcpp(const Rcpp::DataFrame& df,
   result.push_back(std::move(hr_CI), "hr_CI");
   result.push_back(hr_CI_type, "hr_CI_type");
   result.push_back(std::move(event_summary), "event_summary");
+  result.push_back(std::move(switch_missing_summary), "switch_missing_summary");
   result.push_back(std::move(data_switch), "data_switch");
   result.push_back(std::move(km_switch), "km_switch");
   result.push_back(std::move(eval_z), "eval_z");

@@ -417,9 +417,20 @@ DataFrameCpp kmestcpp(const DataFrameCpp& data,
   if (!has_time2) {
     tstopn = std::move(timen);
     // tstartn remains zero-initialized
+    for (size_t i = 0; i < n; ++i) {
+      if (tstopn[i] == 0.0) {
+        tstopn[i] = 1.0e-6; // add a small positive value to avoid zero time
+      }
+    }
   } else {
     tstartn = std::move(timen);
     tstopn = std::move(time2n);
+    for (size_t i = 0; i < n; ++i) {
+      if (tstopn[i] <= tstartn[i]) {
+        throw std::invalid_argument(
+            "time2 must be greater than time for each observation");
+      }
+    }
   }
 
   if (!data.containElementNamed(event))
@@ -876,11 +887,22 @@ DataFrameCpp kmdiffcpp(const DataFrameCpp& data,
   if (!has_time2) {
     tstopn = std::move(timen);
     // tstartn remains zero-initialized
+    for (size_t i = 0; i < n; ++i) {
+      if (tstopn[i] == 0.0) {
+        tstopn[i] = 1.0e-6; // add a small positive value to avoid zero time
+      }
+    }
   } else {
     tstartn = std::move(timen);
     tstopn = std::move(time2n);
+    for (size_t i = 0; i < n; ++i) {
+      if (tstopn[i] <= tstartn[i]) {
+        throw std::invalid_argument(
+            "time2 must be greater than time for each observation");
+      }
+    }
   }
-
+  
   if (!data.containElementNamed(event))
     throw std::invalid_argument("data must contain the event variable");
   std::vector<int> eventn(n);
@@ -1420,11 +1442,22 @@ DataFrameCpp lrtestcpp(const DataFrameCpp& data,
   if (!has_time2) {
     tstopn = std::move(timen);
     // tstartn remains zero-initialized
+    for (size_t i = 0; i < n; ++i) {
+      if (tstopn[i] == 0.0) {
+        tstopn[i] = 1.0e-6; // add a small positive value to avoid zero time
+      }
+    }
   } else {
     tstartn = std::move(timen);
     tstopn = std::move(time2n);
+    for (size_t i = 0; i < n; ++i) {
+      if (tstopn[i] <= tstartn[i]) {
+        throw std::invalid_argument(
+            "time2 must be greater than time for each observation");
+      }
+    }
   }
-
+  
   if (!data.containElementNamed(event))
     throw std::invalid_argument("data must contain the event variable");
   std::vector<int> eventn(n);
@@ -6339,12 +6372,24 @@ ListCpp phregcpp(const DataFrameCpp& data,
   // unify right censored data with counting process data
   std::vector<double> tstartn(n), tstopn(n);
   if (!has_time2) {
-    tstopn = timen;
+    tstopn = std::move(timen);
+    // tstartn remains zero-initialized
+    for (size_t i = 0; i < n; ++i) {
+      if (tstopn[i] == 0.0) {
+        tstopn[i] = 1.0e-6; // add a small positive value to avoid zero time
+      }
+    }
   } else {
-    tstartn = timen;
-    tstopn = time2n;
+    tstartn = std::move(timen);
+    tstopn = std::move(time2n);
+    for (size_t i = 0; i < n; ++i) {
+      if (tstopn[i] <= tstartn[i]) {
+        throw std::invalid_argument(
+            "time2 must be greater than time for each observation");
+      }
+    }
   }
-
+  
 
   // exclude observations with missing values
   std::vector<unsigned char> sub(n,1);
@@ -7779,12 +7824,24 @@ ListCpp residuals_phregcpp(const size_t p,
   // unify right censored data with counting process data
   std::vector<double> tstartn(n), tstopn(n);
   if (!has_time2) {
-    tstopn = timen;
+    tstopn = std::move(timen);
+    // tstartn remains zero-initialized
+    for (size_t i = 0; i < n; ++i) {
+      if (tstopn[i] == 0.0) {
+        tstopn[i] = 1.0e-6; // add a small positive value to avoid zero time
+      }
+    }
   } else {
-    tstartn = timen;
-    tstopn = time2n;
+    tstartn = std::move(timen);
+    tstopn = std::move(time2n);
+    for (size_t i = 0; i < n; ++i) {
+      if (tstopn[i] <= tstartn[i]) {
+        throw std::invalid_argument(
+            "time2 must be greater than time for each observation");
+      }
+    }
   }
-
+  
   // exclude observations with missing values
   std::vector<unsigned char> sub(n, 1);
   for (size_t i = 0; i < n; ++i) {
@@ -8503,12 +8560,24 @@ ListCpp assess_phregcpp(const size_t p,
   // unify right censored data with counting process data
   std::vector<double> tstartn(n), tstopn(n);
   if (!has_time2) {
-    tstopn = timen;
+    tstopn = std::move(timen);
+    // tstartn remains zero-initialized
+    for (size_t i = 0; i < n; ++i) {
+      if (tstopn[i] == 0.0) {
+        tstopn[i] = 1.0e-6; // add a small positive value to avoid zero time
+      }
+    }
   } else {
-    tstartn = timen;
-    tstopn = time2n;
+    tstartn = std::move(timen);
+    tstopn = std::move(time2n);
+    for (size_t i = 0; i < n; ++i) {
+      if (tstopn[i] <= tstartn[i]) {
+        throw std::invalid_argument(
+            "time2 must be greater than time for each observation");
+      }
+    }
   }
-
+  
   // exclude observations with missing values
   std::vector<unsigned char> sub(n,1);
   for (size_t i = 0; i < n; ++i) {
@@ -9005,12 +9074,24 @@ ListCpp zph_phregcpp(const size_t p,
   // unify right censored data with counting process data
   std::vector<double> tstartn(n), tstopn(n);
   if (!has_time2) {
-    tstopn = timen;
+    tstopn = std::move(timen);
+    // tstartn remains zero-initialized
+    for (size_t i = 0; i < n; ++i) {
+      if (tstopn[i] == 0.0) {
+        tstopn[i] = 1.0e-6; // add a small positive value to avoid zero time
+      }
+    }
   } else {
-    tstartn = timen;
-    tstopn = time2n;
+    tstartn = std::move(timen);
+    tstopn = std::move(time2n);
+    for (size_t i = 0; i < n; ++i) {
+      if (tstopn[i] <= tstartn[i]) {
+        throw std::invalid_argument(
+            "time2 must be greater than time for each observation");
+      }
+    }
   }
-
+  
   // exclude observations with missing values
   std::vector<unsigned char> sub(n,1);
   for (size_t i = 0; i < n; ++i) {

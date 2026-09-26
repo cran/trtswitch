@@ -529,6 +529,32 @@ Rcpp::List tsesimpcpp(const Rcpp::DataFrame& df,
     throw std::invalid_argument("offset must be nonnegative");
   if (n_boot < 100)
     throw std::invalid_argument("n_boot must be greater than or equal to 100");
+
+  // Summarize base2_cov missingness before complete-case filtering among
+  // post-progression records eligible for the AFT model in each arm.
+  std::vector<int> missing_treated, missing_count, missing_total;
+  std::vector<std::string> missing_predictor;
+  size_t missing_arms = swtrt_control_only ? 1 : 2;
+  for (size_t h = 0; h < missing_arms; ++h) {
+    for (size_t j = 0; j < p2; ++j) {
+      int count = 0, total = 0;
+      for (size_t i = 0; i < n; ++i) {
+        if (treatn[i] == static_cast<int>(h) && pdn[i] == 1) {
+          ++total;
+          if (std::isnan(z_aftn(i, q + j))) ++count;
+        }
+      }
+      missing_treated.push_back(static_cast<int>(h));
+      missing_predictor.push_back(base2_cov[j]);
+      missing_count.push_back(count);
+      missing_total.push_back(total);
+    }
+  }
+  DataFrameCpp aft_missing_summary;
+  aft_missing_summary.push_back(std::move(missing_treated), "treated");
+  aft_missing_summary.push_back(std::move(missing_predictor), "predictor");
+  aft_missing_summary.push_back(std::move(missing_count), "missing");
+  aft_missing_summary.push_back(std::move(missing_total), "total");
   
   // exclude observations with missing values
   std::vector<unsigned char> sub(n,1);
@@ -903,6 +929,81 @@ Rcpp::List tsesimpcpp(const Rcpp::DataFrame& df,
   bool fail = out.get<bool>("fail");
   bool psimissing = out.get<bool>("psimissing");
   std::string psi_CI_type = "AFT model";
+
+  // Time from disease progression to switching, by adjusted treatment arm.
+  std::vector<ListPtr> data_switch(2), km_switch(2);
+  DataFrameCpp nulldata;
+  size_t K = swtrt_control_only ? 1 : 2;
+  for (size_t h = 0; h < 2; ++h) {
+    ListPtr data_switch_h = std::make_shared<ListCpp>();
+    ListPtr km_switch_h = std::make_shared<ListCpp>();
+    data_switch_h->push_back(nulldata, "data");
+    km_switch_h->push_back(nulldata, "data");
+
+    if (data.bool_cols.count(treat) || data.int_cols.count(treat)) {
+      data_switch_h->push_back(treatwi[1 - h], treat);
+      km_switch_h->push_back(treatwi[1 - h], treat);
+    } else if (data.numeric_cols.count(treat)) {
+      data_switch_h->push_back(treatwn[1 - h], treat);
+      km_switch_h->push_back(treatwn[1 - h], treat);
+    } else if (data.string_cols.count(treat)) {
+      data_switch_h->push_back(treatwc[1 - h], treat);
+      km_switch_h->push_back(treatwc[1 - h], treat);
+    }
+
+    if (h < K) {
+      std::vector<size_t> progressed;
+      progressed.reserve(n);
+      for (size_t i = 0; i < n; ++i) {
+        if (static_cast<size_t>(treatn[i]) == h && pdn[i] == 1) {
+          progressed.push_back(i);
+        }
+      }
+
+      std::vector<int> switch_event = subset(swtrtn, progressed);
+      std::vector<double> switch_time(progressed.size());
+      for (size_t i = 0; i < progressed.size(); ++i) {
+        size_t j = progressed[i];
+        double secondary_baseline = pd_timen[j] - offset;
+        switch_time[i] = switch_event[i] == 1 ?
+          swtrt_timen[j] - secondary_baseline : timen[j] - secondary_baseline;
+      }
+
+      DataFrameCpp ds;
+      ds.push_back(switch_event, "swtrt");
+      ds.push_back(switch_time, "swtrt_time");
+      if (data.int_cols.count(id)) {
+        ds.push_front(subset(idwi, subset(idn, progressed)), id);
+      } else if (data.numeric_cols.count(id)) {
+        ds.push_front(subset(idwn, subset(idn, progressed)), id);
+      } else if (data.string_cols.count(id)) {
+        ds.push_front(subset(idwc, subset(idn, progressed)), id);
+      }
+
+      if (has_stratum) {
+        std::vector<int> stratum_switch = subset(stratumn, progressed);
+        for (size_t i = 0; i < p_stratum; ++i) {
+          const std::string& s = stratum[i];
+          if (data.bool_cols.count(s)) {
+            ds.push_back(subset(u_stratum.get<unsigned char>(s), stratum_switch), s);
+          } else if (data.int_cols.count(s)) {
+            ds.push_back(subset(u_stratum.get<int>(s), stratum_switch), s);
+          } else if (data.numeric_cols.count(s)) {
+            ds.push_back(subset(u_stratum.get<double>(s), stratum_switch), s);
+          } else if (data.string_cols.count(s)) {
+            ds.push_back(subset(u_stratum.get<std::string>(s), stratum_switch), s);
+          }
+        }
+      }
+
+      data_switch_h->get<DataFrameCpp>("data") = ds;
+      km_switch_h->get<DataFrameCpp>("data") = kmestcpp(
+        ds, {""}, "swtrt_time", "", "swtrt", "", "log-log", 1.0 - alpha, 1);
+    }
+
+    data_switch[h] = std::move(data_switch_h);
+    km_switch[h] = std::move(km_switch_h);
+  }
   
   std::vector<double> hrhats(n_boot), psihats(n_boot), psi1hats(n_boot);
   std::vector<unsigned char> fails(n_boot);
@@ -1387,6 +1488,18 @@ Rcpp::List tsesimpcpp(const Rcpp::DataFrame& df,
     }
   }
   
+  std::vector<int> treated_missing = aft_missing_summary.get<int>("treated");
+  std::vector<int> nottreated_missing(treated_missing.size());
+  std::transform(treated_missing.begin(), treated_missing.end(),
+                 nottreated_missing.begin(), [](int value) { return 1 - value; });
+  if (data.bool_cols.count(treat) || data.int_cols.count(treat)) {
+    aft_missing_summary.push_back(subset(treatwi, nottreated_missing), treat);
+  } else if (data.numeric_cols.count(treat)) {
+    aft_missing_summary.push_back(subset(treatwn, nottreated_missing), treat);
+  } else if (data.string_cols.count(treat)) {
+    aft_missing_summary.push_back(subset(treatwc, nottreated_missing), treat);
+  }
+
   ListCpp result;
   std::string pvalue_type = boot ? "bootstrap" : "Cox model";
   std::vector <double> psi_CI = {psilower, psiupper};
@@ -1400,9 +1513,12 @@ Rcpp::List tsesimpcpp(const Rcpp::DataFrame& df,
   result.push_back(std::move(hr_CI), "hr_CI");
   result.push_back(hr_CI_type, "hr_CI_type");
   result.push_back(std::move(event_summary), "event_summary");
+  result.push_back(std::move(aft_missing_summary), "aft_missing_summary");
   result.push_back(std::move(data_aft), "data_aft");
   result.push_back(std::move(fit_aft), "fit_aft");
   result.push_back(std::move(res_aft), "res_aft");
+  result.push_back(std::move(data_switch), "data_switch");
+  result.push_back(std::move(km_switch), "km_switch");
   result.push_back(std::move(data_outcome), "data_outcome");
   result.push_back(std::move(km_outcome), "km_outcome");
   result.push_back(std::move(lr_outcome), "lr_outcome");

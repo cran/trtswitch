@@ -21,12 +21,14 @@ below the KM plot. Default is TRUE.}
 \item{...}{Ensures that all arguments starting from "..." are named.}
 }
 \value{
-A list of two ggplot2 objects, one for Z-plot and the other for
-KM plot.
+A list of ggplot2 objects: \code{p_z} for the Z-plot,
+\code{p_kmstar} for counterfactual untreated outcomes, and \code{p_km}
+for counterfactual unswitched outcomes. KM plots are omitted when their
+corresponding estimates are unavailable.
 }
 \description{
-Generate Z-plot and Kaplan-Meier (KM) plot of a
-rpsftm object.
+Generate a Z-plot and Kaplan-Meier (KM) plots of the
+counterfactual untreated and unswitched outcomes of a rpsftm object.
 }
 \author{
 Kaifeng Lu, \email{kaifenglu@gmail.com}

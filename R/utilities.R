@@ -35,6 +35,29 @@ process_cov <- function(base_cov, df) {
   list(varnames = varnames, vnames = vnames, df = df)
 }
 
+detect_time_varying_predictors <- function(covariates, data, id) {
+  covariates <- covariates[covariates != ""]
+  if (length(covariates) == 0 || is.null(data) || !(id %in% names(data))) {
+    return(character(0))
+  }
+
+  detected <- unlist(lapply(covariates, function(covariate) {
+    processed <- if (covariate %in% names(data)) {
+      list(varnames = covariate, df = data)
+    } else {
+      process_cov(covariate, data)
+    }
+    processed$varnames[vapply(processed$varnames, function(predictor) {
+      values_by_subject <- split(processed$df[[predictor]], processed$df[[id]])
+      any(vapply(values_by_subject, function(values) {
+        values <- values[!is.na(values)]
+        length(unique(values)) > 1
+      }, logical(1)))
+    }, logical(1))]
+  }), use.names = FALSE)
+  unique(detected)
+}
+
 
 #' Append columns from B to A by keyed join (fast, data.table-based)
 #'
